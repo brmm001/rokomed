@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import {
   Brain, TrendingUp, Target, AlertTriangle, CheckCircle,
-  BarChart3, Activity, Shield, Gauge, Bell, ArrowRight, Zap, ChevronRight
+  BarChart3, Activity, Shield, Gauge, Bell, Zap, ChevronRight
 } from 'lucide-react'
 
 type Tab = 'overview' | 'evolution' | 'specialties' | 'projection'
@@ -224,7 +224,7 @@ function EvolutionTab({ data }: { data: any }) {
               <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickFormatter={v => new Date(v).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} />
               <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} domain={[-3, 3]} />
               <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, fontSize: '0.8125rem' }}
-                formatter={(v: number) => [v.toFixed(3), 'θ']}
+                formatter={(v: any) => [Number(v).toFixed(3), 'θ']}
                 labelFormatter={v => new Date(v).toLocaleDateString('pt-BR')} />
               <Area type="monotone" dataKey="theta" stroke="#8B5CF6" fill="url(#thetaGrad)" strokeWidth={2} dot={{ r: 3, fill: '#8B5CF6' }} />
             </AreaChart>
@@ -326,7 +326,7 @@ function ProjectionTab({ data }: { data: any }) {
               <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} label={{ value: 'Dia', position: 'bottom', fill: 'var(--text-muted)', fontSize: 11 }} />
               <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} domain={[0, 100]} label={{ value: '%', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)', fontSize: 11 }} />
               <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, fontSize: '0.8125rem' }}
-                formatter={(v: number) => [`${v}%`, 'Predição']} />
+                formatter={(v: any) => [`${v}%`, 'Predição']} />
               <Line type="monotone" dataKey="predicted" stroke="#8B5CF6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
