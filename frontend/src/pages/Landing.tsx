@@ -1,326 +1,382 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import {
-  Brain, Target, TrendingUp, ShieldCheck,
-  ArrowRight, Stethoscope, Star, CheckCircle,
-  BarChart3, Zap, GraduationCap, LayoutDashboard
-} from 'lucide-react'
 
 export default function LandingPage() {
   useEffect(() => {
-    document.title = 'Rokomed — Banco de Questões Inteligente'
+    document.title = 'ResidênciaQ — Banco de Questões'
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#0A0F1C] text-white selection:bg-indigo-500/30 overflow-hidden font-sans">
-      {/* Background Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-600/20 blur-[120px]" />
-        <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-purple-600/10 blur-[100px]" />
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-      {/* Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto backdrop-blur-md border-b border-white/5 mt-4 rounded-2xl bg-white/[0.02]">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-teal-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Stethoscope size={24} className="text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">Rokomed</span>
-        </Link>
+        .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        .lp-root {
+          --ink:   #0F172A;
+          --paper: #F8FAFC;
+          --red:   #2563EB;
+          --rule:  rgba(15,23,42,0.12);
+          --muted: #475569;
+          --display:'Abril Fatface', Georgia, serif;
+          --body:  'Crimson Pro', Georgia, serif;
+          --mono:  'IBM Plex Mono', monospace;
+          font-family: var(--body);
+          background: var(--paper);
+          color: var(--ink);
+          line-height: 1.5;
+          overflow-x: hidden;
+        }
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-          <a href="#features" className="hover:text-white transition-colors">Recursos</a>
-          <a href="#stats" className="hover:text-white transition-colors">Resultados</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Planos</a>
-        </div>
+        /* NAV */
+        .lp-nav { display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:2px solid var(--ink); position:sticky; top:0; z-index:100; background:var(--paper); }
+        .lp-logo { font-family:var(--display); font-size:1.35rem; color:var(--ink); text-decoration:none; }
+        .lp-logo em { color:var(--red); font-style:normal; }
+        .lp-nav-links { display:flex; gap:2.5rem; list-style:none; }
+        .lp-nav-links a { font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .15s; }
+        .lp-nav-links a:hover { color:var(--ink); }
+        .lp-nav-cta { font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:0.55rem 1.3rem; text-decoration:none; transition:background .15s; }
+        .lp-nav-cta:hover { background:var(--red); }
 
-        <div className="flex items-center gap-4">
-          <Link to="/login" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-            Entrar
-          </Link>
-          <Link to="/register" className="px-5 py-2.5 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/10 backdrop-blur-sm">
-            Criar conta
-          </Link>
-        </div>
-      </nav>
+        /* HERO */
+        .lp-hero { display:grid; grid-template-columns:1fr 1fr; min-height:88vh; border-bottom:2px solid var(--ink); }
+        .lp-hero-left { padding:5vw; border-right:1px solid var(--rule); display:flex; flex-direction:column; justify-content:space-between; }
+        .lp-hero-eyebrow { display:flex; align-items:center; gap:1rem; margin-bottom:3rem; }
+        .lp-cross-icon { width:20px; height:20px; position:relative; flex-shrink:0; }
+        .lp-cross-icon::before,.lp-cross-icon::after { content:''; position:absolute; background:var(--red); }
+        .lp-cross-icon::before { width:20px; height:6px; top:7px; left:0; }
+        .lp-cross-icon::after  { width:6px; height:20px; top:0; left:7px; }
+        .lp-label { font-family:var(--mono); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
+        .lp-h1 { font-family:var(--display); font-size:clamp(3.2rem,6.5vw,6rem); line-height:0.95; letter-spacing:-0.02em; color:var(--ink); flex:1; display:flex; flex-direction:column; justify-content:center; gap:0; }
+        .lp-h1 .lp-red { color:var(--red); }
+        .lp-hero-bottom { display:flex; flex-direction:column; gap:1.5rem; padding-top:3rem; border-top:1px solid var(--rule); }
+        .lp-hero-desc { font-size:1.1rem; font-weight:300; color:var(--muted); line-height:1.7; max-width:440px; }
+        .lp-hero-actions { display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; }
+        .lp-btn-ink { background:var(--ink); color:var(--paper); padding:.85rem 2rem; font-family:var(--mono); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; text-decoration:none; display:inline-block; transition:background .15s; }
+        .lp-btn-ink:hover { background:var(--red); }
+        .lp-btn-link { font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; border-bottom:1px solid var(--rule); padding-bottom:1px; transition:color .15s,border-color .15s; }
+        .lp-btn-link:hover { color:var(--ink); border-color:var(--ink); }
+        .lp-hero-note { font-family:var(--mono); font-size:.63rem; color:var(--muted); letter-spacing:.08em; }
 
-      <main className="relative z-10">
-        {/* Hero Section */}
-        <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-8"
-          >
-            <SparklesIcon className="w-4 h-4" />
-            <span>A plataforma definitiva para Residência Médica</span>
-          </motion.div>
+        /* HERO RIGHT */
+        .lp-hero-right { display:flex; flex-direction:column; }
+        .lp-hero-price-block { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 3rem; border-bottom:1px solid var(--rule); position:relative; }
+        .lp-price-label { font-family:var(--mono); font-size:.65rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:1.2rem; }
+        .lp-price-big { font-family:var(--display); font-size:clamp(6rem,14vw,13rem); line-height:.85; color:var(--ink); letter-spacing:-.04em; }
+        .lp-price-big sup { font-family:var(--body); font-weight:300; font-size:.22em; vertical-align:super; color:var(--muted); letter-spacing:0; }
+        .lp-price-period { font-family:var(--body); font-weight:300; font-size:1rem; color:var(--muted); margin-top:.8rem; font-style:italic; }
+        .lp-hero-stamp { position:absolute; bottom:2.5rem; right:2.5rem; width:86px; height:86px; border:2px solid var(--red); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:.5rem; animation:lp-spin 22s linear infinite; }
+        @keyframes lp-spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+        .lp-hero-stamp span { font-family:var(--mono); font-size:.42rem; letter-spacing:.12em; text-transform:uppercase; color:var(--red); }
+        .lp-hero-stamp .lp-sn { font-family:var(--display); font-size:1.3rem; color:var(--red); line-height:1; }
+        .lp-hero-stats-row { display:grid; grid-template-columns:1fr 1fr; }
+        .lp-hstat { padding:1.8rem; border-top:1px solid var(--rule); border-right:1px solid var(--rule); }
+        .lp-hstat:nth-child(2n) { border-right:none; }
+        .lp-hstat .lp-n { font-family:var(--display); font-size:2.2rem; line-height:1; color:var(--ink); margin-bottom:.3rem; }
+        .lp-hstat .lp-n span { color:var(--red); }
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight max-w-4xl"
-          >
-            Sua aprovação desenhada por{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-teal-400">
-              Inteligência Artificial
-            </span>
-          </motion.h1>
+        /* MARQUEE */
+        .lp-mq-wrap { overflow:hidden; border-bottom:2px solid var(--ink); padding:.9rem 0; background:var(--ink); }
+        .lp-mq-inner { display:flex; white-space:nowrap; animation:lp-mq 28s linear infinite; }
+        .lp-mq-inner span { font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:rgba(248,250,252,.6); padding:0 2rem; }
+        .lp-mq-inner .lp-dot { color:var(--red); opacity:1; font-size:1rem; padding:0 .5rem; }
+        @keyframes lp-mq { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl leading-relaxed"
-          >
-            Mais de 15.000 questões comentadas, simulados adaptativos que aprendem com seus erros e estatísticas precisas para direcionar seu estudo.
-          </motion.p>
+        /* FEATURES */
+        .lp-feat-section { display:grid; grid-template-columns:260px 1fr; border-bottom:2px solid var(--ink); }
+        .lp-feat-sidebar { padding:4rem 3rem; border-right:2px solid var(--ink); display:flex; flex-direction:column; gap:2rem; }
+        .lp-sec-num { font-family:var(--display); font-size:5rem; line-height:1; -webkit-text-stroke:1px var(--red); color:transparent; }
+        .lp-sec-h { font-family:var(--display); font-size:2rem; line-height:1.05; letter-spacing:-.02em; }
+        .lp-feat-grid { display:grid; grid-template-columns:1fr 1fr 1fr; }
+        .lp-fi { padding:3rem 2.5rem; border-bottom:1px solid var(--rule); border-right:1px solid var(--rule); transition:background .2s; }
+        .lp-fi:nth-child(3n) { border-right:none; }
+        .lp-fi:nth-last-child(-n+3) { border-bottom:none; }
+        .lp-fi:hover { background:rgba(188,42,26,.03); }
+        .lp-fi-num { font-family:var(--mono); font-size:.63rem; letter-spacing:.14em; color:var(--muted); margin-bottom:1.5rem; }
+        .lp-fi h3 { font-family:var(--display); font-size:1.25rem; color:var(--ink); margin-bottom:.7rem; line-height:1.1; }
+        .lp-fi p { font-size:.95rem; font-weight:300; color:var(--muted); line-height:1.65; }
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center gap-4"
-          >
-            <Link to="/register" className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-indigo-600 to-teal-500 rounded-2xl overflow-hidden transition-all hover:scale-105 shadow-xl shadow-indigo-500/25">
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-              <span className="relative flex items-center gap-2">
-                Começar agora gratuitamente <ArrowRight size={18} />
-              </span>
-            </Link>
-            <a href="#features" className="px-8 py-4 text-base font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5">
-              Conhecer recursos
-            </a>
-          </motion.div>
+        /* SPECIALTIES */
+        .lp-spec-section { display:grid; grid-template-columns:1fr 1fr; border-bottom:2px solid var(--ink); }
+        .lp-spec-left { padding:5rem 4rem; border-right:2px solid var(--ink); display:flex; flex-direction:column; justify-content:space-between; }
+        .lp-spec-left h2 { font-family:var(--display); font-size:clamp(2.4rem,4vw,3.6rem); line-height:1; letter-spacing:-.02em; }
+        .lp-spec-left h2 em { font-style:italic; color:var(--red); }
+        .lp-spec-count { display:flex; align-items:baseline; gap:.6rem; padding-top:2rem; border-top:1px solid var(--rule); }
+        .lp-bignum { font-family:var(--display); font-size:3.5rem; line-height:1; color:var(--ink); }
+        .lp-bignum span { color:var(--red); }
+        .lp-spec-right { padding:3.5rem 3rem; display:flex; flex-direction:column; justify-content:center; }
+        .lp-spec-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.5rem; }
+        .lp-stag { font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; padding:.38rem .8rem; border:1px solid var(--rule); color:var(--muted); transition:all .15s; cursor:default; text-transform:uppercase; }
+        .lp-stag:hover,.lp-stag.lp-hi { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+        .lp-stag.lp-hir { background:var(--red); color:var(--paper); border-color:var(--red); }
 
-          {/* Floating UI Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-20 w-full max-w-5xl rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-2 shadow-2xl relative"
-          >
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full blur-2xl opacity-50 animate-pulse" />
-            <div className="rounded-2xl overflow-hidden border border-white/5 bg-[#0A0F1C]/80 relative aspect-[16/9] flex items-center justify-center">
-              {/* Fake UI Elements */}
-              <div className="absolute inset-0 flex">
-                <div className="w-64 border-r border-white/5 p-4 hidden md:block">
-                  <div className="h-8 w-32 bg-white/10 rounded mb-8" />
-                  <div className="space-y-4">
-                    <div className="h-4 w-full bg-white/5 rounded" />
-                    <div className="h-4 w-4/5 bg-white/5 rounded" />
-                    <div className="h-4 w-5/6 bg-white/5 rounded" />
-                  </div>
-                </div>
-                <div className="flex-1 p-8">
-                  <div className="flex gap-4 mb-8">
-                    <div className="h-24 flex-1 bg-gradient-to-br from-indigo-500/20 to-transparent border border-indigo-500/20 rounded-xl" />
-                    <div className="h-24 flex-1 bg-gradient-to-br from-teal-500/20 to-transparent border border-teal-500/20 rounded-xl" />
-                    <div className="h-24 flex-1 bg-gradient-to-br from-purple-500/20 to-transparent border border-purple-500/20 rounded-xl hidden sm:block" />
-                  </div>
-                  <div className="h-64 w-full bg-white/5 border border-white/5 rounded-xl" />
-                </div>
+        /* PRICING */
+        .lp-price-section { border-bottom:2px solid var(--ink); }
+        .lp-price-hdr { padding:4rem 5vw 3rem; border-bottom:1px solid var(--rule); display:flex; align-items:flex-end; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
+        .lp-price-hdr h2 { font-family:var(--display); font-size:clamp(2.5rem,5vw,4rem); letter-spacing:-.02em; line-height:1; }
+        .lp-price-hdr p { font-size:1rem; font-weight:300; color:var(--muted); font-style:italic; max-width:280px; }
+        .lp-pcards { display:grid; grid-template-columns:1fr 1fr 1fr; }
+        .lp-pc { padding:3.5rem 3rem; border-right:1px solid var(--rule); display:flex; flex-direction:column; gap:2rem; position:relative; transition:background .2s; }
+        .lp-pc:last-child { border-right:none; }
+        .lp-pc:hover { background:rgba(15,12,7,.02); }
+        .lp-pc.lp-feat { background:var(--ink); color:var(--paper); }
+        .lp-pc-lbl { font-family:var(--mono); font-size:.63rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+        .lp-pc.lp-feat .lp-pc-lbl { color:rgba(248,250,252,.45); }
+        .lp-pc-price { display:flex; align-items:baseline; gap:.3rem; }
+        .lp-pc-price .lp-cur { font-family:var(--body); font-weight:300; font-size:1.1rem; color:var(--muted); }
+        .lp-pc.lp-feat .lp-pc-price .lp-cur { color:rgba(248,250,252,.45); }
+        .lp-pc-price .lp-amt { font-family:var(--display); font-size:4rem; line-height:.9; letter-spacing:-.03em; }
+        .lp-pc-price .lp-per { font-family:var(--body); font-weight:300; font-style:italic; font-size:.85rem; color:var(--muted); }
+        .lp-pc.lp-feat .lp-pc-price .lp-per { color:rgba(248,250,252,.45); }
+        hr.lp-r { border:none; border-top:1px solid var(--rule); }
+        .lp-pc.lp-feat hr.lp-r { border-color:rgba(248,250,252,.15); }
+        .lp-pc-feats { list-style:none; display:flex; flex-direction:column; gap:.65rem; flex:1; }
+        .lp-pc-feats li { font-size:.9rem; font-weight:300; color:var(--muted); display:flex; align-items:flex-start; gap:.6rem; line-height:1.4; }
+        .lp-pc.lp-feat .lp-pc-feats li { color:rgba(248,250,252,.7); }
+        .lp-pc-feats li::before { content:'—'; font-family:var(--mono); font-size:.7rem; color:var(--red); flex-shrink:0; margin-top:.12rem; }
+        .lp-pc.lp-feat .lp-pc-feats li::before { color:#93C5FD; }
+        .lp-pc-btn { display:block; text-align:center; padding:.85rem; font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; text-decoration:none; transition:all .15s; }
+        .lp-pc-btn-out { border:1px solid var(--rule); color:var(--muted); }
+        .lp-pc-btn-out:hover { border-color:var(--ink); color:var(--ink); }
+        .lp-pc-btn-ppr { background:var(--paper); color:var(--ink); }
+        .lp-pc-btn-ppr:hover { background:var(--red); color:var(--paper); }
+        .lp-pflag { position:absolute; top:3.5rem; right:0; background:var(--red); color:var(--paper); font-family:var(--mono); font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; padding:.3rem .55rem; writing-mode:vertical-rl; transform:rotate(180deg); }
+
+        /* TESTIMONIALS */
+        .lp-testi-s { border-bottom:2px solid var(--ink); }
+        .lp-testi-hdr { padding:4rem 5vw 2rem; display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid var(--rule); }
+        .lp-testi-hdr h2 { font-family:var(--display); font-size:clamp(2rem,3.5vw,2.8rem); letter-spacing:-.02em; }
+        .lp-tgrid { display:grid; grid-template-columns:1fr 1fr 1fr; }
+        .lp-titem { padding:3rem 2.5rem; border-right:1px solid var(--rule); display:flex; flex-direction:column; gap:1.5rem; }
+        .lp-titem:last-child { border-right:none; }
+        .lp-tq { font-size:1rem; font-style:italic; font-weight:300; color:var(--ink); line-height:1.7; flex:1; }
+        .lp-tmeta { border-top:1px solid var(--rule); padding-top:1.2rem; }
+        .lp-tmeta .lp-name { font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink); margin-bottom:.25rem; }
+        .lp-tmeta .lp-role { font-size:.82rem; color:var(--muted); font-style:italic; }
+
+        /* FINAL CTA */
+        .lp-cta-s { display:grid; grid-template-columns:1fr auto; align-items:center; gap:3rem; padding:6rem 5vw; border-bottom:2px solid var(--ink); }
+        .lp-cta-s h2 { font-family:var(--display); font-size:clamp(3rem,6vw,5.5rem); line-height:.95; letter-spacing:-.03em; }
+        .lp-cta-s h2 em { color:var(--red); font-style:italic; }
+        .lp-cta-r { display:flex; flex-direction:column; align-items:flex-end; gap:1.2rem; flex-shrink:0; }
+        .lp-cta-r .lp-note { font-family:var(--mono); font-size:.62rem; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; text-align:right; }
+
+        /* FOOTER */
+        .lp-footer { padding:2rem 5vw; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+        .lp-footer p { font-family:var(--mono); font-size:.63rem; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+        .lp-flinks { display:flex; gap:2rem; list-style:none; }
+        .lp-flinks a { font-family:var(--mono); font-size:.63rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; }
+        .lp-flinks a:hover { color:var(--ink); }
+
+        @media(max-width:900px){
+          .lp-hero,.lp-spec-section,.lp-cta-s { grid-template-columns:1fr; }
+          .lp-hero-right,.lp-spec-left { display:none; }
+          .lp-feat-section { grid-template-columns:1fr; }
+          .lp-feat-sidebar { border-right:none; border-bottom:1px solid var(--rule); padding:3rem 5vw; }
+          .lp-feat-grid,.lp-pcards,.lp-tgrid { grid-template-columns:1fr; }
+          .lp-fi { border-right:none; }
+          .lp-pc { border-right:none; border-bottom:1px solid var(--rule); }
+          .lp-titem { border-right:none; border-bottom:1px solid var(--rule); }
+          .lp-cta-r { align-items:flex-start; }
+          .lp-nav-links { display:none; }
+        }
+      `}</style>
+
+      <div className="lp-root">
+        <nav className="lp-nav">
+          <a href="#" className="lp-logo">Residência<em>Q</em></a>
+          <ul className="lp-nav-links">
+            <li><a href="#recursos">Recursos</a></li>
+            <li><a href="#especialidades">Especialidades</a></li>
+            <li><a href="#planos">Planos</a></li>
+            <li><a href="#depoimentos">Depoimentos</a></li>
+          </ul>
+          <a href="#planos" className="lp-nav-cta">Assinar</a>
+        </nav>
+
+        <section className="lp-hero">
+          <div className="lp-hero-left">
+            <div className="lp-hero-eyebrow">
+              <div className="lp-cross-icon"></div>
+              <span className="lp-label">Banco de Questões · Residência Médica</span>
+            </div>
+            <h1 className="lp-h1">
+              <span>Passe na</span>
+              <span className="lp-red">residência</span>
+              <span>na primeira</span>
+              <span>tentativa.</span>
+            </h1>
+            <div className="lp-hero-bottom">
+              <p className="lp-hero-desc">Mais de 15.000 questões comentadas, simulados adaptativos e análise de desempenho por especialidade. Tudo que você precisa, sem o que você não precisa.</p>
+              <div className="lp-hero-actions">
+                <a href="#planos" className="lp-btn-ink">Começar por R$29/mês</a>
+                <a href="#recursos" className="lp-btn-link">Ver recursos →</a>
               </div>
-              
-              {/* Overlay Glass Panel */}
-              <div className="absolute z-10 w-80 p-6 rounded-2xl bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/50 transform translate-x-12 translate-y-12">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-teal-500/20 flex items-center justify-center">
-                    <TrendingUp className="text-teal-400" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-slate-300">Desempenho Geral</div>
-                    <div className="text-2xl font-bold text-white">87.5%</div>
-                  </div>
-                </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-teal-400 w-[87.5%] rounded-full" />
-                </div>
+              <p className="lp-hero-note">Sem taxa de adesão · Acesso imediato · Cancele quando quiser</p>
+            </div>
+          </div>
+
+          <div className="lp-hero-right">
+            <div className="lp-hero-price-block">
+              <div className="lp-price-label">A partir de</div>
+              <div className="lp-price-big"><sup>R$</sup>29</div>
+              <div className="lp-price-period">por mês</div>
+              <div className="lp-hero-stamp">
+                <span>mais de</span>
+                <span className="lp-sn">8k</span>
+                <span>aprovados</span>
               </div>
             </div>
-          </motion.div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-24 px-6 relative">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Projetado para sua aprovação</h2>
-              <p className="text-slate-400 max-w-2xl mx-auto">Tecnologia avançada para otimizar cada minuto do seu estudo.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <FeatureCard 
-                icon={<Brain />}
-                title="Trilhas Adaptativas"
-                desc="Nossa IA identifica suas fraquezas e seleciona as questões exatas que você precisa resolver para melhorar."
-              />
-              <FeatureCard 
-                icon={<BarChart3 />}
-                title="Analytics Profundo"
-                desc="Gráficos detalhados usando Teoria de Resposta ao Item (TRI) para mostrar seu real nível de proficiência."
-              />
-              <FeatureCard 
-                icon={<Target />}
-                title="Simulados Personalizados"
-                desc="Crie provas com a cara das instituições que você deseja, filtrando por bancas, anos e grandes áreas."
-              />
-              <FeatureCard 
-                icon={<Zap />}
-                title="Comentários Focados"
-                desc="Resoluções diretas ao ponto. Sem enrolação, explicando o porquê de cada alternativa."
-              />
-              <FeatureCard 
-                icon={<LayoutDashboard />}
-                title="Dashboard Intuitivo"
-                desc="Sua evolução centralizada em um painel moderno e sem distrações."
-              />
-              <FeatureCard 
-                icon={<ShieldCheck />}
-                title="Conteúdo Atualizado"
-                desc="Novas provas e questões adicionadas constantemente pela nossa equipe de especialistas."
-              />
+            <div className="lp-hero-stats-row">
+              <div className="lp-hstat"><div className="lp-n">15<span>k+</span></div><div className="lp-label">Questões comentadas</div></div>
+              <div className="lp-hstat"><div className="lp-n">40<span>+</span></div><div className="lp-label">Especialidades</div></div>
+              <div className="lp-hstat"><div className="lp-n">98<span>%</span></div><div className="lp-label">Taxa de aprovação</div></div>
+              <div className="lp-hstat"><div className="lp-n">5<span>★</span></div><div className="lp-label">Avaliação média</div></div>
             </div>
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section id="stats" className="py-20 border-y border-white/5 bg-white/[0.02]">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-teal-400 mb-2">15k+</div>
-              <div className="text-sm text-slate-400 font-medium uppercase tracking-wider">Questões</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-teal-400 mb-2">40+</div>
-              <div className="text-sm text-slate-400 font-medium uppercase tracking-wider">Especialidades</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-teal-400 mb-2">98%</div>
-              <div className="text-sm text-slate-400 font-medium uppercase tracking-wider">Aprovação</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-teal-400 mb-2">4.9/5</div>
-              <div className="text-sm text-slate-400 font-medium uppercase tracking-wider">Avaliação</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Section */}
-        <section id="pricing" className="py-24 px-6 relative">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Investimento no seu futuro</h2>
-              <p className="text-slate-400 max-w-2xl mx-auto">Sem taxas ocultas. Escolha o plano perfeito para você.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <PricingCard 
-                title="Mensal"
-                price="29"
-                features={["Acesso ilimitado às questões", "Simulados básicos", "Análise de desempenho", "Suporte padrão"]}
-              />
-              <PricingCard 
-                title="Semestral"
-                price="19"
-                highlight={true}
-                features={["Tudo do Mensal", "Trilhas Adaptativas com IA", "Simulados personalizados", "Análise preditiva de nota", "Suporte prioritário"]}
-              />
-              <PricingCard 
-                title="Anual"
-                price="15"
-                features={["Tudo do Semestral", "Revisões programadas", "Mentorias coletivas", "Acesso a novos recursos em primeira mão"]}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent" />
-          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8">Pronto para vestir o jaleco do seu sonho?</h2>
-            <Link to="/register" className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition-all backdrop-blur-md hover:scale-105 shadow-2xl">
-              Criar conta gratuitamente
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="text-indigo-400" size={20} />
-            <span className="font-bold">Rokomed</span>
-          </div>
-          <div className="text-slate-500 text-sm">
-            © 2026 Rokomed. Todos os direitos reservados.
-          </div>
-          <div className="flex gap-6 text-sm text-slate-400">
-            <a href="#" className="hover:text-white transition-colors">Termos</a>
-            <a href="#" className="hover:text-white transition-colors">Privacidade</a>
-            <a href="#" className="hover:text-white transition-colors">Contato</a>
+        <div className="lp-mq-wrap" aria-hidden="true">
+          <div className="lp-mq-inner">
+            <span>Clínica Médica</span><span className="lp-dot">·</span><span>Cirurgia Geral</span><span className="lp-dot">·</span><span>Pediatria</span><span className="lp-dot">·</span><span>GO</span><span className="lp-dot">·</span><span>Med. Preventiva</span><span className="lp-dot">·</span><span>Cardiologia</span><span className="lp-dot">·</span><span>Neurologia</span><span className="lp-dot">·</span><span>Ortopedia</span><span className="lp-dot">·</span><span>Psiquiatria</span><span className="lp-dot">·</span><span>Dermatologia</span><span className="lp-dot">·</span><span>Infectologia</span><span className="lp-dot">·</span><span>Endocrinologia</span><span className="lp-dot">·</span><span>Pneumologia</span><span className="lp-dot">·</span><span>Nefrologia</span><span className="lp-dot">·</span>
+            <span>Clínica Médica</span><span className="lp-dot">·</span><span>Cirurgia Geral</span><span className="lp-dot">·</span><span>Pediatria</span><span className="lp-dot">·</span><span>GO</span><span className="lp-dot">·</span><span>Med. Preventiva</span><span className="lp-dot">·</span><span>Cardiologia</span><span className="lp-dot">·</span><span>Neurologia</span><span className="lp-dot">·</span><span>Ortopedia</span><span className="lp-dot">·</span><span>Psiquiatria</span><span className="lp-dot">·</span><span>Dermatologia</span><span className="lp-dot">·</span><span>Infectologia</span><span className="lp-dot">·</span><span>Endocrinologia</span><span className="lp-dot">·</span><span>Pneumologia</span><span className="lp-dot">·</span><span>Nefrologia</span><span className="lp-dot">·</span>
           </div>
         </div>
-      </footer>
-    </div>
-  )
-}
 
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
-  return (
-    <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-colors group">
-      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-        {icon}
+        <section className="lp-feat-section" id="recursos">
+          <div className="lp-feat-sidebar">
+            <div className="lp-sec-num">01</div>
+            <h2 className="lp-sec-h">Por que o ResidênciaQ funciona</h2>
+            <p style={{fontSize:'.93rem',fontWeight:300,color:'var(--muted)',lineHeight:1.7,fontStyle:'italic'}}>Construído por médicos que passaram pela residência. Cada detalhe pensado para o candidato real.</p>
+          </div>
+          <div className="lp-feat-grid">
+            <div className="lp-fi"><div className="lp-fi-num">001</div><h3>Banco completo e comentado</h3><p>Questões de provas reais das principais bancas do Brasil com gabarito detalhado e fundamentação científica atualizada.</p></div>
+            <div className="lp-fi"><div className="lp-fi-num">002</div><h3>Simulados adaptativos</h3><p>A plataforma aprende seus pontos fracos e monta simulados personalizados. Mais eficiência, menos tempo desperdiçado.</p></div>
+            <div className="lp-fi"><div className="lp-fi-num">003</div><h3>Desempenho em tempo real</h3><p>Progresso por especialidade e tema. Veja onde você está em relação aos outros candidatos.</p></div>
+            <div className="lp-fi"><div className="lp-fi-num">004</div><h3>Filtros por banca e ano</h3><p>Treine exatamente para a sua prova. Filtre por instituição, ano, dificuldade ou tema específico.</p></div>
+            <div className="lp-fi"><div className="lp-fi-num">005</div><h3>Acesse de qualquer lugar</h3><p>Funciona no celular, tablet ou computador. Ideal para estudar no plantão, no metrô, em qualquer lugar.</p></div>
+            <div className="lp-fi"><div className="lp-fi-num">006</div><h3>Sempre atualizado</h3><p>Novas questões adicionadas semanalmente. As últimas provas entram na plataforma logo após a aplicação.</p></div>
+          </div>
+        </section>
+
+        <section className="lp-spec-section" id="especialidades">
+          <div className="lp-spec-left">
+            <div>
+              <div className="lp-sec-num">02</div>
+              <h2>Todas as <em>especialidades</em> que você precisa</h2>
+            </div>
+            <div className="lp-spec-count">
+              <div className="lp-bignum">40<span>+</span></div>
+              <div>
+                <div className="lp-label">especialidades</div>
+                <div style={{fontSize:'.9rem',color:'var(--muted)',fontStyle:'italic',fontWeight:300}}>das grandes áreas às subespecialidades</div>
+              </div>
+            </div>
+          </div>
+          <div className="lp-spec-right">
+            <div className="lp-label">Principais especialidades</div>
+            <div className="lp-spec-tags">
+              <span className="lp-stag lp-hir">Clínica Médica</span><span className="lp-stag lp-hir">Cirurgia Geral</span><span className="lp-stag lp-hir">Pediatria</span><span className="lp-stag lp-hir">GO</span><span className="lp-stag lp-hir">Med. Preventiva</span>
+              <span className="lp-stag lp-hi">Cardiologia</span><span className="lp-stag lp-hi">Neurologia</span><span className="lp-stag lp-hi">Ortopedia</span>
+              <span className="lp-stag">Psiquiatria</span><span className="lp-stag">Dermatologia</span><span className="lp-stag">Infectologia</span><span className="lp-stag">Endocrinologia</span><span className="lp-stag">Gastroenterologia</span><span className="lp-stag">Pneumologia</span><span className="lp-stag">Nefrologia</span><span className="lp-stag">Reumatologia</span><span className="lp-stag">Hematologia</span><span className="lp-stag">Oftalmologia</span><span className="lp-stag">ORL</span><span className="lp-stag">Urologia</span><span className="lp-stag">Oncologia</span><span className="lp-stag">Anestesiologia</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-price-section" id="planos">
+          <div className="lp-price-hdr">
+            <div>
+              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.4rem'}}>03</div>
+              <h2>Planos e preços</h2>
+            </div>
+            <p>Escolha o plano que melhor se adapta ao seu momento de estudo.</p>
+          </div>
+          <div className="lp-pcards">
+            <div className="lp-pc">
+              <div className="lp-pc-lbl">Mensal</div>
+              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">29</span><span className="lp-per">/mês</span></div>
+              <hr className="lp-r" />
+              <ul className="lp-pc-feats">
+                <li>Acesso a todo o banco de questões</li>
+                <li>Simulados por especialidade</li>
+                <li>Gabaritos comentados</li>
+                <li>Estatísticas de desempenho</li>
+                <li>Cancele quando quiser</li>
+              </ul>
+              <a href="#" className="lp-pc-btn lp-pc-btn-out">Começar agora →</a>
+            </div>
+            <div className="lp-pc lp-feat">
+              <span className="lp-pflag">Mais popular</span>
+              <div className="lp-pc-lbl">Semestral</div>
+              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">19</span><span className="lp-per">/mês</span></div>
+              <hr className="lp-r" />
+              <ul className="lp-pc-feats">
+                <li>Tudo do plano Mensal</li>
+                <li>Simulados personalizados por IA</li>
+                <li>Filtro avançado por banca e ano</li>
+                <li>Modo revisão rápida</li>
+                <li>Suporte prioritário</li>
+              </ul>
+              <a href="#" className="lp-pc-btn lp-pc-btn-ppr">Economizar 34% →</a>
+            </div>
+            <div className="lp-pc">
+              <div className="lp-pc-lbl">Anual</div>
+              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">15</span><span className="lp-per">/mês</span></div>
+              <hr className="lp-r" />
+              <ul className="lp-pc-feats">
+                <li>Tudo do plano Semestral</li>
+                <li>Acesso antecipado a novos recursos</li>
+                <li>Flashcards integrados</li>
+                <li>Planilha de evolução exportável</li>
+                <li>Suporte via WhatsApp</li>
+              </ul>
+              <a href="#" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</a>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-testi-s" id="depoimentos">
+          <div className="lp-testi-hdr">
+            <div>
+              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.3rem'}}>04</div>
+              <h2>O que dizem<br />quem já passou</h2>
+            </div>
+            <div style={{fontFamily:'var(--display)',fontSize:'6rem',color:'var(--red)',opacity:.12,lineHeight:1,userSelect:'none'}}>"</div>
+          </div>
+          <div className="lp-tgrid">
+            <div className="lp-titem">
+              <p className="lp-tq">"Estudei com outros bancos antes, mas o ResidênciaQ é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
+              <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em Clínica Médica — USP 2024</div></div>
+            </div>
+            <div className="lp-titem">
+              <p className="lp-tq">"Em 4 meses usando a plataforma minha nota nos simulados subiu 18 pontos. A análise de desempenho por tema é o diferencial que faz toda a diferença."</p>
+              <div className="lp-tmeta"><div className="lp-name">Rafael L.</div><div className="lp-role">Aprovado em Cirurgia Geral — UNIFESP 2024</div></div>
+            </div>
+            <div className="lp-titem">
+              <p className="lp-tq">"Usei no celular durante a madrugada no plantão. As questões curtas e os comentários objetivos encaixaram perfeitamente na minha rotina."</p>
+              <div className="lp-tmeta"><div className="lp-name">Thais F.</div><div className="lp-role">Aprovada em Pediatria — Santa Casa SP 2024</div></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-cta-s">
+          <h2>Sua vaga na residência<br />começa <em>hoje.</em></h2>
+          <div className="lp-cta-r">
+            <a href="#planos" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}}>Começar por R$29/mês</a>
+            <p className="lp-note">Acesso imediato · Sem compromisso</p>
+            <p className="lp-note">+8.000 médicos aprovados</p>
+          </div>
+        </section>
+
+        <footer className="lp-footer">
+          <a href="#" className="lp-logo">Residência<em>Q</em></a>
+          <p>© 2025 ResidênciaQ · Todos os direitos reservados</p>
+          <ul className="lp-flinks">
+            <li><a href="#">Termos</a></li>
+            <li><a href="#">Privacidade</a></li>
+            <li><a href="#">Contato</a></li>
+          </ul>
+        </footer>
       </div>
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-slate-400 leading-relaxed">{desc}</p>
-    </div>
-  )
-}
-
-function PricingCard({ title, price, features, highlight = false }: { title: string, price: string, features: string[], highlight?: boolean }) {
-  return (
-    <div className={`p-8 rounded-3xl border flex flex-col ${highlight ? 'bg-gradient-to-b from-indigo-900/40 to-[#0A0F1C] border-indigo-500/30 relative' : 'bg-white/[0.02] border-white/5'}`}>
-      {highlight && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-indigo-500 to-teal-400 rounded-full text-xs font-bold tracking-wider">
-          MAIS POPULAR
-        </div>
-      )}
-      <div className="text-slate-400 font-medium mb-4">{title}</div>
-      <div className="flex items-baseline gap-1 mb-8">
-        <span className="text-2xl text-slate-500">R$</span>
-        <span className="text-5xl font-extrabold">{price}</span>
-        <span className="text-slate-500">/mês</span>
-      </div>
-      <ul className="space-y-4 mb-8 flex-1">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <CheckCircle className={`w-5 h-5 shrink-0 ${highlight ? 'text-teal-400' : 'text-slate-500'}`} />
-            <span className="text-slate-300 text-sm leading-tight">{f}</span>
-          </li>
-        ))}
-      </ul>
-      <Link to="/register" className={`w-full py-4 rounded-xl font-bold text-center transition-all ${highlight ? 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-500/25' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'}`}>
-        Assinar {title}
-      </Link>
-    </div>
-  )
-}
-
-function SparklesIcon(props: any) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-      <path d="M5 3v4" />
-      <path d="M19 17v4" />
-      <path d="M3 5h4" />
-      <path d="M17 19h4" />
-    </svg>
+    </>
   )
 }
