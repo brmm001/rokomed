@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 export default function LandingPage() {
   useEffect(() => {
-    document.title = 'ResidênciaQ — Banco de Questões'
+    document.title = 'RokoMed — Banco de Questões'
   }, [])
 
   return (
@@ -183,7 +183,7 @@ export default function LandingPage() {
 
       <div className="lp-root">
         <nav className="lp-nav">
-          <a href="#" className="lp-logo">Residência<em>Q</em></a>
+          <a href="#" className="lp-logo">Roko<em>Med</em></a>
           <ul className="lp-nav-links">
             <li><a href="#recursos">Recursos</a></li>
             <li><a href="#especialidades">Especialidades</a></li>
@@ -245,7 +245,7 @@ export default function LandingPage() {
         <section className="lp-feat-section" id="recursos">
           <div className="lp-feat-sidebar">
             <div className="lp-sec-num">01</div>
-            <h2 className="lp-sec-h">Por que o ResidênciaQ funciona</h2>
+            <h2 className="lp-sec-h">Por que o RokoMed funciona</h2>
             <p style={{fontSize:'.93rem',fontWeight:300,color:'var(--muted)',lineHeight:1.7,fontStyle:'italic'}}>Construído por médicos que passaram pela residência. Cada detalhe pensado para o candidato real.</p>
           </div>
           <div className="lp-feat-grid">
@@ -344,7 +344,7 @@ export default function LandingPage() {
           </div>
           <div className="lp-tgrid">
             <div className="lp-titem">
-              <p className="lp-tq">"Estudei com outros bancos antes, mas o ResidênciaQ é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
+              <p className="lp-tq">"Estudei com outros bancos antes, mas o RokoMed é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
               <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em Clínica Médica — USP 2024</div></div>
             </div>
             <div className="lp-titem">
@@ -368,8 +368,8 @@ export default function LandingPage() {
         </section>
 
         <footer className="lp-footer">
-          <a href="#" className="lp-logo">Residência<em>Q</em></a>
-          <p>© 2025 ResidênciaQ · Todos os direitos reservados</p>
+          <a href="#" className="lp-logo">Roko<em>Med</em></a>
+          <p>© 2026 RokoMed · Todos os direitos reservados</p>
           <ul className="lp-flinks">
             <li><a href="#">Termos</a></li>
             <li><a href="#">Privacidade</a></li>
