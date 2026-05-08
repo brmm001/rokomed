@@ -11,8 +11,8 @@ function createPrismaClient() {
   // Usa Turso em produção (quando TURSO_AUTH_TOKEN estiver definido)
   if (process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith('libsql://')) {
     const libsql = createClient({
-      url: process.env.DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
+      url: process.env.DATABASE_URL?.trim() || '',
+      authToken: process.env.TURSO_AUTH_TOKEN?.trim(),
     })
     const adapter = new PrismaLibSQL(libsql)
     return new PrismaClient({
