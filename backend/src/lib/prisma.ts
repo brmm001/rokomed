@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { createClient } from '@libsql/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
 declare global {
   // eslint-disable-next-line no-var
@@ -10,10 +10,11 @@ declare global {
 function createPrismaClient() {
   // Usa Turso em produção (quando TURSO_AUTH_TOKEN estiver definido)
   if (process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith('libsql://')) {
-    const adapter = new PrismaLibSql({
+    const libsql = createClient({
       url: process.env.DATABASE_URL,
       authToken: process.env.TURSO_AUTH_TOKEN,
     })
+    const adapter = new PrismaLibSQL(libsql)
     return new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
