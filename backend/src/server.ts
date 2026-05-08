@@ -10,7 +10,20 @@ const app = Fastify({ logger: true })
 
 // ── Plugins ────────────────────────────────────────────────────────────────
 app.register(cors, {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, cb) => {
+    // Permitir requisições sem origin (como server-to-server) ou locais
+    if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+      return cb(null, true)
+    }
+    // Permitir os domínios de produção
+    const allowed = ['https://rokomed.vercel.app', 'https://www.rokomed.com.br', 'https://rokomed.com.br']
+    if (process.env.FRONTEND_URL) allowed.push(process.env.FRONTEND_URL)
+    
+    if (allowed.includes(origin)) {
+      return cb(null, true)
+    }
+    cb(new Error('Not allowed by CORS'), false)
+  },
   credentials: true,
 })
 
