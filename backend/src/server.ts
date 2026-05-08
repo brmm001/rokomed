@@ -44,6 +44,16 @@ app.register(require('./routes/simulados').default,     { prefix: '/api/simulado
 app.register(require('./routes/adaptive').default,      { prefix: '/api/adaptive' })
 app.register(require('./routes/analytics').default,     { prefix: '/api/analytics' })
 
+// ── Aliases sem o prefixo /api para tolerância a erros no Vercel ──────────
+app.register(require('./routes/auth').default,          { prefix: '/auth' })
+app.register(require('./routes/questions').default,     { prefix: '/questions' })
+app.register(require('./routes/admin').default,         { prefix: '/admin' })
+app.register(require('./routes/subscriptions').default, { prefix: '/subscriptions' })
+app.register(require('./routes/user').default,          { prefix: '/user' })
+app.register(require('./routes/simulados').default,     { prefix: '/simulados' })
+app.register(require('./routes/adaptive').default,      { prefix: '/adaptive' })
+app.register(require('./routes/analytics').default,     { prefix: '/analytics' })
+
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', async () => ({
   status: 'ok',
