@@ -42,7 +42,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   app.get('/', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string; plan: string }
     const parsed  = listSchema.safeParse(request.query)
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.errors[0].message })
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
 
     const { page, limit, specialtyId, institutionId, year, difficulty, search, bookmarked, wrongOnly } = parsed.data
 
@@ -178,7 +178,9 @@ export default async function questionRoutes(app: FastifyInstance) {
     const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true } })
     if (!question) return reply.code(404).send({ error: 'Questão não encontrada' })
 
-    const isCorrect = selectedOpt.toUpperCase() === question.correctOption.toUpperCase()
+    const isCorrect = question.correctOption 
+      ? selectedOpt.toUpperCase() === question.correctOption.toUpperCase()
+      : false
 
     const answer = await prisma.userAnswer.create({
       data: { userId: payload.sub, questionId: id, selectedOpt: selectedOpt.toUpperCase(), isCorrect, timeSpentSec },

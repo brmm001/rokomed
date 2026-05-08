@@ -26,7 +26,7 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
   app.post('/start', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const parsed = startSchema.safeParse(request.body)
-    if (!parsed.success) return reply.code(400).send({ error: parsed.error.errors[0].message })
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
 
     const { specialtyId, nItems } = parsed.data
 

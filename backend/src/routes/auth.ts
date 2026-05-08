@@ -19,7 +19,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/register', async (request: FastifyRequest, reply: FastifyReply) => {
     const result = registerSchema.safeParse(request.body)
     if (!result.success) {
-      return reply.code(400).send({ error: result.error.errors[0].message })
+      return reply.code(400).send({ error: result.error.issues[0].message })
     }
 
     const { name, email, password } = result.data

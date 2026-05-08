@@ -68,7 +68,10 @@ export default async function adminRoutes(app: FastifyInstance) {
     const parsed  = questionSchema.partial().safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
 
-    const updateData = { ...parsed.data, ...(parsed.data.options ? { options: JSON.stringify(parsed.data.options) } : {}) }
+    const updateData: any = { ...parsed.data }
+    if (parsed.data.options) {
+      updateData.options = JSON.stringify(parsed.data.options)
+    }
     const question = await prisma.question.update({ where: { id }, data: updateData })
 
     await prisma.adminLog.create({
