@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-
+import { Link } from 'react-router-dom'
 export default function LandingPage() {
   useEffect(() => {
     document.title = 'RokoMed — Banco de Questões'
@@ -190,7 +190,10 @@ export default function LandingPage() {
             <li><a href="#planos">Planos</a></li>
             <li><a href="#depoimentos">Depoimentos</a></li>
           </ul>
-          <a href="#planos" className="lp-nav-cta">Assinar</a>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <Link to="/login" className="lp-nav-cta" style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)' }}>Entrar</Link>
+            <a href="#planos" className="lp-nav-cta">Assinar</a>
+          </div>
         </nav>
 
         <section className="lp-hero">
