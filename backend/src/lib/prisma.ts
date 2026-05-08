@@ -9,7 +9,8 @@ declare global {
 
 function createPrismaClient() {
   // Usa Turso em produção (quando TURSO_AUTH_TOKEN estiver definido)
-  if (process.env.TURSO_AUTH_TOKEN && process.env.DATABASE_URL?.startsWith('libsql://')) {
+  const isTursoUrl = process.env.DATABASE_URL?.startsWith('libsql://') || process.env.DATABASE_URL?.startsWith('https://');
+  if (process.env.TURSO_AUTH_TOKEN && isTursoUrl) {
     const libsql = createClient({
       url: process.env.DATABASE_URL?.trim() || '',
       authToken: process.env.TURSO_AUTH_TOKEN?.trim(),
