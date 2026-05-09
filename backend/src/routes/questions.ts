@@ -66,7 +66,8 @@ export default async function questionRoutes(app: FastifyInstance) {
           correctOption: q.correctOption,
           explanation: q.explanation,
           specialty: q.specialty,
-          institution: q.institution
+          institution: q.institution,
+          year: q.year
         }
       })
       

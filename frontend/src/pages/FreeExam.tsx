@@ -9,6 +9,8 @@ type FreeQuestion = {
   correctOption?: string
   explanation?: string
   specialty?: { name: string }
+  institution?: { name: string; acronym: string }
+  year?: number
 }
 
 export default function FreeExamPage() {
@@ -55,13 +57,17 @@ export default function FreeExamPage() {
           
           <hr style={{border:'none', borderTop:'1px dashed var(--rule)', margin:'2rem 0'}} />
           
-          <p style={{fontSize:'1.1rem', marginBottom:'2rem'}}>
-            Para ter acesso à análise de desempenho detalhada por IA, aos gabaritos completos de todas as questões e filtros por banca, assine o RokoMed.
+          <p style={{fontSize:'1.1rem', marginBottom:'1.5rem', color: 'var(--red)', fontWeight: 'bold'}}>
+            Aviso de Reajuste!
+          </p>
+          <p style={{fontSize:'1.05rem', marginBottom:'2rem', lineHeight: 1.6}}>
+            A plataforma RokoMed passará por um reajuste de preço devido à nova versão da Inteligência Artificial. Garanta hoje o acesso total por apenas <strong>R$ 29,00 mensais</strong> antes que o valor aumente!
           </p>
           
-          <Link to="/checkout?plan=semiannual" style={{display:'inline-block', background:'var(--ink)', color:'var(--paper)', padding:'1rem 2rem', fontFamily:'var(--mono)', textTransform:'uppercase', textDecoration:'none', letterSpacing:'0.1em', width:'100%'}}>
-            Desbloquear Acesso Completo
+          <Link to="/checkout?plan=monthly" style={{display:'inline-block', background:'var(--red)', color:'white', padding:'1.2rem 2rem', fontFamily:'var(--mono)', fontWeight:'bold', textTransform:'uppercase', textDecoration:'none', letterSpacing:'0.05em', width:'100%', borderRadius: '4px', boxShadow: '0 4px 14px rgba(211, 47, 47, 0.4)'}}>
+            Garantir Acesso Imediato
           </Link>
+          <p style={{fontFamily:'var(--mono)', fontSize:'0.75rem', color:'var(--muted)', marginTop:'1rem'}}>Assinatura sem fidelidade. Cancele a qualquer momento.</p>
         </div>
       </div>
     )
@@ -97,7 +103,12 @@ export default function FreeExamPage() {
       </header>
 
       <main style={{maxWidth:'800px', margin:'3rem auto', padding:'0 1.5rem'}}>
-        <div style={{marginBottom:'2rem'}}>
+        <div style={{marginBottom:'2rem', display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
+          {q.institution && (
+            <span style={{fontFamily:'var(--mono)', fontSize:'0.65rem', background:'var(--rule)', color:'var(--ink)', padding:'0.3rem 0.6rem', textTransform:'uppercase', letterSpacing:'0.1em'}}>
+              {q.institution.acronym || q.institution.name} {q.year ? `- ${q.year}` : ''}
+            </span>
+          )}
           <span style={{fontFamily:'var(--mono)', fontSize:'0.65rem', background:'var(--ink)', color:'var(--paper)', padding:'0.3rem 0.6rem', textTransform:'uppercase', letterSpacing:'0.1em'}}>{q.specialty?.name || 'Geral'}</span>
         </div>
         
