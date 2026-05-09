@@ -18,6 +18,7 @@ import SimuladoExamPage from './pages/SimuladoExam'
 import AdaptiveSessionPage from './pages/AdaptiveSession'
 import AnalyticsPage from './pages/Analytics'
 import CheckoutPage from './pages/Checkout'
+import PartnershipsPage from './pages/Partnerships'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/pricing"  element={<PricingPage />} />
+          <Route path="/parcerias" element={<PartnershipsPage />} />
 
           {/* Autenticado */}
           <Route element={<RequireAuth><Layout /></RequireAuth>}>

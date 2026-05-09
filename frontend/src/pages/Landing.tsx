@@ -273,6 +273,7 @@ export default function LandingPage() {
             <li><a href="#especialidades">Especialidades</a></li>
             <li><a href="#planos">Planos</a></li>
             <li><a href="#depoimentos">Depoimentos</a></li>
+            <li><a href="/parcerias">Parcerias</a></li>
           </ul>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <Link to="/login" className="lp-nav-cta" style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)' }}>Entrar</Link>
@@ -592,7 +593,7 @@ export default function LandingPage() {
             <div className="lp-mfooter-col">
               <h4>Parcerias</h4>
               <ul>
-                <li><a href="/parcerias">Parcerias</a></li>
+                <li><a href="/parcerias">Visão geral</a></li>
                 <li><a href="/parcerias#atleticas">Parcerias Atléticas</a></li>
                 <li><a href="/parcerias#embaixadores">Embaixadores</a></li>
                 <li><a href="/parcerias#instituicoes">Instituições</a></li>
