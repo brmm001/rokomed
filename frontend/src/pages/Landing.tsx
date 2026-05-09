@@ -285,10 +285,34 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="lp-testi-s" id="depoimentos">
+          <div className="lp-testi-hdr">
+            <div>
+              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.3rem'}}>03</div>
+              <h2>O que dizem<br />quem já passou</h2>
+            </div>
+            <div style={{fontFamily:'var(--display)',fontSize:'6rem',color:'var(--red)',opacity:.12,lineHeight:1,userSelect:'none'}}>"</div>
+          </div>
+          <div className="lp-tgrid">
+            <div className="lp-titem">
+              <p className="lp-tq">"Estudei com outros bancos antes, mas o RokoMed é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
+              <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em 1º Lugar — Clínica Médica</div></div>
+            </div>
+            <div className="lp-titem">
+              <p className="lp-tq">"Em 4 meses usando a plataforma minha nota nos simulados subiu 18 pontos. A análise de desempenho por tema é o diferencial que faz toda a diferença."</p>
+              <div className="lp-tmeta"><div className="lp-name">Rafael L.</div><div className="lp-role">Aprovado na 1ª Opção — Cirurgia Geral</div></div>
+            </div>
+            <div className="lp-titem">
+              <p className="lp-tq">"Usei no celular durante a madrugada no plantão. As questões curtas e os comentários objetivos encaixaram perfeitamente na minha rotina."</p>
+              <div className="lp-tmeta"><div className="lp-name">Thais F.</div><div className="lp-role">Aprovada entre os Top 5 — Pediatria</div></div>
+            </div>
+          </div>
+        </section>
+
         <section className="lp-price-section" id="planos">
           <div className="lp-price-hdr">
             <div>
-              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.4rem'}}>03</div>
+              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.4rem'}}>04</div>
               <h2>Planos e preços</h2>
             </div>
             <p>Escolha o plano que melhor se adapta ao seu momento de estudo.</p>
@@ -340,30 +364,6 @@ export default function LandingPage() {
                 <li>Suporte via WhatsApp</li>
               </ul>
               <Link to="/checkout?plan=annual" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="lp-testi-s" id="depoimentos">
-          <div className="lp-testi-hdr">
-            <div>
-              <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.3rem'}}>04</div>
-              <h2>O que dizem<br />quem já passou</h2>
-            </div>
-            <div style={{fontFamily:'var(--display)',fontSize:'6rem',color:'var(--red)',opacity:.12,lineHeight:1,userSelect:'none'}}>"</div>
-          </div>
-          <div className="lp-tgrid">
-            <div className="lp-titem">
-              <p className="lp-tq">"Estudei com outros bancos antes, mas o RokoMed é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
-              <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em 1º Lugar — Clínica Médica</div></div>
-            </div>
-            <div className="lp-titem">
-              <p className="lp-tq">"Em 4 meses usando a plataforma minha nota nos simulados subiu 18 pontos. A análise de desempenho por tema é o diferencial que faz toda a diferença."</p>
-              <div className="lp-tmeta"><div className="lp-name">Rafael L.</div><div className="lp-role">Aprovado na 1ª Opção — Cirurgia Geral</div></div>
-            </div>
-            <div className="lp-titem">
-              <p className="lp-tq">"Usei no celular durante a madrugada no plantão. As questões curtas e os comentários objetivos encaixaram perfeitamente na minha rotina."</p>
-              <div className="lp-tmeta"><div className="lp-name">Thais F.</div><div className="lp-role">Aprovada entre os Top 5 — Pediatria</div></div>
             </div>
           </div>
         </section>
