@@ -269,14 +269,6 @@ export default function PartnershipsPage() {
               </div>
             </div>
           </div>
-          <div className="pp-logos">
-            {['USP','UNIFESP','UNICAMP','UFSCar','FAMERP'].map(u => (
-              <div className="pp-logo-cell" key={u}>
-                <div className="pp-logo-icon">{u[0]}</div>
-                <span>Atlética {u}</span>
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* ===== INSTITUIÇÕES ===== */}
