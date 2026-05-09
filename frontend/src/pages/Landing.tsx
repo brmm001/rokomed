@@ -6,6 +6,27 @@ export default function LandingPage() {
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [hasTriggeredPopup, setHasTriggeredPopup] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  
+  const [leadEmail, setLeadEmail] = useState('')
+  const [loadingLead, setLoadingLead] = useState(false)
+
+  const handleLeadCapture = async () => {
+    if(!leadEmail.includes('@')) { alert('Por favor, insira um e-mail válido.'); return; }
+    setLoadingLead(true)
+    try {
+      await fetch(import.meta.env.VITE_API_URL + '/api/auth/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: leadEmail })
+      })
+      localStorage.setItem('rokomed_lead_email', leadEmail)
+      window.location.href = '/simulado-gratis'
+    } catch(e) {
+      console.error(e)
+      localStorage.setItem('rokomed_lead_email', leadEmail)
+      window.location.href = '/simulado-gratis'
+    }
+  }
 
   useEffect(() => {
     document.title = 'RokoMed — Banco de Questões'
@@ -539,11 +560,23 @@ export default function LandingPage() {
               <div className="lp-sec-num" style={{fontSize:'3rem', marginBottom:'1rem', lineHeight:1}}>Espere!</div>
               <h2 style={{fontFamily:'var(--display)', fontSize:'2.5rem', lineHeight:1, marginBottom:'1rem'}}>Não vá embora de mãos abanando.</h2>
               <p style={{color:'var(--muted)', marginBottom:'2rem'}}>
-                Sabemos que a residência é puxada. Experimente grátis nosso simulado com as 50 questões mais difíceis de Cirurgia Geral.
+                Sabemos que a residência é puxada. Experimente grátis nosso simulado com 30 questões comentadas e veja seu nível agora mesmo.
               </p>
-              <Link to="/register" className="lp-btn-ink" style={{display:'block', width:'100%', padding:'1.2rem', fontSize:'0.9rem'}} onClick={() => setShowExitPopup(false)}>
-                Fazer Simulado Grátis Agora
-              </Link>
+              <input 
+                type="email" 
+                placeholder="Qual o seu melhor e-mail?"
+                value={leadEmail}
+                onChange={e => setLeadEmail(e.target.value)}
+                style={{width:'100%', padding:'1.2rem', fontSize:'1rem', fontFamily:'var(--mono)', border:'2px solid var(--ink)', marginBottom:'1rem', background:'var(--paper)', outline:'none'}}
+              />
+              <button 
+                className="lp-btn-ink" 
+                style={{display:'block', width:'100%', padding:'1.2rem', fontSize:'0.9rem', cursor:'pointer', border:'none'}} 
+                onClick={handleLeadCapture} 
+                disabled={loadingLead}
+              >
+                {loadingLead ? 'Carregando...' : 'Fazer Simulado Grátis Agora'}
+              </button>
               <button onClick={() => setShowExitPopup(false)} style={{background:'none', border:'none', fontFamily:'var(--mono)', fontSize:'0.65rem', textTransform:'uppercase', color:'var(--muted)', marginTop:'1.5rem', cursor:'pointer', textDecoration:'underline'}}>
                 Não, prefiro continuar estudando do jeito antigo
               </button>

@@ -12,6 +12,7 @@ import PricingPage from './pages/Pricing'
 import ProfilePage from './pages/Profile'
 import AdminPage from './pages/Admin'
 import LandingPage from './pages/Landing'
+import FreeExamPage from './pages/FreeExam'
 import SimuladoConfigPage from './pages/SimuladoConfig'
 import SimuladoExamPage from './pages/SimuladoExam'
 import AdaptiveSessionPage from './pages/AdaptiveSession'
@@ -58,6 +59,7 @@ export default function App() {
         <Routes>
           {/* Público */}
           <Route path="/"         element={<LandingPage />} />
+          <Route path="/simulado-gratis" element={<FreeExamPage />} />
           <Route path="/login"    element={<PublicOnly><LoginPage /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
           <Route path="/checkout" element={<CheckoutPage />} />

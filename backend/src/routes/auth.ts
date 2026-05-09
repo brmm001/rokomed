@@ -105,4 +105,19 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/logout', async (_request, reply) => {
     return reply.send({ message: 'Logout realizado com sucesso' })
   })
+
+  // POST /api/auth/lead (Captura e-mail para simulado grátis)
+  app.post('/lead', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email } = request.body as { email: string }
+    if (!email || !email.includes('@')) return reply.code(400).send({ error: 'E-mail inválido' })
+
+    let user = await prisma.user.findUnique({ where: { email } })
+    if (!user) {
+      user = await prisma.user.create({
+        data: { name: 'Visitante', email, plan: 'FREE', role: 'ALUNO' },
+      })
+    }
+    
+    return reply.send({ success: true, userId: user.id })
+  })
 }

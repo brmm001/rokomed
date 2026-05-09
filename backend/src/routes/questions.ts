@@ -38,6 +38,24 @@ function parseQuestion(q: Record<string, unknown>) {
 }
 
 export default async function questionRoutes(app: FastifyInstance) {
+  // GET /api/questions/public-sample — 30 questões variadas (Sem autenticação)
+  app.get('/public-sample', async (_request, reply) => {
+    const recent = await prisma.question.findMany({
+      where: { isPublished: true },
+      take: 200, // Pega as 200 mais recentes para ter variedade
+      orderBy: { createdAt: 'desc' },
+      include: {
+        specialty: { select: { id: true, name: true } },
+        institution: { select: { id: true, name: true, acronym: true } },
+        images: { select: { id: true, url: true, caption: true, order: true }, orderBy: { order: 'asc' } },
+      }
+    })
+    // Embaralha e seleciona 30
+    const shuffled = recent.sort(() => 0.5 - Math.random()).slice(0, 30)
+    const data = shuffled.map(q => parseQuestion(q as unknown as Record<string, unknown>))
+    return reply.send({ data })
+  })
+
   // GET /api/questions — lista questões com filtros
   app.get('/', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string; plan: string }
