@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import { authApi } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -24,7 +24,12 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Focus mode: ocultar sidebar durante o estudo/simulado
+  const isFocusMode = location.pathname.match(/^\/questoes\/[a-zA-Z0-9_-]+$/) || 
+                      (location.pathname.includes('/simulados/') && !location.pathname.endsWith('/novo'))
 
   // Mostra onboarding para usuários PRO que ainda não completaram
   const showOnboarding = user?.plan === 'PRO' && user?.onboardingDone === false
@@ -56,7 +61,7 @@ export default function Layout() {
         width: 260,
         background: 'var(--bg-surface)',
         borderRight: '1px solid var(--border)',
-        display: 'flex',
+        display: isFocusMode ? 'none' : 'flex',
         flexDirection: 'column',
         position: 'fixed',
         top: 0, left: 0, bottom: 0,
@@ -121,8 +126,12 @@ export default function Layout() {
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
             >
-              <Icon size={18} />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} color={isActive ? 'var(--text-primary)' : 'currentColor'} />
+                  <span style={{ fontWeight: isActive ? 600 : 500 }}>{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
 
@@ -133,8 +142,12 @@ export default function Layout() {
               style={{ marginTop: 8 }}
               onClick={() => setSidebarOpen(false)}
             >
-              <ShieldCheck size={18} />
-              Administração
+              {({ isActive }) => (
+                <>
+                  <ShieldCheck size={20} strokeWidth={isActive ? 2.5 : 1.5} color={isActive ? 'var(--text-primary)' : 'currentColor'} />
+                  <span style={{ fontWeight: isActive ? 600 : 500 }}>Administração</span>
+                </>
+              )}
             </NavLink>
           )}
         </nav>
@@ -161,10 +174,11 @@ export default function Layout() {
       </aside>
 
       {/* Main */}
-      <div style={{ flex: 1, marginLeft: 260, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ flex: 1, marginLeft: isFocusMode ? 0 : 260, transition: 'margin-left 0.3s ease', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {/* Mobile header */}
         <header style={{
-          display: 'none',
+          display: isFocusMode ? 'none' : 'none', // Mantém controle original de mobile header
+
           padding: '1rem',
           borderBottom: '1px solid var(--border)',
           background: 'var(--bg-surface)',

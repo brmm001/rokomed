@@ -44,15 +44,10 @@ function Timer({ startedAt, limitMin, finished }: { startedAt?: string|null, lim
   const over  = total ? elapsed > total : false
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <Clock size={15} color={over ? '#EF4444' : 'var(--text-muted)'} />
-      <span style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '1rem', color: over ? '#EF4444' : 'var(--text-primary)' }}>
+      <Clock size={15} color={over ? '#FF453A' : 'var(--text-secondary)'} />
+      <span style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '14px', color: over ? '#FF453A' : 'var(--text-primary)', letterSpacing: '0.5px' }}>
         {total ? (over ? '+' : '') : ''}{mm}:{ss}
       </span>
-      {pct !== null && (
-        <div style={{ width: 60, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: over ? '#EF4444' : 'var(--accent-teal)', transition: 'width 1s linear' }} />
-        </div>
-      )}
     </div>
   )
 }
@@ -149,7 +144,7 @@ export default function SimuladoExamPage() {
             { icon: <Clock size={18} />,    label: exam.timeLimitMin ? `${exam.timeLimitMin} min` : 'Sem limite' },
             { icon: <Target size={18} />,   label: 'Aleatório' },
           ].map((item, i) => (
-            <div key={i} className="glass" style={{ borderRadius: 12, padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              <div key={i} className="apple-card" style={{ padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
               {item.icon} {item.label}
             </div>
           ))}
@@ -174,10 +169,10 @@ export default function SimuladoExamPage() {
     return (
       <div className="animate-fade-in" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
         {/* Score hero */}
-        <div className="glass" style={{ borderRadius: 20, padding: '2.5rem', textAlign: 'center', marginBottom: '1.5rem',
-          background: score >= 70 ? 'linear-gradient(135deg,rgba(16,185,129,0.12),rgba(16,185,129,0.04))'
-            : score >= 50 ? 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.04))'
-            : 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.04))' }}>
+        <div className="apple-card" style={{ padding: '40px', textAlign: 'center', marginBottom: '24px',
+          background: score >= 70 ? 'rgba(48,209,88,0.08)'
+            : score >= 50 ? 'rgba(245,158,11,0.08)'
+            : 'rgba(255,69,58,0.08)' }}>
           <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '5rem', lineHeight: 1,
             color: score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444' }}>
             {score}%
@@ -195,7 +190,7 @@ export default function SimuladoExamPage() {
             { label: 'ERROS',   value: wrong,   sub: `de ${total}`, color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
             { label: 'EM BRANCO', value: unanswered, sub: 'não respondidas', color: '#94A3B8', bg: 'rgba(100,116,139,0.1)' },
           ].map(s => (
-            <div key={s.label} className="glass" style={{ borderRadius: 14, padding: '1.25rem', textAlign: 'center', background: s.bg, border: `1px solid ${s.color}22` }}>
+            <div key={s.label} className="apple-card" style={{ padding: '24px', textAlign: 'center', background: s.bg, border: `1px solid ${s.color}22` }}>
               <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '2.5rem', color: s.color }}>{s.value}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: 1 }}>{s.label}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.sub}</div>
@@ -214,8 +209,8 @@ export default function SimuladoExamPage() {
             const correct  = eq.isCorrect
             const isOpen   = showExpl === i
             return (
-              <div key={eq.examQuestionId} className="glass" style={{ borderRadius: 14, overflow: 'hidden',
-                border: `1px solid ${!answered ? 'var(--border)' : correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.25)'}` }}>
+              <div key={eq.examQuestionId} className="apple-card" style={{ padding: 0, overflow: 'hidden',
+                border: `1px solid ${!answered ? 'var(--border)' : correct ? 'rgba(48,209,88,0.3)' : 'rgba(255,69,58,0.25)'}` }}>
                 <button onClick={() => setShowExpl(isOpen ? null : i)} style={{
                   width: '100%', padding: '1rem 1.25rem', background: 'transparent', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '0.875rem', textAlign: 'left' }}>
@@ -294,26 +289,21 @@ export default function SimuladoExamPage() {
   const answeredPct = Math.round((Object.keys(localAnswers).length / exam.totalQuestions) * 100)
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '0.375rem', fontWeight: 600 }}>
-            {exam.title}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.1rem' }}>
-              Questão {current + 1} <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>de {exam.totalQuestions}</span>
-            </span>
-            {q.difficulty && <span style={{ fontSize: '0.75rem', fontWeight: 600, color: diffColor[q.difficulty] }}>{diffLabel[q.difficulty]}</span>}
-          </div>
+    <div className="animate-spring" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
+      {/* Dynamic Island Progress */}
+      <div style={{
+        margin: '0 auto 2.5rem auto', width: 'fit-content', background: 'rgba(28, 28, 30, 0.65)', 
+        backdropFilter: 'blur(20px)', padding: '10px 20px', borderRadius: '40px',
+        display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+          {current + 1} <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>/ {exam.totalQuestions}</span>
+        </div>
+        <div style={{ width: 140, height: 6, borderRadius: 6, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 6, background: '#fff', width: `${((current + 1) / exam.totalQuestions) * 100}%`, transition: 'width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)' }} />
         </div>
         <Timer startedAt={exam.startedAt} limitMin={exam.timeLimitMin} finished={exam.status === 'FINISHED'} />
-      </div>
-
-      {/* Progress bar */}
-      <div style={{ height: 6, borderRadius: 6, background: 'rgba(255,255,255,0.06)', marginBottom: '1.25rem', overflow: 'hidden' }}>
-        <div style={{ height: '100%', borderRadius: 6, background: 'var(--gradient-accent)', width: `${((current + 1) / exam.totalQuestions) * 100}%`, transition: 'width 0.3s ease' }} />
       </div>
 
       {/* Dot navigation */}
@@ -334,7 +324,7 @@ export default function SimuladoExamPage() {
       </div>
 
       {/* Question card */}
-      <div className="glass" style={{ borderRadius: 18, padding: '2rem', marginBottom: '1rem' }}>
+      <div style={{ padding: '0 0.5rem 2rem 0.5rem', marginBottom: '1rem' }}>
         {/* Meta */}
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           {q.specialty?.parent && <span className="badge badge-blue">{q.specialty.parent.name}</span>}
@@ -343,7 +333,7 @@ export default function SimuladoExamPage() {
           {q.year && <span className="badge badge-gray">{q.year}</span>}
         </div>
 
-        <div style={{ fontSize: '1rem', lineHeight: 1.75, color: 'var(--text-primary)', marginBottom: '1.75rem' }}
+        <div style={{ fontSize: '1.35rem', fontWeight: 500, lineHeight: 1.6, color: 'var(--text-primary)', marginBottom: '2.5rem', letterSpacing: '-0.015em' }}
           dangerouslySetInnerHTML={{ __html: q.statement }} />
 
         {q.images && q.images.length > 0 && (
@@ -361,14 +351,14 @@ export default function SimuladoExamPage() {
           {q.options.map(({ letter, text }) => (
             <button key={letter} id={`opt-${letter}`}
               onClick={() => handleAnswer(eq.order, letter)}
-              className={`option-btn${answered === letter ? ' selected' : ''}`}>
-              <span style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 700, fontSize: '0.875rem',
-                background: answered === letter ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)' }}>
+              className={`apple-option${answered === letter ? ' selected' : ''}`}>
+              <span style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 600, fontSize: '1rem',
+                background: answered === letter ? '#fff' : 'rgba(255,255,255,0.1)', color: answered === letter ? '#000' : 'var(--text-primary)', transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
                 {letter}
               </span>
               <span style={{ flex: 1 }}>{text}</span>
-              {answered === letter && <CheckCircle size={16} color="var(--accent-blue)" />}
+              {answered === letter && <CheckCircle size={18} color="#000" />}
             </button>
           ))}
         </div>
@@ -395,14 +385,14 @@ export default function SimuladoExamPage() {
         </div>
 
         {current < exam.totalQuestions - 1 ? (
-          <button className="btn btn-secondary" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))}>
+          <button className="apple-btn" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))}>
             Próxima <ArrowRight size={16} />
           </button>
         ) : (
-          <button id="finish-simulado-btn" className="btn btn-primary"
+          <button id="finish-simulado-btn" className="apple-btn"
             onClick={handleFinish} disabled={finishMutation.isPending}
-            style={{ background: 'linear-gradient(135deg,#10B981,#059669)', boxShadow: '0 4px 15px rgba(16,185,129,0.3)' }}>
-            {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Finalizar Simulado</>}
+            style={{ background: '#fff', color: '#000' }}>
+            {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Finalizar</>}
           </button>
         )}
       </div>

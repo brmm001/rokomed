@@ -135,10 +135,12 @@ export default function QuestionBankPage() {
 
             <div>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Dificuldade</label>
-              <select id="filter-difficulty" className="input" value={difficulty} onChange={e => { setDifficulty(e.target.value); setPage(1) }}>
-                <option value="">Todas</option>
-                {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <div className="apple-segmented-control">
+                <button type="button" className={difficulty === '' ? 'active' : ''} onClick={() => { setDifficulty(''); setPage(1) }}>Todas</button>
+                {DIFFICULTIES.map(d => (
+                  <button type="button" key={d} className={difficulty === d ? 'active' : ''} onClick={() => { setDifficulty(d); setPage(1) }}>{d}</button>
+                ))}
+              </div>
             </div>
           </div>
 
