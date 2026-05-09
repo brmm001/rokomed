@@ -14,7 +14,8 @@ export default function LandingPage() {
     if(!leadEmail.includes('@')) { alert('Por favor, insira um e-mail válido.'); return; }
     setLoadingLead(true)
     try {
-      await fetch(import.meta.env.VITE_API_URL + '/api/auth/lead', {
+      const baseUrl = import.meta.env.VITE_API_URL || ''
+      await fetch(`${baseUrl}/api/auth/lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: leadEmail })

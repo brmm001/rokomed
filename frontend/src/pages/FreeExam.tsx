@@ -19,7 +19,8 @@ export default function FreeExamPage() {
   const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
-    fetch(import.meta.env.VITE_API_URL + '/api/questions/public-sample')
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    fetch(`${baseUrl}/api/questions/public-sample`)
       .then(r => r.json())
       .then(d => { setQuestions(d.data || []); setLoading(false) })
       .catch(e => { console.error(e); setLoading(false) })
