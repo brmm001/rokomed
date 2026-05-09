@@ -32,7 +32,7 @@ const PLAN_DETAILS: Record<PlanType, PlanDetail> = {
   annual: {
     title: 'Plano Anual',
     price: '12x de R$ 15,00',
-    total: 'Total: R$ 180,00',
+    total: 'Total à vista: R$ 147,00',
     description: 'O melhor custo-benefício. Sem renovação automática.',
     features: ['Tudo do plano Semestral', 'Flashcards integrados', 'Planilha de evolução exportável']
   }

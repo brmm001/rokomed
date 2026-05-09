@@ -454,7 +454,7 @@ export default function LandingPage() {
               <div className="lp-pc-price" style={{alignItems:'baseline'}}>
                 <span className="lp-cur">12x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">15</span>
               </div>
-              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>ou à vista por R$ 180</div>
+              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>ou à vista por R$ 147</div>
               <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'var(--red)', marginTop:'0.5rem', textTransform:'uppercase', letterSpacing:'0.05em', display:'flex', alignItems:'center', gap:'0.3rem'}}>
                 <ShieldCheck size={14}/> 7 dias de garantia
               </div>
