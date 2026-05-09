@@ -45,7 +45,7 @@ export default function LandingPage() {
 
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {
-          --ink: #111111; --paper: #FAFAFA; --red: #C8102E; --rule: rgba(0,0,0,0.18); --muted: #525252;
+          --ink: #111111; --paper: #FAFAFA; --red: #1D4ED8; --rule: rgba(0,0,0,0.18); --muted: #525252;
           --display:'Abril Fatface', Georgia, serif;
           --body:  'Crimson Pro', Georgia, serif;
           --mono:  'IBM Plex Mono', monospace;
@@ -55,6 +55,7 @@ export default function LandingPage() {
           line-height: 1.5;
           overflow-x: hidden;
         }
+        .lp-root h1, .lp-root h2, .lp-root h3, .lp-root h4, .lp-root h5, .lp-root h6 { color: var(--ink); }
 
         /* NAV */
         .lp-nav { display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:2px solid var(--ink); position:sticky; top:0; z-index:100; background:var(--paper); }

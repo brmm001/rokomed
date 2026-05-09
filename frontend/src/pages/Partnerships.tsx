@@ -34,10 +34,11 @@ export default function PartnershipsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
         .pp * { box-sizing: border-box; margin: 0; padding: 0; }
         .pp {
-          --ink: #111111; --paper: #FAFAFA; --red: #C8102E; --rule: rgba(0,0,0,0.18); --muted: #525252;
+          --ink: #111111; --paper: #FAFAFA; --red: #1D4ED8; --rule: rgba(0,0,0,0.18); --muted: #525252;
           --display: 'Abril Fatface', Georgia, serif; --body: 'Crimson Pro', Georgia, serif; --mono: 'IBM Plex Mono', monospace;
           font-family: var(--body); background: var(--paper); color: var(--ink); line-height: 1.5; overflow-x: hidden;
         }
+        .pp h1, .pp h2, .pp h3, .pp h4, .pp h5, .pp h6 { color: var(--ink); }
         .pp-nav { display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:2px solid var(--ink); background:var(--paper); position:sticky; top:0; z-index:100; }
         .pp-logo { font-family:var(--display); font-size:1.35rem; color:var(--ink); text-decoration:none; }
         .pp-logo em { color:var(--red); font-style:normal; }
