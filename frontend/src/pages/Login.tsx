@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, Stethoscope, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -12,6 +12,10 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const { setAuth }             = useAuthStore()
   const navigate                = useNavigate()
+
+  useEffect(() => {
+    document.title = 'Entrar — RokoMed'
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,96 +34,70 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--gradient-hero)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem',
-    }}>
-      {/* Background decoration */}
-      <div style={{
-        position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none',
-      }}>
-        <div style={{
-          position: 'absolute', top: '-20%', right: '-10%',
-          width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)',
-          borderRadius: '50%',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-20%', left: '-10%',
-          width: 500, height: 500,
-          background: 'radial-gradient(circle, rgba(20,184,166,0.06) 0%, transparent 70%)',
-          borderRadius: '50%',
-        }} />
-      </div>
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111111] font-['Crimson_Pro',Georgia,serif] flex flex-col selection:bg-[#1D4ED8] selection:text-white">
+      {/* Header */}
+      <header className="p-6 border-b-2 border-[#111111] flex items-center justify-between bg-white sticky top-0 z-10">
+        <Link to="/" className="font-['Abril_Fatface',Georgia,serif] text-xl text-[#111111] no-underline">
+          Roko<em className="not-italic text-[#1D4ED8]">Med</em>
+        </Link>
+        <Link to="/" className="text-[#525252] hover:text-[#111111] transition-colors flex items-center gap-2 font-['IBM_Plex_Mono',monospace] text-xs uppercase tracking-widest">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Link>
+      </header>
 
-      <div className="animate-fade-in" style={{ width: '100%', maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: 18, margin: '0 auto 1rem',
-            background: 'linear-gradient(135deg, #3B82F6, #14B8A6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(59,130,246,0.3)',
-          }}>
-            <Stethoscope size={32} color="white" />
-          </div>
-          <h1 style={{ fontSize: '1.75rem', margin: 0, fontFamily: 'Outfit', fontWeight: 800 }}>
-            ResidênciaApp
-          </h1>
-          <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+      {/* Form Container */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          <h1 className="font-['Abril_Fatface',Georgia,serif] text-4xl mb-2 text-[#111111] leading-tight text-center">
             Acesse sua conta
+          </h1>
+          <p className="text-[#525252] mb-10 font-light italic text-center">
+            Seja bem-vindo de volta ao RokoMed.
           </p>
-        </div>
 
-        {/* Card */}
-        <div className="glass" style={{ borderRadius: 16, padding: '2rem' }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form onSubmit={handleSubmit} className="space-y-5 bg-white p-8 border-2 border-[#111111] shadow-[8px_8px_0px_0px_rgba(17,17,17,1)]">
             <div>
-              <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-                E-mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                className="input"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
+              <label className="block font-['IBM_Plex_Mono',monospace] text-[0.65rem] uppercase tracking-widest text-[#525252] mb-2">E-mail</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[rgba(0,0,0,0.3)]">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-[#111111] bg-white text-[#111111] placeholder:text-[rgba(0,0,0,0.3)] focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] transition-all rounded-none font-sans"
+                  placeholder="seu@email.com"
+                />
+              </div>
             </div>
 
             <div>
-              <label style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-                Senha
-              </label>
-              <div style={{ position: 'relative' }}>
+              <label className="block font-['IBM_Plex_Mono',monospace] text-[0.65rem] uppercase tracking-widest text-[#525252] mb-2">Senha</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[rgba(0,0,0,0.3)]">
+                  <Lock className="h-4 w-4" />
+                </div>
                 <input
                   id="password"
-                  type={showPw ? 'text' : 'password'}
-                  className="input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  type={showPw ? "text" : "password"}
                   required
                   autoComplete="current-password"
-                  style={{ paddingRight: '2.75rem' }}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-10 py-3 border border-[#111111] bg-white text-[#111111] placeholder:text-[rgba(0,0,0,0.3)] focus:outline-none focus:ring-1 focus:ring-[#1D4ED8] focus:border-[#1D4ED8] transition-all rounded-none font-sans"
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(p => !p)}
-                  style={{
-                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
-                    padding: 0,
-                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[rgba(0,0,0,0.3)] hover:text-[#111111] transition-colors"
                 >
-                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
@@ -127,28 +105,34 @@ export default function LoginPage() {
             <button
               id="login-btn"
               type="submit"
-              className="btn btn-primary"
               disabled={loading}
-              style={{ marginTop: 8, padding: '0.875rem', fontSize: '0.9375rem' }}
+              className="w-full mt-6 bg-[#111111] text-white font-['IBM_Plex_Mono',monospace] text-[0.75rem] uppercase tracking-widest py-4 px-6 hover:bg-[#1D4ED8] transition-colors flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? <span className="loader" style={{ width: 20, height: 20 }} /> : (
-                <>Entrar <ArrowRight size={16} /></>
+              {loading ? (
+                <span className="animate-pulse">Autenticando...</span>
+              ) : (
+                <>
+                  Entrar na Plataforma
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </>
               )}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Não tem conta?{' '}
-            <Link to="/register" style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 600 }}>
-              Criar conta grátis
+          <p className="text-center mt-8 font-['IBM_Plex_Mono',monospace] text-[0.65rem] tracking-widest uppercase text-[#525252]">
+            Ainda não tem conta?{' '}
+            <Link to="/checkout" className="text-[#1D4ED8] hover:text-[#111111] transition-colors border-b border-[#1D4ED8] hover:border-[#111111] pb-[1px]">
+              Ver planos
             </Link>
           </p>
+          
+          {/* Demo credentials */}
+          <div className="mt-12 pt-6 border-t border-[rgba(0,0,0,0.1)] text-center">
+            <p className="font-['IBM_Plex_Mono',monospace] text-[0.6rem] text-[rgba(0,0,0,0.4)] tracking-widest uppercase">
+              Demo Admin: admin@residencia.app / admin123
+            </p>
+          </div>
         </div>
-
-        {/* Demo credentials */}
-        <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-          Admin demo: admin@residencia.app / admin123
-        </p>
       </div>
     </div>
   )
