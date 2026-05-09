@@ -168,7 +168,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         }
       }
     } catch (err) {
-      app.log.error('Erro processando webhook:', err)
+      app.log.error(err as any, 'Erro processando webhook')
     }
 
     return reply.code(200).send({ received: true })
