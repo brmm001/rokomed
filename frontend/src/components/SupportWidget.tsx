@@ -131,7 +131,7 @@ export default function SupportWidget() {
             background: '#111111', color: 'white',
             padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10,
           }}>
-            {(view === 'chat' || view === 'new') && view !== 'list' && (
+            {(view === 'chat' || view === 'new') && (
               <button
                 onClick={() => setView(tickets.length ? 'list' : 'new')}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', padding: 0, display: 'flex' }}
