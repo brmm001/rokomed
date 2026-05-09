@@ -6,12 +6,10 @@
  * Uso: npm run import:answers
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as readline from 'readline'
-
-const prisma = new PrismaClient()
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 

@@ -211,7 +211,7 @@ export default function LandingPage() {
             <div className="lp-hero-bottom">
               <p className="lp-hero-desc">Mais de 15.000 questões comentadas, simulados adaptativos e análise de desempenho por especialidade. Tudo que você precisa, sem o que você não precisa.</p>
               <div className="lp-hero-actions">
-                <a href="#planos" className="lp-btn-ink">Começar por R$29/mês</a>
+                <Link to="/checkout" className="lp-btn-ink">Começar por R$29/mês</Link>
                 <a href="#recursos" className="lp-btn-link">Ver recursos →</a>
               </div>
               <p className="lp-hero-note">Sem taxa de adesão · Acesso imediato · Cancele quando quiser</p>
@@ -297,7 +297,8 @@ export default function LandingPage() {
             <div className="lp-pc">
               <div className="lp-pc-lbl">Mensal</div>
               <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">29</span><span className="lp-per">/mês</span></div>
-              <hr className="lp-r" />
+              <div style={{fontFamily:'var(--mono)', fontSize:'0.6rem', color:'var(--muted)', marginTop:'0.5rem'}}>Renovação automática</div>
+              <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Acesso a todo o banco de questões</li>
                 <li>Simulados por especialidade</li>
@@ -305,13 +306,16 @@ export default function LandingPage() {
                 <li>Estatísticas de desempenho</li>
                 <li>Cancele quando quiser</li>
               </ul>
-              <a href="#" className="lp-pc-btn lp-pc-btn-out">Começar agora →</a>
+              <Link to="/checkout?plan=monthly" className="lp-pc-btn lp-pc-btn-out">Começar agora →</Link>
             </div>
             <div className="lp-pc lp-feat">
               <span className="lp-pflag">Mais popular</span>
               <div className="lp-pc-lbl">Semestral</div>
-              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">19</span><span className="lp-per">/mês</span></div>
-              <hr className="lp-r" />
+              <div className="lp-pc-price" style={{alignItems:'baseline'}}>
+                <span className="lp-cur">6x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">19</span>
+              </div>
+              <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'rgba(255,255,255,0.6)', marginTop:'0.5rem'}}>Valor total: R$ 114 (sem renovação automática)</div>
+              <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Tudo do plano Mensal</li>
                 <li>Simulados personalizados por IA</li>
@@ -319,12 +323,15 @@ export default function LandingPage() {
                 <li>Modo revisão rápida</li>
                 <li>Suporte prioritário</li>
               </ul>
-              <a href="#" className="lp-pc-btn lp-pc-btn-ppr">Economizar 34% →</a>
+              <Link to="/checkout?plan=semiannual" className="lp-pc-btn lp-pc-btn-ppr">Economizar 34% →</Link>
             </div>
             <div className="lp-pc">
               <div className="lp-pc-lbl">Anual</div>
-              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">15</span><span className="lp-per">/mês</span></div>
-              <hr className="lp-r" />
+              <div className="lp-pc-price" style={{alignItems:'baseline'}}>
+                <span className="lp-cur">12x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">15</span>
+              </div>
+              <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'var(--muted)', marginTop:'0.5rem'}}>Valor total: R$ 180 (sem renovação automática)</div>
+              <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Tudo do plano Semestral</li>
                 <li>Acesso antecipado a novos recursos</li>
@@ -332,7 +339,7 @@ export default function LandingPage() {
                 <li>Planilha de evolução exportável</li>
                 <li>Suporte via WhatsApp</li>
               </ul>
-              <a href="#" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</a>
+              <Link to="/checkout?plan=annual" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</Link>
             </div>
           </div>
         </section>
@@ -364,7 +371,7 @@ export default function LandingPage() {
         <section className="lp-cta-s">
           <h2>Sua vaga na residência<br />começa <em>hoje.</em></h2>
           <div className="lp-cta-r">
-            <a href="#planos" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}}>Começar por R$29/mês</a>
+            <Link to="/checkout" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}}>Começar por R$29/mês</Link>
             <p className="lp-note">Acesso imediato · Sem compromisso</p>
             <p className="lp-note">+8.000 médicos aprovados</p>
           </div>

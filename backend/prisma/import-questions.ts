@@ -4,12 +4,10 @@
  * Uso: npx ts-node prisma/import-questions.ts
  */
 
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../src/lib/prisma'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as readline from 'readline'
-
-const prisma = new PrismaClient()
 
 // Mapeamento de siglas conhecidas → dados completos da instituição
 const INSTITUTION_MAP: Record<string, { name: string; city?: string; state?: string }> = {

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { requireAuth } from '../middleware/auth'
+import { MercadoPagoConfig, Preference, PreApproval } from 'mercadopago'
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
   // GET /api/subscriptions/current — assinatura atual
@@ -22,47 +23,152 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
   // POST /api/subscriptions/checkout — iniciar checkout Mercado Pago
   app.post('/checkout', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { plan, couponCode } = request.body as { plan: 'PRO' | 'GRUPO'; couponCode?: string }
+    const { plan } = request.body as { plan: 'monthly' | 'semiannual' | 'annual' }
+    
+    const payload = request.user as { sub: string }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
 
-    const prices: Record<string, number> = { PRO: 49.90, GRUPO: 299.90 }
-    let amount = prices[plan]
-
-    if (!amount) return reply.code(400).send({ error: 'Plano inválido' })
-
-    // Aplicar cupom se fornecido
-    if (couponCode) {
-      const coupon = await prisma.coupon.findFirst({
-        where: { code: couponCode, isActive: true, usesRemaining: { gt: 0 } },
-      })
-      if (coupon) {
-        amount = coupon.type === 'percent'
-          ? amount * (1 - coupon.value / 100)
-          : Math.max(0, amount - coupon.value)
-      }
-    }
-
-    // Aqui você integraria com MercadoPago SDK real
-    // Por enquanto retorna payload de checkout simulado
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      return reply.send({
-        checkoutUrl: null,
-        message: 'Configure MERCADO_PAGO_ACCESS_TOKEN para ativar pagamentos',
-        amount,
-        plan,
-      })
+      // Retorna URL de fallback para dev se não houver MP configurado
+      app.log.warn('MERCADO_PAGO_ACCESS_TOKEN não configurado. Retornando URL fake.');
+      return reply.send({ checkoutUrl: 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=fake' });
     }
 
-    // TODO: integração MercadoPago real
-    return reply.send({ checkoutUrl: null, amount, plan })
+    const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
+    const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+    try {
+      if (plan === 'monthly') {
+        // Assinatura com renovação automática
+        const preApproval = new PreApproval(client)
+        const result = await preApproval.create({
+          body: {
+            back_url: `${frontUrl}/dashboard?payment=success`,
+            reason: "RokoMed - Plano Mensal (Renovação Automática)",
+            auto_recurring: {
+              frequency: 1,
+              frequency_type: "months",
+              transaction_amount: 29.00,
+              currency_id: "BRL"
+            },
+            payer_email: user.email,
+            status: "pending"
+          }
+        })
+        return reply.send({ checkoutUrl: result.init_point })
+      } else {
+        // Pagamento único (que pode ser parcelado no MP)
+        const amount = plan === 'semiannual' ? 114.00 : 180.00
+        const title = plan === 'semiannual' ? 'RokoMed - Plano Semestral' : 'RokoMed - Plano Anual'
+        
+        const preference = new Preference(client)
+        const result = await preference.create({
+          body: {
+            items: [
+              {
+                id: plan,
+                title,
+                quantity: 1,
+                unit_price: amount,
+                currency_id: "BRL"
+              }
+            ],
+            payer: {
+              email: user.email
+            },
+            back_urls: {
+              success: `${frontUrl}/dashboard?payment=success`,
+              failure: `${frontUrl}/checkout?payment=failure`,
+              pending: `${frontUrl}/dashboard?payment=pending`
+            },
+            auto_return: "approved",
+            external_reference: `${user.id}_${plan}`
+          }
+        })
+        return reply.send({ checkoutUrl: result.init_point })
+      }
+    } catch (err) {
+      app.log.error(err)
+      return reply.code(500).send({ error: 'Erro ao gerar checkout do Mercado Pago' })
+    }
   })
 
   // POST /api/subscriptions/webhook — webhook Mercado Pago
   app.post('/webhook', async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = request.body as { type?: string; data?: { id?: string } }
+    const body = request.body as any
+    app.log.info(`Webhook MP recebido: ${JSON.stringify(body)}`)
 
-    if (body?.type === 'payment' && body?.data?.id) {
-      // TODO: buscar payment no MP e atualizar subscription
-      app.log.info(`Webhook recebido: payment ${body.data.id}`)
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      return reply.code(200).send({ received: true })
+    }
+
+    try {
+      const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
+      
+      const topic = body.type || body.topic
+      if (topic === 'payment' && body.data?.id) {
+        // Usa `require('mercadopago').Payment` pq importamos Payment no top
+        const { Payment } = require('mercadopago')
+        const paymentClient = new Payment(client)
+        const paymentInfo = await paymentClient.get({ id: body.data.id })
+
+        if (paymentInfo.status === 'approved') {
+          // Precisamos identificar o usuário. Pode vir por external_reference ou pelo e-mail
+          let userId: string | null = null
+          let planKey = 'monthly'
+
+          if (paymentInfo.external_reference) {
+            const parts = paymentInfo.external_reference.split('_')
+            userId = parts[0]
+            planKey = parts[1] || 'monthly'
+          } else if (paymentInfo.payer?.email) {
+            const user = await prisma.user.findUnique({ where: { email: paymentInfo.payer.email } })
+            if (user) userId = user.id
+          }
+
+          if (userId) {
+            // Calcula vencimento
+            const months = planKey === 'semiannual' ? 6 : planKey === 'annual' ? 12 : 1
+            const expiresAt = new Date()
+            expiresAt.setMonth(expiresAt.getMonth() + months)
+
+            // Registra Pagamento
+            await prisma.payment.upsert({
+              where: { mercadoPagoId: String(paymentInfo.id) },
+              update: { status: 'approved' },
+              create: {
+                userId,
+                mercadoPagoId: String(paymentInfo.id),
+                plan: 'PRO',
+                amount: Number(paymentInfo.transaction_amount) || 0,
+                status: 'approved',
+                webhookPayload: JSON.stringify(body)
+              }
+            })
+
+            // Atualiza usuário para PRO
+            await prisma.user.update({
+              where: { id: userId },
+              data: { plan: 'PRO' }
+            })
+
+            // Cria / atualiza Assinatura
+            await prisma.subscription.create({
+              data: {
+                userId,
+                plan: 'PRO',
+                status: 'active',
+                expiresAt
+              }
+            })
+            
+            app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} atualizada para PRO. Vencimento: ${expiresAt}`)
+          }
+        }
+      }
+    } catch (err) {
+      app.log.error('Erro processando webhook:', err)
     }
 
     return reply.code(200).send({ received: true })
