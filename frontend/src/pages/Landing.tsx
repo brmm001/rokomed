@@ -193,12 +193,31 @@ export default function LandingPage() {
         .lp-cta-r { display:flex; flex-direction:column; align-items:flex-end; gap:1.2rem; flex-shrink:0; }
         .lp-cta-r .lp-note { font-family:var(--mono); font-size:.62rem; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; text-align:right; }
 
-        /* FOOTER */
-        .lp-footer { padding:2rem 5vw; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
-        .lp-footer p { font-family:var(--mono); font-size:.63rem; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
-        .lp-flinks { display:flex; gap:2rem; list-style:none; }
-        .lp-flinks a { font-family:var(--mono); font-size:.63rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; }
-        .lp-flinks a:hover { color:var(--ink); }
+        /* MEGA FOOTER */
+        .lp-mfooter { background:#0d0d14; color:rgba(255,255,255,.75); padding:4rem 5vw 0; border-top:2px solid var(--ink); }
+        .lp-mfooter-grid { display:grid; grid-template-columns:220px repeat(4,1fr); gap:3rem; padding-bottom:3rem; border-bottom:1px solid rgba(255,255,255,.08); }
+        .lp-mfooter-brand { display:flex; flex-direction:column; gap:1.5rem; }
+        .lp-mfooter-logo { font-family:var(--display); font-size:1.5rem; color:#fff; text-decoration:none; }
+        .lp-mfooter-logo em { color:var(--red); font-style:normal; }
+        .lp-mfooter-tagline { font-size:.82rem; font-weight:300; color:rgba(255,255,255,.45); line-height:1.6; }
+        .lp-mfooter-badges { display:flex; flex-direction:column; gap:.6rem; }
+        .lp-mfooter-badge { display:flex; align-items:center; gap:.6rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); padding:.5rem .9rem; border-radius:8px; text-decoration:none; transition:background .15s; cursor:pointer; }
+        .lp-mfooter-badge:hover { background:rgba(255,255,255,.13); }
+        .lp-mfooter-badge svg { flex-shrink:0; }
+        .lp-mfooter-badge-text { display:flex; flex-direction:column; }
+        .lp-mfooter-badge-text span:first-child { font-family:var(--mono); font-size:.52rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.45); }
+        .lp-mfooter-badge-text span:last-child { font-family:var(--body); font-size:.85rem; color:#fff; font-weight:400; }
+        .lp-mfooter-col h4 { font-family:var(--mono); font-size:.65rem; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.35); margin-bottom:1.2rem; }
+        .lp-mfooter-col ul { list-style:none; display:flex; flex-direction:column; gap:.75rem; }
+        .lp-mfooter-col ul li a { font-size:.9rem; font-weight:300; color:rgba(255,255,255,.65); text-decoration:none; transition:color .15s; }
+        .lp-mfooter-col ul li a:hover { color:#fff; }
+        .lp-mfooter-col ul li a.lp-mf-hi { color:var(--red); }
+        .lp-mfooter-bar { padding:1.2rem 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+        .lp-mfooter-bar p { font-family:var(--mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.3); }
+        .lp-mfooter-bar ul { display:flex; gap:1.5rem; list-style:none; }
+        .lp-mfooter-bar ul a { font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.35); text-decoration:none; }
+        .lp-mfooter-bar ul a:hover { color:rgba(255,255,255,.7); }
+        @media(max-width:900px){ .lp-mfooter-grid { grid-template-columns:1fr 1fr; } }
 
         /* COMPARISON TABLE */
         .lp-comp-s { padding: 5rem 5vw; border-bottom: 2px solid var(--ink); background: var(--paper); }
@@ -532,14 +551,90 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <footer className="lp-footer">
-          <a href="#" className="lp-logo">Roko<em>Med</em></a>
-          <p>© 2026 RokoMed · Todos os direitos reservados</p>
-          <ul className="lp-flinks">
-            <li><a href="#">Termos</a></li>
-            <li><a href="#">Privacidade</a></li>
-            <li><a href="#">Contato</a></li>
-          </ul>
+        <footer className="lp-mfooter">
+          <div className="lp-mfooter-grid">
+            {/* Brand */}
+            <div className="lp-mfooter-brand">
+              <a href="#" className="lp-mfooter-logo">Roko<em>Med</em></a>
+              <p className="lp-mfooter-tagline">O banco de questões mais objetivo do Brasil para quem quer passar na residência médica na primeira tentativa.</p>
+              <div className="lp-mfooter-badges">
+                <a href="#" className="lp-mfooter-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                  <div className="lp-mfooter-badge-text">
+                    <span>Disponível na</span>
+                    <span>App Store</span>
+                  </div>
+                </a>
+                <a href="#" className="lp-mfooter-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.3.17.64.24.99.2l.06-.03 11.2-6.47-2.41-2.41-9.84 8.71zm-1.1-20.1A1.5 1.5 0 0 0 2 4.5v15a1.5 1.5 0 0 0 .08.5l9.36-9.36-9.36-7.98zm19.9 8.51-2.72-1.57-2.7 2.7 2.7 2.7 2.74-1.58a1.5 1.5 0 0 0 0-2.25zM4.17.28a1.5 1.5 0 0 0-.99.2L12 8.35l2.41-2.41L4.23.31l-.06-.03z"/></svg>
+                  <div className="lp-mfooter-badge-text">
+                    <span>Disponível no</span>
+                    <span>Google Play</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* Col 1 */}
+            <div className="lp-mfooter-col">
+              <h4>Plataforma</h4>
+              <ul>
+                <li><a href="#planos" className="lp-mf-hi">Assinar agora</a></li>
+                <li><a href="#recursos">Banco de Questões</a></li>
+                <li><a href="#recursos">Simulados Adaptativos</a></li>
+                <li><a href="#especialidades">Especialidades</a></li>
+                <li><a href="/simulado-gratis">Teste grátis</a></li>
+                <li><a href="/checkout">Planos e Preços</a></li>
+              </ul>
+            </div>
+
+            {/* Col 2 */}
+            <div className="lp-mfooter-col">
+              <h4>Parcerias</h4>
+              <ul>
+                <li><a href="/parcerias">Parcerias</a></li>
+                <li><a href="/parcerias#atleticas">Parcerias Atléticas</a></li>
+                <li><a href="/parcerias#embaixadores">Embaixadores</a></li>
+                <li><a href="/parcerias#instituicoes">Instituições</a></li>
+              </ul>
+            </div>
+
+            {/* Col 3 */}
+            <div className="lp-mfooter-col">
+              <h4>Especialidades</h4>
+              <ul>
+                <li><a href="#especialidades">Clínica Médica</a></li>
+                <li><a href="#especialidades">Cirurgia Geral</a></li>
+                <li><a href="#especialidades">Pediatria</a></li>
+                <li><a href="#especialidades">GO</a></li>
+                <li><a href="#especialidades">Med. Preventiva</a></li>
+                <li><a href="#especialidades">Cardiologia</a></li>
+                <li><a href="#especialidades">Neurologia</a></li>
+              </ul>
+            </div>
+
+            {/* Col 4 */}
+            <div className="lp-mfooter-col">
+              <h4>Recursos</h4>
+              <ul>
+                <li><a href="#depoimentos">Depoimentos</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="#">Contato</a></li>
+                <li><a href="/login">Entrar</a></li>
+                <li><a href="/register">Criar conta</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="lp-mfooter-bar">
+            <p>© 2026 RokoMed · Todos os direitos reservados</p>
+            <ul>
+              <li><a href="#">Termos de Uso</a></li>
+              <li><a href="#">Privacidade</a></li>
+              <li><a href="#">Contato</a></li>
+            </ul>
+          </div>
         </footer>
 
         {/* Floating WhatsApp Button */}
