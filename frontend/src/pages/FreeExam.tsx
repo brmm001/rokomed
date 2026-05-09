@@ -19,11 +19,11 @@ export default function FreeExamPage() {
   const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
-    const baseUrl = import.meta.env.VITE_API_URL || ''
-    fetch(`${baseUrl}/api/questions/public-sample`)
-      .then(r => r.json())
-      .then(d => { setQuestions(d.data || []); setLoading(false) })
-      .catch(e => { console.error(e); setLoading(false) })
+    import('../lib/api').then(({ default: api }) => {
+      api.get('/questions/public-sample')
+        .then(r => { setQuestions(r.data.data || []); setLoading(false) })
+        .catch(e => { console.error(e); setLoading(false) })
+    })
   }, [])
 
   const handleSelectOption = (letter: string) => {
