@@ -309,12 +309,12 @@ export default function LandingPage() {
               <Link to="/checkout?plan=monthly" className="lp-pc-btn lp-pc-btn-out">Começar agora →</Link>
             </div>
             <div className="lp-pc lp-feat">
-              <span className="lp-pflag">Mais popular</span>
+              <span className="lp-pflag" style={{ background: '#FFC107', color: '#000', fontWeight: 'bold', fontSize: '0.65rem', padding: '0.4rem 0.8rem', boxShadow: '0 4px 12px rgba(255, 193, 7, 0.4)' }}>Mais Vendido</span>
               <div className="lp-pc-lbl">Semestral</div>
               <div className="lp-pc-price" style={{alignItems:'baseline'}}>
                 <span className="lp-cur">6x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">19</span>
               </div>
-              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginTop:'0.2rem'}}>ou à vista por R$ 114</div>
+              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginTop:'0.2rem'}}>ou à vista por R$ 97</div>
               <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Tudo do plano Mensal</li>
@@ -355,15 +355,15 @@ export default function LandingPage() {
           <div className="lp-tgrid">
             <div className="lp-titem">
               <p className="lp-tq">"Estudei com outros bancos antes, mas o RokoMed é outro nível. Os comentários são didáticos e os simulados me ajudaram a entender exatamente onde eu errava."</p>
-              <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em Clínica Médica — USP 2024</div></div>
+              <div className="lp-tmeta"><div className="lp-name">Carolina M.</div><div className="lp-role">Aprovada em 1º Lugar — Clínica Médica</div></div>
             </div>
             <div className="lp-titem">
               <p className="lp-tq">"Em 4 meses usando a plataforma minha nota nos simulados subiu 18 pontos. A análise de desempenho por tema é o diferencial que faz toda a diferença."</p>
-              <div className="lp-tmeta"><div className="lp-name">Rafael L.</div><div className="lp-role">Aprovado em Cirurgia Geral — UNIFESP 2024</div></div>
+              <div className="lp-tmeta"><div className="lp-name">Rafael L.</div><div className="lp-role">Aprovado na 1ª Opção — Cirurgia Geral</div></div>
             </div>
             <div className="lp-titem">
               <p className="lp-tq">"Usei no celular durante a madrugada no plantão. As questões curtas e os comentários objetivos encaixaram perfeitamente na minha rotina."</p>
-              <div className="lp-tmeta"><div className="lp-name">Thais F.</div><div className="lp-role">Aprovada em Pediatria — Santa Casa SP 2024</div></div>
+              <div className="lp-tmeta"><div className="lp-name">Thais F.</div><div className="lp-role">Aprovada entre os Top 5 — Pediatria</div></div>
             </div>
           </div>
         </section>

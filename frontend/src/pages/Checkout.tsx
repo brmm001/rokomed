@@ -25,8 +25,8 @@ const PLAN_DETAILS: Record<PlanType, PlanDetail> = {
   semiannual: {
     title: 'Plano Semestral',
     price: '6x de R$ 19,00',
-    total: 'Total: R$ 114,00',
-    description: 'Nosso plano mais popular. Sem renovação automática.',
+    total: 'Total à vista: R$ 97,00',
+    description: 'Nosso plano mais vendido. Sem renovação automática.',
     features: ['Tudo do plano Mensal', 'Simulados personalizados por IA', 'Suporte prioritário']
   },
   annual: {
