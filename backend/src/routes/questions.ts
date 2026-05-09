@@ -364,15 +364,15 @@ export default async function questionRoutes(app: FastifyInstance) {
     const tree = roots.map(r => ({
       id: r.id,
       name: r.name,
-      questionCount: (r._count as any).questions,
+      questionCount: (r as any)._count?.questions || 0,
       themes: r.children.map(t => ({
         id: t.id,
         name: t.name,
-        questionCount: (t._count as any).questions,
+        questionCount: (t as any)._count?.questions || 0,
         subthemes: t.children.map(st => ({
           id: st.id,
           name: st.name,
-          questionCount: (st._count as any).questions,
+          questionCount: (st as any)._count?.questions || 0,
         })),
       })),
     }))
