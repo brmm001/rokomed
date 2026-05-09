@@ -1,14 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { X, MessageCircle, Lock, Plus, Minus, ShieldCheck } from 'lucide-react'
+import { submitPartnershipLead } from '../lib/api'
+import toast from 'react-hot-toast'
 
 export default function LandingPage() {
   const [showExitPopup, setShowExitPopup] = useState(false)
   const [hasTriggeredPopup, setHasTriggeredPopup] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  
   const [leadEmail, setLeadEmail] = useState('')
   const [loadingLead, setLoadingLead] = useState(false)
+
+  // Partnership forms
+  const [ambName, setAmbName]   = useState('')
+  const [ambEmail, setAmbEmail] = useState('')
+  const [ambLoading, setAmbLoading] = useState(false)
+
+  const [instName, setInstName]   = useState('')
+  const [instEmail, setInstEmail] = useState('')
+  const [instLoading, setInstLoading] = useState(false)
 
   const handleLeadCapture = async () => {
     if(!leadEmail.includes('@')) { alert('Por favor, insira um e-mail válido.'); return; }
@@ -23,6 +33,28 @@ export default function LandingPage() {
       localStorage.setItem('rokomed_lead_email', leadEmail)
       window.location.href = '/simulado-gratis'
     }
+  }
+
+  const handleAmbassador = async () => {
+    if (!ambName.trim() || !ambEmail.includes('@')) { toast.error('Preencha nome e e-mail válido.'); return }
+    setAmbLoading(true)
+    try {
+      await submitPartnershipLead({ type: 'AMBASSADOR', name: ambName, email: ambEmail })
+      toast.success('Candidatura enviada! Entraremos em contato em breve 🙌')
+      setAmbName(''); setAmbEmail('')
+    } catch { toast.error('Erro ao enviar. Tente novamente.') }
+    finally { setAmbLoading(false) }
+  }
+
+  const handleInstitution = async () => {
+    if (!instName.trim() || !instEmail.includes('@')) { toast.error('Preencha todos os campos corretamente.'); return }
+    setInstLoading(true)
+    try {
+      await submitPartnershipLead({ type: 'INSTITUICAO', name: instName, email: instEmail })
+      toast.success('Proposta solicitada! Responderemos em até 24h ✅')
+      setInstName(''); setInstEmail('')
+    } catch { toast.error('Erro ao enviar. Tente novamente.') }
+    finally { setInstLoading(false) }
   }
 
   useEffect(() => {
@@ -64,7 +96,7 @@ export default function LandingPage() {
         .lp-nav { display:flex; align-items:center; justify-content:space-between; padding:1.4rem 5vw; border-bottom:2px solid var(--ink); position:sticky; top:0; z-index:100; background:var(--paper); }
         .lp-logo { font-family:var(--display); font-size:1.35rem; color:var(--ink); text-decoration:none; }
         .lp-logo em { color:var(--red); font-style:normal; }
-        .lp-nav-links { display:flex; gap:2.5rem; list-style:none; }
+        .lp-nav-links { display:flex; gap:2rem; list-style:none; flex-wrap:wrap; }
         .lp-nav-links a { font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; transition:color .15s; }
         .lp-nav-links a:hover { color:var(--ink); }
         .lp-nav-cta { font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:0.55rem 1.3rem; text-decoration:none; transition:background .15s; }
@@ -222,6 +254,89 @@ export default function LandingPage() {
         .lp-faq-a { padding-bottom: 1.5rem; font-size: 0.95rem; color: var(--muted); line-height: 1.6; display: none; }
         .lp-faq-item.open .lp-faq-a { display: block; }
 
+        /* AMBASSADORS */
+        .lp-amb-s { border-bottom: 2px solid var(--ink); }
+        .lp-amb-hero { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--rule); }
+        .lp-amb-hero-left { padding: 5rem 5vw; border-right: 1px solid var(--rule); }
+        .lp-amb-hero-left .lp-sec-num { font-family: var(--display); font-size: 5rem; line-height: 1; -webkit-text-stroke: 1px var(--red); color: transparent; }
+        .lp-amb-hero-left h2 { font-family: var(--display); font-size: clamp(2.4rem, 4vw, 3.6rem); line-height: 1; letter-spacing: -.02em; margin: 1rem 0; }
+        .lp-amb-hero-left h2 em { font-style: italic; color: var(--red); }
+        .lp-amb-hero-left p { font-size: 1rem; font-weight: 300; color: var(--muted); line-height: 1.7; max-width: 420px; margin-bottom: 2rem; }
+        .lp-amb-hero-right { padding: 5rem 4rem; display: flex; flex-direction: column; justify-content: center; gap: 1.5rem; }
+        .lp-amb-perk { display: flex; gap: 1.2rem; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px solid var(--rule); }
+        .lp-amb-perk:last-child { border-bottom: none; padding-bottom: 0; }
+        .lp-amb-perk-num { font-family: var(--mono); font-size: 0.6rem; letter-spacing: .14em; color: var(--red); flex-shrink: 0; padding-top: 3px; }
+        .lp-amb-perk h4 { font-family: var(--display); font-size: 1.1rem; margin-bottom: .3rem; }
+        .lp-amb-perk p { font-size: .88rem; color: var(--muted); line-height: 1.6; font-weight: 300; }
+        .lp-amb-cards { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); }
+        .lp-amb-card { padding: 3rem 2.5rem; border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 1rem; transition: background .2s; }
+        .lp-amb-card:last-child { border-right: none; }
+        .lp-amb-card:hover { background: rgba(29,78,216,.03); }
+        .lp-amb-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 1.4rem; color: var(--paper); flex-shrink: 0; }
+        .lp-amb-card h4 { font-family: var(--display); font-size: 1.1rem; margin-bottom: .1rem; }
+        .lp-amb-card .lp-role { font-family: var(--mono); font-size: .63rem; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+        .lp-amb-card p { font-size: .88rem; font-weight: 300; color: var(--muted); line-height: 1.6; flex: 1; }
+        .lp-amb-cta-bar { padding: 2.5rem 5vw; background: var(--ink); display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+        .lp-amb-cta-bar p { font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+        .lp-amb-cta-bar a { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; background: var(--red); color: var(--paper); padding: .75rem 2rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+        .lp-amb-cta-bar a:hover { opacity: .85; }
+
+        /* ATLETICA */
+        .lp-atl-s { border-bottom: 2px solid var(--ink); }
+        .lp-atl-hdr { display: grid; grid-template-columns: 260px 1fr; border-bottom: 1px solid var(--rule); }
+        .lp-atl-sidebar { padding: 4rem 3rem; border-right: 2px solid var(--ink); display: flex; flex-direction: column; gap: 2rem; }
+        .lp-atl-sidebar .lp-sec-num { font-family: var(--display); font-size: 5rem; line-height: 1; -webkit-text-stroke: 1px var(--red); color: transparent; }
+        .lp-atl-sidebar h2 { font-family: var(--display); font-size: 2rem; line-height: 1.05; letter-spacing: -.02em; }
+        .lp-atl-sidebar p { font-size: .9rem; font-weight: 300; color: var(--muted); line-height: 1.65; font-style: italic; }
+        .lp-atl-content { padding: 4rem 3rem; display: flex; flex-direction: column; gap: 2.5rem; }
+        .lp-atl-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .lp-atl-ben { padding: 1.8rem; border: 1px solid var(--rule); transition: border-color .2s; }
+        .lp-atl-ben:hover { border-color: var(--red); }
+        .lp-atl-ben .lp-fi-num { font-family: var(--mono); font-size: .63rem; letter-spacing: .14em; color: var(--muted); margin-bottom: .8rem; }
+        .lp-atl-ben h4 { font-family: var(--display); font-size: 1.05rem; margin-bottom: .4rem; }
+        .lp-atl-ben p { font-size: .85rem; font-weight: 300; color: var(--muted); line-height: 1.6; }
+        .lp-atl-discount-bar { background: var(--red); padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+        .lp-atl-discount-bar .lp-big { font-family: var(--display); font-size: 3.5rem; line-height: 1; color: var(--paper); }
+        .lp-atl-discount-bar .lp-detail { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.8); }
+        .lp-atl-discount-bar a { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; background: var(--paper); color: var(--red); padding: .75rem 2rem; text-decoration: none; transition: opacity .2s; white-space: nowrap; }
+        .lp-atl-discount-bar a:hover { opacity: .85; }
+        .lp-atl-logos { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--rule); }
+        .lp-atl-logo-cell { padding: 2rem; border-right: 1px solid var(--rule); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6rem; transition: background .15s; }
+        .lp-atl-logo-cell:last-child { border-right: none; }
+        .lp-atl-logo-cell:hover { background: rgba(0,0,0,.03); }
+        .lp-atl-logo-icon { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--rule); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: .9rem; color: var(--muted); }
+        .lp-atl-logo-cell span { font-family: var(--mono); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+
+        /* INSTITUICOES */
+        .lp-inst-s { border-bottom: 2px solid var(--ink); }
+        .lp-inst-hero { padding: 5rem 5vw; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; border-bottom: 1px solid var(--rule); }
+        .lp-inst-hero h2 { font-family: var(--display); font-size: clamp(2.4rem, 4vw, 3.5rem); line-height: 1; letter-spacing: -.02em; }
+        .lp-inst-hero h2 em { color: var(--red); font-style: italic; }
+        .lp-inst-hero .lp-sec-num { font-family: var(--display); font-size: 5rem; line-height: 1; -webkit-text-stroke: 1px var(--red); color: transparent; margin-bottom: 1rem; }
+        .lp-inst-right { display: flex; flex-direction: column; gap: 1.2rem; justify-content: center; }
+        .lp-inst-right p { font-size: 1rem; font-weight: 300; color: var(--muted); line-height: 1.7; }
+        .lp-inst-tiers { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+        .lp-inst-tier { padding: 3rem 2.5rem; border-right: 1px solid var(--rule); position: relative; transition: background .2s; }
+        .lp-inst-tier:last-child { border-right: none; }
+        .lp-inst-tier:hover { background: rgba(0,0,0,.02); }
+        .lp-inst-tier-badge { font-family: var(--mono); font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--paper); background: var(--muted); padding: .25rem .6rem; display: inline-block; margin-bottom: 1.2rem; }
+        .lp-inst-tier.featured .lp-inst-tier-badge { background: var(--red); }
+        .lp-inst-tier h3 { font-family: var(--display); font-size: 1.6rem; margin-bottom: .5rem; }
+        .lp-inst-tier .lp-price-label { font-family: var(--mono); font-size: .65rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .3rem; }
+        .lp-inst-tier .lp-price-val { font-family: var(--display); font-size: 2.5rem; color: var(--ink); margin-bottom: 1.2rem; }
+        .lp-inst-tier.featured .lp-price-val { color: var(--red); }
+        .lp-inst-tier ul { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+        .lp-inst-tier ul li { font-size: .88rem; color: var(--muted); font-weight: 300; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.4; }
+        .lp-inst-tier ul li::before { content: '→'; font-family: var(--mono); font-size: .7rem; color: var(--red); flex-shrink: 0; }
+        .lp-inst-contact { padding: 4rem 5vw; display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+        .lp-inst-contact h3 { font-family: var(--display); font-size: 2rem; line-height: 1; }
+        .lp-inst-contact p { font-size: .9rem; color: var(--muted); margin-top: .5rem; }
+        .lp-inst-form { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .lp-inst-form input { font-family: var(--mono); font-size: .75rem; padding: .85rem 1.2rem; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); outline: none; min-width: 220px; transition: border-color .2s; }
+        .lp-inst-form input:focus { border-color: var(--ink); }
+        .lp-inst-form button { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; background: var(--ink); color: var(--paper); padding: .85rem 2rem; border: none; cursor: pointer; transition: background .15s; white-space: nowrap; }
+        .lp-inst-form button:hover { background: var(--red); }
+
         /* WHATSAPP BTN */
         .lp-wa-btn { position: fixed; bottom: 2rem; right: 2rem; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(37,211,102,0.4); z-index: 99; transition: transform 0.2s; }
         .lp-wa-btn:hover { transform: scale(1.1); }
@@ -233,14 +348,20 @@ export default function LandingPage() {
         .lp-popup-close:hover { color: var(--ink); }
 
         @media(max-width:900px){
-          .lp-hero,.lp-spec-section,.lp-cta-s { grid-template-columns:1fr; }
+          .lp-hero,.lp-spec-section,.lp-cta-s,.lp-amb-hero,.lp-inst-hero { grid-template-columns:1fr; }
           .lp-hero-right,.lp-spec-left { display:none; }
-          .lp-feat-section { grid-template-columns:1fr; }
-          .lp-feat-sidebar { border-right:none; border-bottom:1px solid var(--rule); padding:3rem 5vw; }
-          .lp-feat-grid,.lp-pcards,.lp-tgrid { grid-template-columns:1fr; }
+          .lp-feat-section,.lp-atl-hdr { grid-template-columns:1fr; }
+          .lp-feat-sidebar,.lp-atl-sidebar { border-right:none; border-bottom:1px solid var(--rule); padding:3rem 5vw; }
+          .lp-feat-grid,.lp-pcards,.lp-tgrid,.lp-amb-cards,.lp-inst-tiers { grid-template-columns:1fr; }
           .lp-fi { border-right:none; }
           .lp-pc { border-right:none; border-bottom:1px solid var(--rule); }
           .lp-titem { border-right:none; border-bottom:1px solid var(--rule); }
+          .lp-amb-card { border-right:none; border-bottom:1px solid var(--rule); }
+          .lp-inst-tier { border-right:none; border-bottom:1px solid var(--rule); }
+          .lp-atl-benefits { grid-template-columns:1fr; }
+          .lp-atl-logos { grid-template-columns: repeat(3, 1fr); }
+          .lp-inst-contact { flex-direction:column; }
+          .lp-inst-form { flex-direction:column; }
           .lp-cta-r { align-items:flex-start; }
           .lp-nav-links { display:none; }
         }
@@ -253,7 +374,8 @@ export default function LandingPage() {
             <li><a href="#recursos">Recursos</a></li>
             <li><a href="#especialidades">Especialidades</a></li>
             <li><a href="#planos">Planos</a></li>
-            <li><a href="#depoimentos">Depoimentos</a></li>
+            <li><a href="#embaixadores">Embaixadores</a></li>
+            <li><a href="#atleticas">Atléticas</a></li>
           </ul>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <Link to="/login" className="lp-nav-cta" style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)' }}>Entrar</Link>
@@ -529,6 +651,191 @@ export default function LandingPage() {
             <Link to="/checkout" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}}>Começar por R$29/mês</Link>
             <p className="lp-note">Acesso imediato · Sem compromisso</p>
             <p className="lp-note">+8.000 médicos aprovados</p>
+          </div>
+        </section>
+
+        {/* ===== EMBAIXADORES ===== */}
+        <section className="lp-amb-s" id="embaixadores">
+          <div className="lp-amb-hero">
+            <div className="lp-amb-hero-left">
+              <div className="lp-sec-num">05</div>
+              <h2>Seja um <em>Embaixador</em><br />RokoMed</h2>
+              <p>Médicos residentes e estudantes apaixonados por educação médica. Juntos, ajudando a próxima geração a conquistar a residência dos sonhos — e ainda sendo recompensados por isso.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: 380 }}>
+                <input
+                  type="text" placeholder="Seu nome completo"
+                  value={ambName} onChange={e => setAmbName(e.target.value)}
+                  style={{ padding: '0.9rem 1.1rem', fontFamily: 'var(--mono)', fontSize: '0.75rem', border: '1px solid var(--rule)', background: 'var(--paper)', color: 'var(--ink)', outline: 'none' }}
+                />
+                <input
+                  type="email" placeholder="Seu melhor e-mail"
+                  value={ambEmail} onChange={e => setAmbEmail(e.target.value)}
+                  style={{ padding: '0.9rem 1.1rem', fontFamily: 'var(--mono)', fontSize: '0.75rem', border: '1px solid var(--rule)', background: 'var(--paper)', color: 'var(--ink)', outline: 'none' }}
+                />
+                <button
+                  className="lp-btn-ink" disabled={ambLoading}
+                  style={{ border: 'none', cursor: 'pointer', textAlign: 'center' }}
+                  onClick={handleAmbassador}
+                >
+                  {ambLoading ? 'Enviando...' : 'Quero ser embaixador →'}
+                </button>
+              </div>
+            </div>
+            <div className="lp-amb-hero-right">
+              <div className="lp-amb-perk">
+                <span className="lp-amb-perk-num">01</span>
+                <div><h4>Comissão recorrente</h4><p>Ganhe comissão sobre cada assinatura indicada, durante toda a vigência do plano do seu indicado.</p></div>
+              </div>
+              <div className="lp-amb-perk">
+                <span className="lp-amb-perk-num">02</span>
+                <div><h4>Acesso gratuito à plataforma</h4><p>Embaixadores ativos têm acesso completo ao RokoMed sem custo nenhum, pelo período da parceria.</p></div>
+              </div>
+              <div className="lp-amb-perk">
+                <span className="lp-amb-perk-num">03</span>
+                <div><h4>Material exclusivo</h4><p>Artes prontas, link personalizado e suporte dedicado para você divulgar sem dificuldade.</p></div>
+              </div>
+              <div className="lp-amb-perk">
+                <span className="lp-amb-perk-num">04</span>
+                <div><h4>Reconhecimento público</h4><p>Seu nome e perfil destacados na plataforma como referência na comunidade RokoMed.</p></div>
+              </div>
+            </div>
+          </div>
+          <div className="lp-amb-cards">
+            {[
+              {init:'CM', name:'Carolina M.', role:'Embaixadora — Clínica Médica', text:'"Indico o RokoMed para todos os meus colegas de internato. Além de ajudar, ainda consigo uma renda extra enquanto estudo."'},
+              {init:'RL', name:'Rafael L.', role:'Embaixador — Cirurgia Geral', text:'"A plataforma vende sozinha. Só compartilhei meu link e em 1 mês já tinha 12 indicações ativas."'},
+              {init:'TF', name:'Thais F.', role:'Embaixadora — Pediatria', text:'"O suporte é ótimo e o painel de comissões é transparente. Melhor programa de embaixadores que já participei."'},
+            ].map(({init, name, role, text}) => (
+              <div className="lp-amb-card" key={name}>
+                <div className="lp-amb-avatar">{init}</div>
+                <div>
+                  <h4>{name}</h4>
+                  <div className="lp-role">{role}</div>
+                </div>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="lp-amb-cta-bar">
+            <p>Comunidade de embaixadores RokoMed · Crescendo todo mês</p>
+            <a href="https://wa.me/5511999999999">Cadastre-se como embaixador →</a>
+          </div>
+        </section>
+
+        {/* ===== PARCERIA COM ATLÉTICAS ===== */}
+        <section className="lp-atl-s" id="atleticas">
+          <div className="lp-atl-hdr">
+            <div className="lp-atl-sidebar">
+              <div className="lp-sec-num">06</div>
+              <h2>Parceria com Atléticas</h2>
+              <p>Sua atlética oferece o RokoMed com desconto exclusivo para os alunos. Simples assim.</p>
+            </div>
+            <div className="lp-atl-content">
+              <div className="lp-atl-benefits">
+                <div className="lp-atl-ben">
+                  <div className="lp-fi-num">001</div>
+                  <h4>Desconto de até 40%</h4>
+                  <p>Seus membros pagam menos. A atlética recebe uma comissão por cada assinatura ativa do convênio.</p>
+                </div>
+                <div className="lp-atl-ben">
+                  <div className="lp-fi-num">002</div>
+                  <h4>Link e cupom exclusivos</h4>
+                  <p>Código personalizado com o nome da sua atlética. Fácil de divulgar em grupos e redes sociais.</p>
+                </div>
+                <div className="lp-atl-ben">
+                  <div className="lp-fi-num">003</div>
+                  <h4>Sem burocracia</h4>
+                  <p>Sem contrato complicado. O acordo é simples: vocês divulgam, nós pagamos a comissão mensalmente.</p>
+                </div>
+                <div className="lp-atl-ben">
+                  <div className="lp-fi-num">004</div>
+                  <h4>Dashboard da atlética</h4>
+                  <p>Painel exclusivo para acompanhar quantos alunos estão ativos e quanto a atlética já arrecadou.</p>
+                </div>
+              </div>
+              <div className="lp-atl-discount-bar">
+                <div>
+                  <div className="lp-big">40%</div>
+                  <div className="lp-detail">de desconto para membros da atlética parceira</div>
+                </div>
+                <a href="https://wa.me/5511999999999">Quero parceria para minha atlética →</a>
+              </div>
+            </div>
+          </div>
+          <div className="lp-atl-logos">
+            {['USP', 'UNIFESP', 'UNICAMP', 'UFSCar', 'FAMERP'].map(univ => (
+              <div className="lp-atl-logo-cell" key={univ}>
+                <div className="lp-atl-logo-icon">{univ[0]}</div>
+                <span>Atlética {univ}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ===== PARCERIA COM INSTITUIÇÕES ===== */}
+        <section className="lp-inst-s" id="instituicoes">
+          <div className="lp-inst-hero">
+            <div>
+              <div className="lp-sec-num">07</div>
+              <h2>Parceria com <em>Instituições</em></h2>
+            </div>
+            <div className="lp-inst-right">
+              <p>Faculdades, ligas acadêmicas, cursinhos preparatórios e hospitais — oferecemos pacotes corporativos sob medida para que sua instituição ofereça o RokoMed aos alunos e residentes.</p>
+              <p>Negociação direta, pricing flexível e onboarding dedicado. Já temos parceria com mais de 30 instituições em todo o Brasil.</p>
+            </div>
+          </div>
+          <div className="lp-inst-tiers">
+            <div className="lp-inst-tier">
+              <span className="lp-inst-tier-badge">Starter</span>
+              <h3>Liga &amp; Grupo</h3>
+              <div className="lp-price-label">A partir de</div>
+              <div className="lp-price-val">R$9<span style={{fontSize:'1.2rem', fontFamily:'var(--body)', fontWeight:300}}>/aluno/mês</span></div>
+              <ul>
+                <li>Mínimo 20 alunos</li>
+                <li>Acesso completo à plataforma</li>
+                <li>Relatório de engajamento mensal</li>
+                <li>Suporte via WhatsApp</li>
+              </ul>
+            </div>
+            <div className="lp-inst-tier featured">
+              <span className="lp-inst-tier-badge">Mais escolhido</span>
+              <h3>Faculdade</h3>
+              <div className="lp-price-label">A partir de</div>
+              <div className="lp-price-val">R$7<span style={{fontSize:'1.2rem', fontFamily:'var(--body)', fontWeight:300}}>/aluno/mês</span></div>
+              <ul>
+                <li>Mínimo 100 alunos</li>
+                <li>Tudo do Starter</li>
+                <li>Dashboard institucional</li>
+                <li>Treinamento para coordenadores</li>
+                <li>Simulados com branding da instituição</li>
+              </ul>
+            </div>
+            <div className="lp-inst-tier">
+              <span className="lp-inst-tier-badge">Enterprise</span>
+              <h3>Hospital &amp; Rede</h3>
+              <div className="lp-price-label">Sob consulta</div>
+              <div className="lp-price-val" style={{fontSize:'1.8rem'}}>Personalizado</div>
+              <ul>
+                <li>Ilimitado de usuários</li>
+                <li>Tudo do Faculdade</li>
+                <li>API e integração com LMS</li>
+                <li>Gerente de conta dedicado</li>
+                <li>SLA garantido em contrato</li>
+              </ul>
+            </div>
+          </div>
+          <div className="lp-inst-contact">
+            <div>
+              <h3>Vamos conversar?</h3>
+              <p>Resposta em até 24h · Sem compromisso · Proposta personalizada</p>
+            </div>
+            <div className="lp-inst-form">
+              <input type="text" placeholder="Nome da instituição" value={instName} onChange={e => setInstName(e.target.value)} />
+              <input type="email" placeholder="E-mail institucional" value={instEmail} onChange={e => setInstEmail(e.target.value)} />
+              <button type="button" onClick={handleInstitution} disabled={instLoading}>
+                {instLoading ? 'Enviando...' : 'Solicitar proposta →'}
+              </button>
+            </div>
           </div>
         </section>
 

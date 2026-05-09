@@ -110,7 +110,21 @@ export const adminApi = {
     api.post(`/admin/support/tickets/${ticketId}/messages`, { content }).then(r => r.data),
   supportSetStatus: (ticketId: string, status: string) =>
     api.patch(`/admin/support/tickets/${ticketId}/status`, { status }).then(r => r.data),
+  partnerships: (params?: { type?: string; status?: string; page?: number }) =>
+    api.get('/partnerships/admin/leads', { params }).then(r => r.data),
+  updatePartnershipLead: (id: string, data: { status?: string; notes?: string }) =>
+    api.patch(`/partnerships/admin/leads/${id}`, data).then(r => r.data),
+  deletePartnershipLead: (id: string) =>
+    api.delete(`/partnerships/admin/leads/${id}`).then(r => r.data),
 }
+
+// ── Parcerias (público, sem auth) ────────────────────────────────────────────
+export const submitPartnershipLead = (data: {
+  type: 'AMBASSADOR' | 'ATLETICA' | 'INSTITUICAO'
+  name: string
+  email: string
+  extra?: Record<string, unknown>
+}) => api.post('/partnerships/lead', data).then(r => r.data)
 
 // ── Support ──────────────────────────────────────────────────────────────────
 export const supportApi = {

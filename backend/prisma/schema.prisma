@@ -462,3 +462,22 @@ model SupportMessage {
 
   @@map("support_messages")
 }
+
+// ── Parcerias / Embaixadores ──────────────────────────────────────────────────
+
+model PartnershipLead {
+  id        String   @id @default(cuid())
+  // AMBASSADOR | ATLETICA | INSTITUICAO
+  type      String
+  // nome pessoal ou nome da instituição/atlética
+  name      String
+  email     String
+  // campos extras livres: JSON
+  extra     String?
+  status    String   @default("NOVO") // NOVO | EM_CONTATO | FECHADO | RECUSADO
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partnership_leads")
+}

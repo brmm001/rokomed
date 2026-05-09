@@ -6,15 +6,17 @@ import {
   LayoutDashboard, BookOpen, Users, FileText,
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
-  Send, CheckCircle, Clock, Mail,
+  Send, CheckCircle, Clock, Mail, Handshake,
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [partnerFilter, setPartnerFilter] = useState<{ type: string; status: string }>({ type: '', status: '' })
+  const [partnerNotes, setPartnerNotes] = useState<Record<string, string>>({})
   const qc = useQueryClient()
 
   const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
@@ -23,7 +25,12 @@ export default function AdminPage() {
   const { data: logs,    isLoading: logsLoading     } = useQuery({ queryKey: ['admin-logs'],      queryFn: () => adminApi.logs(),      enabled: tab === 'logs' })
   const { data: tickets, isLoading: ticketsLoading  } = useQuery({ queryKey: ['admin-support'],   queryFn: adminApi.supportTickets,    enabled: tab === 'support' })
   const { data: ticketDetail } = useQuery({ queryKey: ['admin-ticket', selectedTicketId], queryFn: () => adminApi.supportTicket(selectedTicketId!), enabled: !!selectedTicketId })
-  const { data: leads,   isLoading: leadsLoading    } = useQuery({ queryKey: ['admin-leads'],     queryFn: adminApi.abandonedCheckouts, enabled: tab === 'leads' })
+  const { data: leads,    isLoading: leadsLoading    } = useQuery({ queryKey: ['admin-leads'],        queryFn: adminApi.abandonedCheckouts, enabled: tab === 'leads' })
+  const { data: partnerships, isLoading: partnershipsLoading } = useQuery({
+    queryKey: ['admin-partnerships', partnerFilter],
+    queryFn: () => adminApi.partnerships({ type: partnerFilter.type || undefined, status: partnerFilter.status || undefined }),
+    enabled: tab === 'partnerships',
+  })
 
   const deleteQ = useMutation({
     mutationFn: (id: string) => adminApi.deleteQuestion(id),
@@ -50,13 +57,25 @@ export default function AdminPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-support'] }); qc.invalidateQueries({ queryKey: ['admin-ticket', selectedTicketId] }) },
   })
 
+  const updatePartner = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { status?: string; notes?: string } }) =>
+      adminApi.updatePartnershipLead(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-partnerships'] }); toast.success('Atualizado!') },
+  })
+
+  const deletePartner = useMutation({
+    mutationFn: (id: string) => adminApi.deletePartnershipLead(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-partnerships'] }); toast.success('Lead removido') },
+  })
+
   const tabs = [
-    { id: 'stats',     label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
-    { id: 'questions', label: 'Questões',      icon: <BookOpen size={16} /> },
-    { id: 'users',     label: 'Usuários',      icon: <Users size={16} /> },
-    { id: 'leads',     label: 'Leads',         icon: <ShoppingCart size={16} /> },
-    { id: 'support',   label: 'Suporte',       icon: <MessageSquare size={16} /> },
-    { id: 'logs',      label: 'Logs',          icon: <FileText size={16} /> },
+    { id: 'stats',        label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
+    { id: 'questions',    label: 'Questões',      icon: <BookOpen size={16} /> },
+    { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
+    { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
+    { id: 'support',      label: 'Suporte',       icon: <MessageSquare size={16} /> },
+    { id: 'partnerships', label: 'Parcerias',     icon: <Handshake size={16} /> },
+    { id: 'logs',         label: 'Logs',          icon: <FileText size={16} /> },
   ] as const
 
   return (
@@ -414,6 +433,129 @@ export default function AdminPage() {
                   <Send size={14} />
                 </button>
               </form>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Partnerships Tab ─────────────────────────────────────────────────── */}
+      {tab === 'partnerships' && (
+        <div className="animate-fade-in">
+          {/* Filtros */}
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <select
+              className="input"
+              style={{ fontSize: '0.8125rem', padding: '0.45rem 0.75rem', minWidth: 160 }}
+              value={partnerFilter.type}
+              onChange={e => setPartnerFilter(f => ({ ...f, type: e.target.value }))}
+            >
+              <option value="">Todos os tipos</option>
+              <option value="AMBASSADOR">Embaixadores</option>
+              <option value="ATLETICA">Atléticas</option>
+              <option value="INSTITUICAO">Instituições</option>
+            </select>
+            <select
+              className="input"
+              style={{ fontSize: '0.8125rem', padding: '0.45rem 0.75rem', minWidth: 160 }}
+              value={partnerFilter.status}
+              onChange={e => setPartnerFilter(f => ({ ...f, status: e.target.value }))}
+            >
+              <option value="">Todos os status</option>
+              <option value="NOVO">Novo</option>
+              <option value="EM_CONTATO">Em contato</option>
+              <option value="FECHADO">Fechado</option>
+              <option value="RECUSADO">Recusado</option>
+            </select>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginLeft: 'auto' }}>
+              {partnerships?.total ?? 0} lead{partnerships?.total !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {partnershipsLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} className="animate-spin" /> Carregando...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {partnerships?.data?.length === 0 && (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '3rem' }}>Nenhum lead encontrado.</div>
+              )}
+              {partnerships?.data?.map((lead: {
+                id: string; type: string; name: string; email: string;
+                extra?: string; status: string; notes?: string; createdAt: string;
+              }) => {
+                const typeLabel: Record<string, string> = { AMBASSADOR: 'Embaixador', ATLETICA: 'Atlética', INSTITUICAO: 'Instituição' }
+                const statusColor: Record<string, string> = {
+                  NOVO: 'var(--accent-blue)', EM_CONTATO: 'var(--accent-gold)',
+                  FECHADO: 'var(--accent-green)', RECUSADO: 'var(--accent-red)',
+                }
+                const extra = lead.extra ? (() => { try { return JSON.parse(lead.extra!) } catch { return {} } })() : {}
+                return (
+                  <div key={lead.id} className="glass" style={{ borderRadius: 14, padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+                      {/* Avatar */}
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#0F2040,#1E3A5F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#93C5FD', fontSize: '1rem', flexShrink: 0, border: '2px solid var(--border)' }}>
+                        {lead.name[0]?.toUpperCase()}
+                      </div>
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{lead.name}</div>
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Mail size={12} /> {lead.email}
+                        </div>
+                        {Object.keys(extra).length > 0 && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                            {Object.entries(extra).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {new Date(lead.createdAt).toLocaleString('pt-BR')}
+                        </div>
+                      </div>
+                      {/* Badges + ações */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.65rem', padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                          {typeLabel[lead.type] ?? lead.type}
+                        </span>
+                        <select
+                          className="input"
+                          style={{ fontSize: '0.7rem', padding: '3px 8px', color: statusColor[lead.status] ?? 'inherit', minWidth: 130 }}
+                          value={lead.status}
+                          onChange={e => updatePartner.mutate({ id: lead.id, data: { status: e.target.value } })}
+                        >
+                          <option value="NOVO">Novo</option>
+                          <option value="EM_CONTATO">Em contato</option>
+                          <option value="FECHADO">Fechado</option>
+                          <option value="RECUSADO">Recusado</option>
+                        </select>
+                        <button
+                          className="btn btn-danger"
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.75rem' }}
+                          onClick={() => { if (confirm('Remover lead?')) deletePartner.mutate(lead.id) }}
+                          disabled={deletePartner.isPending}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Notes */}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input
+                        className="input"
+                        style={{ flex: 1, fontSize: '0.8rem', padding: '0.45rem 0.75rem' }}
+                        placeholder="Anotações internas..."
+                        defaultValue={lead.notes ?? ''}
+                        onBlur={e => {
+                          const val = e.target.value
+                          if (val !== (lead.notes ?? '')) {
+                            updatePartner.mutate({ id: lead.id, data: { notes: val } })
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
