@@ -95,8 +95,8 @@ export default function PartnershipsPage() {
         /* DISCOUNT BAR */
         .pp-discount-bar { background:var(--red); padding:2rem 3rem; display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
         .pp-discount-big { font-family:var(--display); font-size:4rem; line-height:1; color:#fff; }
-        .pp-discount-detail { font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.8); margin-top:.3rem; }
-        .pp-discount-bar-btn { font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; background:#fff; color:var(--red); padding:.8rem 2rem; text-decoration:none; transition:opacity .2s; white-space:nowrap; }
+        .pp-discount-detail { font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.9); margin-top:.3rem; }
+        .pp-discount-bar-btn { font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; background:#fff; color:var(--red); padding:.8rem 2rem; border:none; cursor:pointer; transition:opacity .2s; white-space:nowrap; display:inline-block; }
         .pp-discount-bar-btn:hover { opacity:.85; }
 
         /* TIERS */
@@ -124,16 +124,16 @@ export default function PartnershipsPage() {
 
         /* CTA BAR */
         .pp-cta-bar { padding:3rem 5vw; background:var(--ink); display:flex; align-items:center; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
-        .pp-cta-bar p { font-family:var(--mono); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.6); }
+        .pp-cta-bar p { font-family:var(--mono); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; color:#a8a29e; }
         .pp-cta-bar a { font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; background:var(--red); color:#fff; padding:.8rem 2rem; text-decoration:none; transition:opacity .2s; }
         .pp-cta-bar a:hover { opacity:.85; }
 
         /* FOOTER */
-        .pp-footer { background:#0d0d14; color:rgba(255,255,255,.6); padding:2rem 5vw; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-top:2px solid #111; }
+        .pp-footer { background:#0d0d14; color:#a8a29e; padding:2rem 5vw; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; border-top:2px solid #222; }
         .pp-footer p { font-family:var(--mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; }
         .pp-footer-links { display:flex; gap:2rem; list-style:none; }
-        .pp-footer-links a { font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.4); text-decoration:none; }
-        .pp-footer-links a:hover { color:rgba(255,255,255,.8); }
+        .pp-footer-links a { font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:#a8a29e; text-decoration:none; transition:color .15s; }
+        .pp-footer-links a:hover { color:#e7e5e4; }
 
         @media(max-width:900px){
           .pp-sec-grid { grid-template-columns:1fr; }
@@ -235,7 +235,7 @@ export default function PartnershipsPage() {
               <div className="pp-sec-num">02</div>
               <h2>Parceria com <em>Atléticas</em></h2>
               <p>Sua atlética oferece o RokoMed com desconto exclusivo. Os membros pagam menos, a atlética recebe comissão.</p>
-              <div className="pp-form">
+              <div className="pp-form" id="atl-form">
                 <input type="text" placeholder="Nome da atlética / faculdade" value={atlName} onChange={e => setAtlName(e.target.value)} />
                 <input type="email" placeholder="E-mail da diretoria" value={atlEmail} onChange={e => setAtlEmail(e.target.value)} />
                 <button className="pp-btn" disabled={atlLoading}
@@ -264,7 +264,7 @@ export default function PartnershipsPage() {
                   <div className="pp-discount-big">40%</div>
                   <div className="pp-discount-detail">de desconto para membros da atlética parceira</div>
                 </div>
-                <a href="#atleticas" className="pp-discount-bar-btn" onClick={e => { e.preventDefault(); document.querySelector<HTMLInputElement>('#atleticas input')?.focus() }}>Quero essa parceria →</a>
+                <button className="pp-discount-bar-btn" onClick={() => { document.getElementById('atl-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => document.querySelector<HTMLInputElement>('#atl-form input')?.focus(), 400) }}>Quero essa parceria →</button>
               </div>
             </div>
           </div>

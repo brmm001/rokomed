@@ -199,24 +199,24 @@ export default function LandingPage() {
         .lp-mfooter-brand { display:flex; flex-direction:column; gap:1.5rem; }
         .lp-mfooter-logo { font-family:var(--display); font-size:1.5rem; color:#fff; text-decoration:none; }
         .lp-mfooter-logo em { color:var(--red); font-style:normal; }
-        .lp-mfooter-tagline { font-size:.82rem; font-weight:300; color:rgba(255,255,255,.45); line-height:1.6; }
+        .lp-mfooter-tagline { font-size:.82rem; font-weight:300; color:#a8a29e; line-height:1.6; }
         .lp-mfooter-badges { display:flex; flex-direction:column; gap:.6rem; }
-        .lp-mfooter-badge { display:flex; align-items:center; gap:.6rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); padding:.5rem .9rem; border-radius:8px; text-decoration:none; transition:background .15s; cursor:pointer; }
+        .lp-mfooter-badge { display:flex; align-items:center; gap:.6rem; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15); padding:.5rem .9rem; border-radius:8px; text-decoration:none; transition:background .15s; cursor:pointer; }
         .lp-mfooter-badge:hover { background:rgba(255,255,255,.13); }
         .lp-mfooter-badge svg { flex-shrink:0; }
         .lp-mfooter-badge-text { display:flex; flex-direction:column; }
-        .lp-mfooter-badge-text span:first-child { font-family:var(--mono); font-size:.52rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.45); }
+        .lp-mfooter-badge-text span:first-child { font-family:var(--mono); font-size:.52rem; letter-spacing:.1em; text-transform:uppercase; color:#a8a29e; }
         .lp-mfooter-badge-text span:last-child { font-family:var(--body); font-size:.85rem; color:#fff; font-weight:400; }
-        .lp-mfooter-col h4 { font-family:var(--mono); font-size:.65rem; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.35); margin-bottom:1.2rem; }
+        .lp-mfooter-col h4 { font-family:var(--mono); font-size:.65rem; letter-spacing:.16em; text-transform:uppercase; color:#a8a29e; margin-bottom:1.2rem; }
         .lp-mfooter-col ul { list-style:none; display:flex; flex-direction:column; gap:.75rem; }
-        .lp-mfooter-col ul li a { font-size:.9rem; font-weight:300; color:rgba(255,255,255,.65); text-decoration:none; transition:color .15s; }
+        .lp-mfooter-col ul li a { font-size:.9rem; font-weight:300; color:#d6d3d1; text-decoration:none; transition:color .15s; }
         .lp-mfooter-col ul li a:hover { color:#fff; }
-        .lp-mfooter-col ul li a.lp-mf-hi { color:var(--red); }
+        .lp-mfooter-col ul li a.lp-mf-hi { color:#93c5fd; }
         .lp-mfooter-bar { padding:1.2rem 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
-        .lp-mfooter-bar p { font-family:var(--mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.3); }
+        .lp-mfooter-bar p { font-family:var(--mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:#a8a29e; }
         .lp-mfooter-bar ul { display:flex; gap:1.5rem; list-style:none; }
-        .lp-mfooter-bar ul a { font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.35); text-decoration:none; }
-        .lp-mfooter-bar ul a:hover { color:rgba(255,255,255,.7); }
+        .lp-mfooter-bar ul a { font-family:var(--mono); font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; color:#a8a29e; text-decoration:none; transition:color .15s; }
+        .lp-mfooter-bar ul a:hover { color:#e7e5e4; }
         @media(max-width:900px){ .lp-mfooter-grid { grid-template-columns:1fr 1fr; } }
 
         /* COMPARISON TABLE */
