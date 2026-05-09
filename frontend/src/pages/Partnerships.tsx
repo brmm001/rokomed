@@ -34,7 +34,7 @@ export default function PartnershipsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
         .pp * { box-sizing: border-box; margin: 0; padding: 0; }
         .pp {
-          --ink: #111111; --paper: #FAFAFA; --red: #1D4ED8; --rule: rgba(0,0,0,0.18); --muted: #525252;
+          --ink: #111111; --paper: #FAFAFA; --red: #C8102E; --rule: rgba(0,0,0,0.18); --muted: #525252;
           --display: 'Abril Fatface', Georgia, serif; --body: 'Crimson Pro', Georgia, serif; --mono: 'IBM Plex Mono', monospace;
           font-family: var(--body); background: var(--paper); color: var(--ink); line-height: 1.5; overflow-x: hidden;
         }

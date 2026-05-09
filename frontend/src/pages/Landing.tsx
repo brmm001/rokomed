@@ -45,11 +45,7 @@ export default function LandingPage() {
 
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {
-          --ink:   #111111;
-          --paper: #FAFAFA;
-          --red:   #1D4ED8;
-          --rule:  rgba(0,0,0,0.18);
-          --muted: #525252;
+          --ink: #111111; --paper: #FAFAFA; --red: #C8102E; --rule: rgba(0,0,0,0.18); --muted: #525252;
           --display:'Abril Fatface', Georgia, serif;
           --body:  'Crimson Pro', Georgia, serif;
           --mono:  'IBM Plex Mono', monospace;
@@ -211,7 +207,7 @@ export default function LandingPage() {
         .lp-mfooter-col ul { list-style:none; display:flex; flex-direction:column; gap:.75rem; }
         .lp-mfooter-col ul li a { font-size:.9rem; font-weight:300; color:#d6d3d1; text-decoration:none; transition:color .15s; }
         .lp-mfooter-col ul li a:hover { color:#fff; }
-        .lp-mfooter-col ul li a.lp-mf-hi { color:#93c5fd; }
+        .lp-mfooter-col ul li a.lp-mf-hi { color:#f87171; }
         .lp-mfooter-bar { padding:1.2rem 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
         .lp-mfooter-bar p { font-family:var(--mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:#a8a29e; }
         .lp-mfooter-bar ul { display:flex; gap:1.5rem; list-style:none; }
