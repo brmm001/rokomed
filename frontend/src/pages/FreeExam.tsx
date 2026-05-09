@@ -90,14 +90,100 @@ export default function FreeExamPage() {
           --ink: #111111;
           --rule: #E5E5E5;
           --red: #D32F2F;
+          --blue: #2563EB;
           --display: 'Abril Fatface', serif;
           --body: 'Crimson Pro', serif;
           --mono: 'Inter', sans-serif;
         }
+
+        .editorial-explanation h4 {
+          font-family: var(--mono);
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: var(--blue);
+          margin-top: 0;
+          margin-bottom: 0.75rem;
+          font-weight: 700;
+        }
+        .editorial-explanation p {
+          margin-bottom: 1rem;
+          line-height: 1.7;
+        }
+        .editorial-explanation .gatilhos {
+          margin-bottom: 1.5rem;
+          padding: 1rem 1.5rem;
+          background: rgba(37, 99, 235, 0.04);
+          border-left: 4px solid var(--blue);
+        }
+        .editorial-explanation .gatilho {
+          display: inline-block;
+          background: white;
+          border: 1px solid var(--rule);
+          padding: 0.15rem 0.5rem;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          margin-right: 0.4rem;
+          margin-bottom: 0.4rem;
+          font-family: var(--mono);
+          color: var(--ink);
+        }
+        .editorial-explanation .comentario-geral,
+        .editorial-explanation .conteudo-completo,
+        .editorial-explanation .pegadinha,
+        .editorial-explanation .contexto-especifico,
+        .editorial-explanation .raciocinio-alternativas {
+          padding: 1.5rem;
+          background: white;
+          border: 1px solid var(--rule);
+          border-radius: 8px;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .editorial-explanation .pegadinha h4 {
+          color: #D97706;
+        }
+        .editorial-explanation .pegadinha {
+          border-left: 4px solid #D97706;
+        }
+        .editorial-explanation .alt-item {
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1rem;
+          padding: 1rem;
+          background: var(--paper);
+          border: 1px solid var(--rule);
+          border-radius: 6px;
+        }
+        .editorial-explanation .alt-item:last-child {
+          margin-bottom: 0;
+        }
+        .editorial-explanation .alt-letra {
+          font-family: var(--mono);
+          font-weight: bold;
+          padding: 0.3rem 0.7rem;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: fit-content;
+        }
+        .editorial-explanation .alt-letra.correta {
+          background: rgba(16, 185, 129, 0.15);
+          color: #065F46;
+        }
+        .editorial-explanation .alt-letra.incorreta {
+          background: rgba(239, 68, 68, 0.15);
+          color: #991B1B;
+        }
+        .editorial-explanation .alt-texto {
+          font-size: 0.95rem;
+          line-height: 1.6;
+        }
       `}</style>
       <div style={{minHeight:'100vh', background:'var(--paper)', color:'var(--ink)', fontFamily:'var(--body)'}}>
         <header style={{padding:'1.5rem 2rem', borderBottom:'2px solid var(--ink)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--paper)'}}>
-          <div style={{fontFamily:'var(--display)', fontSize:'1.2rem', lineHeight:1}}>Roko<em style={{color:'var(--red)', fontStyle:'normal'}}>Med</em></div>
+          <div style={{fontFamily:'var(--display)', fontSize:'1.2rem', lineHeight:1}}>Roko<em style={{color:'var(--blue)', fontStyle:'normal'}}>Med</em></div>
         <div style={{fontFamily:'var(--mono)', fontSize:'0.8rem', letterSpacing:'0.1em', textTransform:'uppercase'}}>Questão {currentIndex + 1} / {questions.length}</div>
         <Link to="/" style={{fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--muted)', textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.1em'}}>Sair</Link>
       </header>
@@ -145,9 +231,11 @@ export default function FreeExamPage() {
         </div>
 
         {isAnswered && (
-          <div style={{background:'rgba(29, 78, 216, 0.05)', border:'1px solid var(--red)', padding:'2rem', marginBottom:'3rem'}}>
-            <h4 style={{fontFamily:'var(--mono)', color:'var(--red)', textTransform:'uppercase', fontSize:'0.75rem', marginBottom:'1rem', letterSpacing:'0.1em'}}>Comentário</h4>
-            <div dangerouslySetInnerHTML={{__html: q.explanation || 'Nenhum comentário disponível para esta questão no momento.'}} style={{fontSize:'0.95rem', lineHeight:1.6, color:'var(--ink)'}} />
+          <div style={{background:'rgba(37, 99, 235, 0.03)', border:'1px solid var(--blue)', padding:'2rem', marginBottom:'3rem', borderRadius: '8px'}}>
+            <h4 style={{fontFamily:'var(--mono)', color:'var(--blue)', textTransform:'uppercase', fontSize:'0.85rem', marginBottom:'1.5rem', letterSpacing:'0.1em', fontWeight:'bold'}}>
+              Resolução RokoMed
+            </h4>
+            <div className="editorial-explanation" dangerouslySetInnerHTML={{__html: q.explanation || 'Nenhum comentário disponível para esta questão no momento.'}} style={{fontSize:'1rem', lineHeight:1.6, color:'var(--ink)'}} />
           </div>
         )}
 
