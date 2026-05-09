@@ -19,10 +19,10 @@ export default function DashboardPage() {
   const StatCard = ({ icon: Icon, value, label, color }: {
     icon: React.ElementType; value: string | number; label: string; color: string;
   }) => (
-    <div className="glass glass-hover stat-card" style={{ borderRadius: 14 }}>
+    <div className="apple-card" style={{ padding: '20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="stat-value" style={{ color }}>{value}</div>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="stat-value">{value}</div>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={22} color={color} />
         </div>
       </div>
@@ -33,20 +33,20 @@ export default function DashboardPage() {
   return (
     <div className="animate-fade-in" style={{ maxWidth: 1100, margin: '0 auto' }}>
       {/* Welcome */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 800 }}>
+      <div className="dashboard-header" style={{ marginBottom: '32px' }}>
+        <h1 className="apple-title">
           Olá, {user?.name?.split(' ')[0]} 👋
         </h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: 6 }}>
+        <p className="apple-subtitle">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
 
       {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass" style={{ borderRadius: 14, padding: '1.25rem', height: 100, opacity: 0.5 }} />
+            <div key={i} className="apple-card" style={{ height: 110, opacity: 0.5 }} />
           ))
         ) : (
           <>
@@ -59,9 +59,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Main actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
         {/* Quick study card */}
-        <div className="glass" style={{ borderRadius: 16, padding: '1.75rem', background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(20,184,166,0.08))', border: '1px solid rgba(59,130,246,0.2)' }}>
+        <div className="apple-card" style={{ background: 'var(--bg-surface)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
             <div>
               <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>Continuar estudando</h2>
@@ -88,15 +88,15 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <button id="start-study-btn" className="btn btn-primary" onClick={() => navigate('/questoes')} style={{ width: '100%', padding: '0.875rem' }}>
+          <button id="start-study-btn" className="apple-btn" onClick={() => navigate('/questoes')} style={{ width: '100%', marginTop: '8px' }}>
             Ir para o banco de questões <ArrowRight size={16} />
           </button>
         </div>
 
         {/* Side panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Progress */}
-          <div className="glass" style={{ borderRadius: 14, padding: '1.25rem' }}>
+          <div className="apple-card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <TrendingUp size={18} color="var(--accent-green)" />
               <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Progresso hoje</span>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Streak */}
-          <div className="glass" style={{ borderRadius: 14, padding: '1.25rem', textAlign: 'center' }}>
+          <div className="apple-card" style={{ padding: '20px', textAlign: 'center' }}>
             <Flame size={32} color="#F97316" style={{ marginBottom: 8 }} />
             <div style={{ fontSize: '2.25rem', fontWeight: 800, fontFamily: 'Outfit', color: '#F97316' }}>
               {stats?.streak ?? 0}
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Study tips */}
-          <div className="glass" style={{ borderRadius: 14, padding: '1.25rem' }}>
+          <div className="apple-card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
               <Star size={16} color="var(--accent-gold)" />
               <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Dica do dia</span>

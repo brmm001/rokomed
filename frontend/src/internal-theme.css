@@ -1,0 +1,139 @@
+/* internal-theme.css - Premium Apple/Steve Jobs inspired design system for internal app */
+
+.internal-system {
+  /* Premium Dark Mode / Titanium Palette */
+  --bg-base: #0a0a0b;        /* Space Black */
+  --bg-surface: #121214;     /* Elevated Space Black */
+  --bg-surface-hover: #1a1a1d;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(255, 255, 255, 0.12);
+  --text-primary: #EDEDED;
+  --text-secondary: #A1A1A6; /* Titanium Gray */
+  --text-muted: #6B6B70;
+  
+  --apple-accent: #ffffff;   /* Pure white for primary actions is very premium */
+  --apple-accent-text: #000000;
+  --apple-accent-secondary: #0A84FF; /* iOS Blue for subtle accents */
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-base) !important;
+}
+
+.internal-system * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+}
+
+.internal-system h1, 
+.internal-system h2, 
+.internal-system h3 {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+/* Sidebar adjustments */
+.internal-system aside {
+  background: rgba(10, 10, 11, 0.8) !important;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-right: 1px solid var(--border) !important;
+}
+
+.internal-system .nav-item {
+  color: var(--text-secondary);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-weight: 500;
+}
+
+.internal-system .nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.internal-system .nav-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+  border-left: none !important;
+}
+
+/* Glassmorphism Cards */
+.internal-system .apple-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s, border-color 0.3s;
+}
+
+.internal-system .apple-card:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-accent);
+}
+
+/* Apple style Buttons */
+.internal-system .apple-btn {
+  background: var(--apple-accent);
+  color: var(--apple-accent-text);
+  border: none;
+  border-radius: 99px; /* Pill shape */
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.internal-system .apple-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.internal-system .apple-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.internal-system .apple-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Typography elements */
+.internal-system .apple-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #A1A1A6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.internal-system .apple-subtitle {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-top: 6px;
+  font-weight: 400;
+}
+
+.internal-system .stat-value {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: #ffffff !important;
+}
+
+.internal-system .stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 8px;
+}

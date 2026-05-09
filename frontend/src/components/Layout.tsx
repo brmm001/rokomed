@@ -10,6 +10,7 @@ import {
 import { useState } from 'react'
 import SupportWidget from './SupportWidget'
 import OnboardingModal from './OnboardingModal'
+import '../internal-theme.css'
 
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
@@ -38,7 +39,7 @@ export default function Layout() {
   const isAdmin = user && ['ADMIN', 'SUPERADMIN'].includes(user.role)
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-base)' }}>
+    <div className="internal-system" style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
