@@ -77,9 +77,21 @@ export default function FreeExamPage() {
   } catch(e) {}
 
   return (
-    <div style={{minHeight:'100vh', background:'var(--paper)', color:'var(--ink)', fontFamily:'var(--body)'}}>
-      <header style={{padding:'1.5rem 2rem', borderBottom:'2px solid var(--ink)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'white'}}>
-        <div style={{fontFamily:'var(--display)', fontSize:'1.2rem', lineHeight:1}}>Roko<em style={{color:'var(--red)', fontStyle:'normal'}}>Med</em></div>
+    <>
+      <style>{`
+        :root {
+          --paper: #FAFAFA;
+          --ink: #111111;
+          --rule: #E5E5E5;
+          --red: #D32F2F;
+          --display: 'Abril Fatface', serif;
+          --body: 'Crimson Pro', serif;
+          --mono: 'Inter', sans-serif;
+        }
+      `}</style>
+      <div style={{minHeight:'100vh', background:'var(--paper)', color:'var(--ink)', fontFamily:'var(--body)'}}>
+        <header style={{padding:'1.5rem 2rem', borderBottom:'2px solid var(--ink)', display:'flex', justifyContent:'space-between', alignItems:'center', background:'var(--paper)'}}>
+          <div style={{fontFamily:'var(--display)', fontSize:'1.2rem', lineHeight:1}}>Roko<em style={{color:'var(--red)', fontStyle:'normal'}}>Med</em></div>
         <div style={{fontFamily:'var(--mono)', fontSize:'0.8rem', letterSpacing:'0.1em', textTransform:'uppercase'}}>Questão {currentIndex + 1} / {questions.length}</div>
         <Link to="/" style={{fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--muted)', textDecoration:'none', textTransform:'uppercase', letterSpacing:'0.1em'}}>Sair</Link>
       </header>
@@ -137,5 +149,6 @@ export default function FreeExamPage() {
         )}
       </main>
     </div>
+    </>
   )
 }
