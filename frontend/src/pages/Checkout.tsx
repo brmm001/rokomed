@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, ShieldCheck, Mail, Lock, User, CreditCard } from 'lucide-react'
-import { api } from '../lib/api'
+import api from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
 
 type PlanType = 'monthly' | 'semiannual' | 'annual'
 
-const PLAN_DETAILS = {
+type PlanDetail = {
+  title: string;
+  price: string;
+  total?: string;
+  description: string;
+  features: string[];
+}
+
+const PLAN_DETAILS: Record<PlanType, PlanDetail> = {
   monthly: {
     title: 'Plano Mensal',
     price: 'R$ 29,00',
