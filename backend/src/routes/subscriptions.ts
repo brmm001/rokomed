@@ -59,7 +59,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         return reply.send({ checkoutUrl: result.init_point })
       } else {
         // Pagamento único (que pode ser parcelado no MP)
-        const amount = plan === 'semiannual' ? 114.00 : 180.00
+        const amount = plan === 'semiannual' ? 97.00 : 147.00
         const title = plan === 'semiannual' ? 'RokoMed - Plano Semestral' : 'RokoMed - Plano Anual'
         
         const preference = new Preference(client)
