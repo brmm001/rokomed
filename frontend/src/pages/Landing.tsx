@@ -1,9 +1,24 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { X, MessageCircle, Lock, Plus, Minus, ShieldCheck } from 'lucide-react'
+
 export default function LandingPage() {
+  const [showExitPopup, setShowExitPopup] = useState(false)
+  const [hasTriggeredPopup, setHasTriggeredPopup] = useState(false)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+
   useEffect(() => {
     document.title = 'RokoMed — Banco de Questões'
-  }, [])
+    
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 0 && !hasTriggeredPopup) {
+        setShowExitPopup(true)
+        setHasTriggeredPopup(true)
+      }
+    }
+    document.addEventListener('mouseleave', handleMouseLeave)
+    return () => document.removeEventListener('mouseleave', handleMouseLeave)
+  }, [hasTriggeredPopup])
 
   return (
     <>
@@ -167,6 +182,38 @@ export default function LandingPage() {
         .lp-flinks a { font-family:var(--mono); font-size:.63rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); text-decoration:none; }
         .lp-flinks a:hover { color:var(--ink); }
 
+        /* COMPARISON TABLE */
+        .lp-comp-s { padding: 5rem 5vw; border-bottom: 2px solid var(--ink); background: var(--paper); }
+        .lp-comp-hdr { text-align: center; margin-bottom: 3rem; }
+        .lp-comp-hdr h2 { font-family: var(--display); font-size: clamp(2rem, 4vw, 3rem); line-height: 1; }
+        .lp-comp-table { width: 100%; max-width: 900px; margin: 0 auto; border-collapse: collapse; border: 2px solid var(--ink); background: white; }
+        .lp-comp-table th, .lp-comp-table td { padding: 1.5rem 1rem; border: 1px solid var(--rule); text-align: center; font-size: 0.95rem; }
+        .lp-comp-table th { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem; background: var(--ink); color: var(--paper); border-color: var(--ink); }
+        .lp-comp-table th:first-child { background: var(--paper); color: var(--ink); text-align: left; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+        .lp-comp-table td:first-child { text-align: left; font-weight: 500; font-family: var(--body); border-right: 2px solid var(--ink); }
+        .lp-comp-table tr:last-child td { border-bottom: none; }
+        .lp-comp-table .lp-check { color: var(--red); font-weight: bold; font-family: var(--mono); }
+        .lp-comp-table .lp-cross { color: var(--muted); opacity: 0.5; font-family: var(--mono); }
+
+        /* FAQ */
+        .lp-faq-s { padding: 5rem 5vw; border-bottom: 2px solid var(--ink); display: grid; grid-template-columns: 1fr 2fr; gap: 4rem; }
+        .lp-faq-hdr h2 { font-family: var(--display); font-size: clamp(2rem, 4vw, 3rem); line-height: 1; }
+        .lp-faq-item { border-bottom: 1px solid var(--rule); }
+        .lp-faq-item:first-child { border-top: 1px solid var(--rule); }
+        .lp-faq-q { width: 100%; text-align: left; padding: 1.5rem 0; background: none; border: none; font-family: var(--body); font-size: 1.1rem; color: var(--ink); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .lp-faq-a { padding-bottom: 1.5rem; font-size: 0.95rem; color: var(--muted); line-height: 1.6; display: none; }
+        .lp-faq-item.open .lp-faq-a { display: block; }
+
+        /* WHATSAPP BTN */
+        .lp-wa-btn { position: fixed; bottom: 2rem; right: 2rem; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(37,211,102,0.4); z-index: 99; transition: transform 0.2s; }
+        .lp-wa-btn:hover { transform: scale(1.1); }
+
+        /* POPUP */
+        .lp-popup-overlay { position: fixed; inset: 0; background: rgba(17,17,17,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
+        .lp-popup { background: var(--paper); border: 2px solid var(--ink); padding: 3rem; max-width: 500px; width: 100%; position: relative; text-align: center; box-shadow: 12px 12px 0px 0px rgba(17,17,17,1); }
+        .lp-popup-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; cursor: pointer; color: var(--muted); transition: color 0.2s; }
+        .lp-popup-close:hover { color: var(--ink); }
+
         @media(max-width:900px){
           .lp-hero,.lp-spec-section,.lp-cta-s { grid-template-columns:1fr; }
           .lp-hero-right,.lp-spec-left { display:none; }
@@ -285,6 +332,51 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="lp-comp-s">
+          <div className="lp-comp-hdr">
+            <div className="lp-label" style={{marginBottom:'1rem'}}>O Fim do Cursinho Tradicional</div>
+            <h2>Nós vs. Eles</h2>
+          </div>
+          <div style={{overflowX: 'auto', paddingBottom: '1rem'}}>
+            <table className="lp-comp-table">
+              <thead>
+                <tr>
+                  <th>Comparativo</th>
+                  <th>Cursinhos Gigantes</th>
+                  <th style={{background:'var(--red)'}}>RokoMed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Preço Médio Anual</td>
+                  <td>R$ 6.500 a R$ 9.000</td>
+                  <td style={{fontWeight:'bold'}}>A partir de R$ 180</td>
+                </tr>
+                <tr>
+                  <td>Foco do Estudo</td>
+                  <td>Aulas teóricas de 2 horas</td>
+                  <td>Prática ativa e direta</td>
+                </tr>
+                <tr>
+                  <td>Comentários das Questões</td>
+                  <td>Longos e prolixos</td>
+                  <td>Diretos ao ponto</td>
+                </tr>
+                <tr>
+                  <td>Simulados com IA</td>
+                  <td><span className="lp-cross">✖ Não possui</span></td>
+                  <td><span className="lp-check">✔ Sim</span></td>
+                </tr>
+                <tr>
+                  <td>Cancelamento</td>
+                  <td>Multas absurdas</td>
+                  <td><span className="lp-check">✔ Cancele quando quiser</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section className="lp-testi-s" id="depoimentos">
           <div className="lp-testi-hdr">
             <div>
@@ -314,8 +406,15 @@ export default function LandingPage() {
             <div>
               <div className="lp-sec-num" style={{fontSize:'3rem',marginBottom:'.4rem'}}>04</div>
               <h2>Planos e preços</h2>
+              <div style={{background:'rgba(29, 78, 216, 0.1)', padding:'0.5rem 1rem', display:'inline-block', border:'1px solid var(--red)', marginTop:'1rem'}}>
+                <span style={{fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--red)', textTransform:'uppercase', letterSpacing:'0.1em'}}>
+                  ⚡ Aproveite os R$ 19 mensais antes do reajuste da nova versão!
+                </span>
+              </div>
             </div>
-            <p>Escolha o plano que melhor se adapta ao seu momento de estudo.</p>
+            <p>
+              Um cursinho tradicional custa R$ 8.500. O RokoMed custa menos que um lanche por mês para te garantir a vaga que vai mudar sua vida.
+            </p>
           </div>
           <div className="lp-pcards">
             <div className="lp-pc">
@@ -327,7 +426,6 @@ export default function LandingPage() {
                 <li>Acesso a todo o banco de questões</li>
                 <li>Simulados por especialidade</li>
                 <li>Gabaritos comentados</li>
-                <li>Estatísticas de desempenho</li>
                 <li>Cancele quando quiser</li>
               </ul>
               <Link to="/checkout?plan=monthly" className="lp-pc-btn lp-pc-btn-out">Começar agora →</Link>
@@ -339,13 +437,15 @@ export default function LandingPage() {
                 <span className="lp-cur">6x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">19</span>
               </div>
               <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginTop:'0.2rem'}}>ou à vista por R$ 97</div>
+              <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'#60A5FA', marginTop:'0.5rem', textTransform:'uppercase', letterSpacing:'0.05em', display:'flex', alignItems:'center', gap:'0.3rem'}}>
+                <ShieldCheck size={14}/> 7 dias de garantia
+              </div>
               <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Tudo do plano Mensal</li>
                 <li>Simulados personalizados por IA</li>
                 <li>Filtro avançado por banca e ano</li>
-                <li>Modo revisão rápida</li>
-                <li>Suporte prioritário</li>
+                <li style={{color:'#FFC107', fontWeight:600}}>🎁 Bônus: Planilha de Revisão Espaçada</li>
               </ul>
               <Link to="/checkout?plan=semiannual" className="lp-pc-btn lp-pc-btn-ppr">Economizar 34% →</Link>
             </div>
@@ -355,16 +455,53 @@ export default function LandingPage() {
                 <span className="lp-cur">12x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">15</span>
               </div>
               <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>ou à vista por R$ 180</div>
+              <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'var(--red)', marginTop:'0.5rem', textTransform:'uppercase', letterSpacing:'0.05em', display:'flex', alignItems:'center', gap:'0.3rem'}}>
+                <ShieldCheck size={14}/> 7 dias de garantia
+              </div>
               <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
                 <li>Tudo do plano Semestral</li>
                 <li>Acesso antecipado a novos recursos</li>
                 <li>Flashcards integrados</li>
-                <li>Planilha de evolução exportável</li>
-                <li>Suporte via WhatsApp</li>
+                <li style={{color:'var(--ink)', fontWeight:600}}>🎁 Bônus: Guia 100 Temas SUS-SP</li>
               </ul>
               <Link to="/checkout?plan=annual" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</Link>
             </div>
+          </div>
+          
+          <div style={{textAlign:'center', padding:'2rem', borderTop:'1px solid var(--rule)', display:'flex', alignItems:'center', justifyContent:'center', gap:'2rem', flexWrap:'wrap'}}>
+            <div style={{display:'flex', alignItems:'center', gap:'0.5rem', fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--muted)', textTransform:'uppercase'}}>
+              <Lock size={16} /> Compra 100% Segura
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:'0.5rem', fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--muted)', textTransform:'uppercase'}}>
+              <ShieldCheck size={16} /> Pagamento via Mercado Pago
+            </div>
+            <div style={{display:'flex', alignItems:'center', gap:'0.5rem', fontFamily:'var(--mono)', fontSize:'0.7rem', color:'var(--muted)', textTransform:'uppercase'}}>
+              Acesso Liberado na Hora
+            </div>
+          </div>
+        </section>
+
+        <section className="lp-faq-s">
+          <div className="lp-faq-hdr">
+            <h2>Perguntas Frequentes</h2>
+            <p style={{marginTop:'1rem', color:'var(--muted)'}}>Ficou alguma dúvida? Nós te ajudamos.</p>
+          </div>
+          <div>
+            {[
+              {q: "Tem aplicativo para celular?", a: "Sim! Nossa plataforma é totalmente responsiva e pode ser salva como aplicativo na tela inicial do seu celular (PWA), funcionando perfeitamente para você estudar nos plantões."},
+              {q: "As questões são atualizadas?", a: "Nossa equipe adiciona as provas mais recentes semanalmente. Logo que uma banca aplica a prova, nossa equipe já trabalha na correção comentada."},
+              {q: "Como funciona a garantia de 7 dias?", a: "Se você assinar o plano Semestral ou Anual e não gostar, basta nos mandar um único e-mail dentro de 7 dias e devolvemos 100% do seu dinheiro, sem letras miúdas."},
+              {q: "Posso cancelar quando quiser?", a: "Sim, o cancelamento da renovação pode ser feito a qualquer momento com apenas 2 cliques direto pelo seu painel, sem precisar falar com atendentes."}
+            ].map((faq, i) => (
+              <div key={i} className={`lp-faq-item ${openFaq === i ? 'open' : ''}`}>
+                <button className="lp-faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  {faq.q}
+                  {openFaq === i ? <Minus size={18}/> : <Plus size={18}/>}
+                </button>
+                <div className="lp-faq-a">{faq.a}</div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -386,6 +523,33 @@ export default function LandingPage() {
             <li><a href="#">Contato</a></li>
           </ul>
         </footer>
+
+        {/* Floating WhatsApp Button */}
+        <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="lp-wa-btn" aria-label="WhatsApp">
+          <MessageCircle size={32} />
+        </a>
+
+        {/* Exit Intent Popup */}
+        {showExitPopup && (
+          <div className="lp-popup-overlay" onClick={() => setShowExitPopup(false)}>
+            <div className="lp-popup" onClick={e => e.stopPropagation()}>
+              <button className="lp-popup-close" onClick={() => setShowExitPopup(false)}>
+                <X size={24} />
+              </button>
+              <div className="lp-sec-num" style={{fontSize:'3rem', marginBottom:'1rem', lineHeight:1}}>Espere!</div>
+              <h2 style={{fontFamily:'var(--display)', fontSize:'2.5rem', lineHeight:1, marginBottom:'1rem'}}>Não vá embora de mãos abanando.</h2>
+              <p style={{color:'var(--muted)', marginBottom:'2rem'}}>
+                Sabemos que a residência é puxada. Experimente grátis nosso simulado com as 50 questões mais difíceis de Cirurgia Geral.
+              </p>
+              <Link to="/register" className="lp-btn-ink" style={{display:'block', width:'100%', padding:'1.2rem', fontSize:'0.9rem'}} onClick={() => setShowExitPopup(false)}>
+                Fazer Simulado Grátis Agora
+              </Link>
+              <button onClick={() => setShowExitPopup(false)} style={{background:'none', border:'none', fontFamily:'var(--mono)', fontSize:'0.65rem', textTransform:'uppercase', color:'var(--muted)', marginTop:'1.5rem', cursor:'pointer', textDecoration:'underline'}}>
+                Não, prefiro continuar estudando do jeito antigo
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
