@@ -386,3 +386,10 @@ CREATE UNIQUE INDEX "question_irt_questionId_key" ON "question_irt"("questionId"
 -- CreateIndex
 CREATE UNIQUE INDEX "user_thetas_userId_specialtyId_key" ON "user_thetas"("userId", "specialtyId");
 
+C R E A T E   T A B L E   " s u p p o r t _ t i c k e t s "   ( " i d "   T E X T   N O T   N U L L   P R I M A R Y   K E Y ,   " u s e r I d "   T E X T   N O T   N U L L ,   " s u b j e c t "   T E X T   N O T   N U L L ,   " s t a t u s "   T E X T   N O T   N U L L   D E F A U L T    
+ '  
+ O P E N  
+ '  
+ ,   " c r e a t e d A t "   D A T E T I M E   N O T   N U L L   D E F A U L T   C U R R E N T _ T I M E S T A M P ,   " u p d a t e d A t "   D A T E T I M E   N O T   N U L L ,   C O N S T R A I N T   " s u p p o r t _ t i c k e t s _ u s e r I d _ f k e y "   F O R E I G N   K E Y   ( " u s e r I d " )   R E F E R E N C E S   " u s e r s "   ( " i d " )   O N   D E L E T E   C A S C A D E   O N   U P D A T E   C A S C A D E ) ;  
+ C R E A T E   T A B L E   " s u p p o r t _ m e s s a g e s "   ( " i d "   T E X T   N O T   N U L L   P R I M A R Y   K E Y ,   " t i c k e t I d "   T E X T   N O T   N U L L ,   " s e n d e r I d "   T E X T   N O T   N U L L ,   " c o n t e n t "   T E X T   N O T   N U L L ,   " c r e a t e d A t "   D A T E T I M E   N O T   N U L L   D E F A U L T   C U R R E N T _ T I M E S T A M P ,   C O N S T R A I N T   " s u p p o r t _ m e s s a g e s _ t i c k e t I d _ f k e y "   F O R E I G N   K E Y   ( " t i c k e t I d " )   R E F E R E N C E S   " s u p p o r t _ t i c k e t s "   ( " i d " )   O N   D E L E T E   C A S C A D E   O N   U P D A T E   C A S C A D E ,   C O N S T R A I N T   " s u p p o r t _ m e s s a g e s _ s e n d e r I d _ f k e y "   F O R E I G N   K E Y   ( " s e n d e r I d " )   R E F E R E N C E S   " u s e r s "   ( " i d " )   O N   D E L E T E   C A S C A D E   O N   U P D A T E   C A S C A D E ) ;  
+ 

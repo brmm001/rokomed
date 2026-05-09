@@ -8,6 +8,7 @@ import {
   Brain, BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
+import SupportWidget from './SupportWidget'
 
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
@@ -173,6 +174,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <SupportWidget />
     </div>
   )
 }

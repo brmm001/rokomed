@@ -5,19 +5,25 @@ import toast from 'react-hot-toast'
 import {
   LayoutDashboard, BookOpen, Users, FileText,
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
-  AlertTriangle, BookMarked
+  AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
+  Send, CheckCircle, Clock, Mail,
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
   const qc = useQueryClient()
 
-  const { data: stats,  isLoading: statsLoading  } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
-  const { data: qData,  isLoading: qLoading       } = useQuery({ queryKey: ['admin-questions'], queryFn: () => adminApi.questions(), enabled: tab === 'questions' })
-  const { data: uData,  isLoading: uLoading       } = useQuery({ queryKey: ['admin-users'],     queryFn: () => adminApi.users(),     enabled: tab === 'users' })
-  const { data: logs,   isLoading: logsLoading    } = useQuery({ queryKey: ['admin-logs'],      queryFn: () => adminApi.logs(),      enabled: tab === 'logs' })
+  const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
+  const { data: qData,   isLoading: qLoading        } = useQuery({ queryKey: ['admin-questions'], queryFn: () => adminApi.questions(), enabled: tab === 'questions' })
+  const { data: uData,   isLoading: uLoading        } = useQuery({ queryKey: ['admin-users'],     queryFn: () => adminApi.users(),     enabled: tab === 'users' })
+  const { data: logs,    isLoading: logsLoading     } = useQuery({ queryKey: ['admin-logs'],      queryFn: () => adminApi.logs(),      enabled: tab === 'logs' })
+  const { data: tickets, isLoading: ticketsLoading  } = useQuery({ queryKey: ['admin-support'],   queryFn: adminApi.supportTickets,    enabled: tab === 'support' })
+  const { data: ticketDetail } = useQuery({ queryKey: ['admin-ticket', selectedTicketId], queryFn: () => adminApi.supportTicket(selectedTicketId!), enabled: !!selectedTicketId })
+  const { data: leads,   isLoading: leadsLoading    } = useQuery({ queryKey: ['admin-leads'],     queryFn: adminApi.abandonedCheckouts, enabled: tab === 'leads' })
 
   const deleteQ = useMutation({
     mutationFn: (id: string) => adminApi.deleteQuestion(id),
@@ -29,10 +35,27 @@ export default function AdminPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast.success('Usuário atualizado') },
   })
 
+  const sendReply = useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) => adminApi.supportReply(id, content),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-ticket', selectedTicketId] })
+      qc.invalidateQueries({ queryKey: ['admin-support'] })
+      setReplyText('')
+      toast.success('Resposta enviada!')
+    },
+  })
+
+  const setTicketStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => adminApi.supportSetStatus(id, status),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-support'] }); qc.invalidateQueries({ queryKey: ['admin-ticket', selectedTicketId] }) },
+  })
+
   const tabs = [
     { id: 'stats',     label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
     { id: 'questions', label: 'Questões',      icon: <BookOpen size={16} /> },
     { id: 'users',     label: 'Usuários',      icon: <Users size={16} /> },
+    { id: 'leads',     label: 'Leads',         icon: <ShoppingCart size={16} /> },
+    { id: 'support',   label: 'Suporte',       icon: <MessageSquare size={16} /> },
     { id: 'logs',      label: 'Logs',          icon: <FileText size={16} /> },
   ] as const
 
@@ -222,6 +245,175 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Leads Tab ──────────────────────────────────────────────────────── */}
+      {tab === 'leads' && (
+        <div className="animate-fade-in">
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              Usuários que se cadastraram nos últimos 7 dias mas ainda não assinaram um plano PRO. Ótimas oportunidades de remarketing!
+            </p>
+          </div>
+          {leadsLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} className="animate-spin" /> Carregando...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {leads?.data?.length === 0 && (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum lead nos últimos 7 dias.</div>
+              )}
+              {leads?.data?.map((lead: {
+                id: string; name: string; email: string; createdAt: string;
+                payments: { status: string; plan: string; createdAt: string }[]
+              }) => (
+                <div key={lead.id} className="glass" style={{ borderRadius: 12, padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#0F2040,#1E3A5F)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--border)', fontWeight: 700, color: '#93C5FD', fontSize: '0.9rem' }}>
+                    {lead.name[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{lead.name}</div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Mail size={12} /> {lead.email}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                      Cadastrou em {new Date(lead.createdAt).toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                  <div style={{ flexShrink: 0 }}>
+                    {lead.payments.length > 0 ? (
+                      <span className="badge badge-gold" style={{ fontSize: '0.65rem' }}>Tentou pagar</span>
+                    ) : (
+                      <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>Só cadastrou</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Support Tab ────────────────────────────────────────────────────── */}
+      {tab === 'support' && (
+        <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: selectedTicketId ? '1fr 1.5fr' : '1fr', gap: '1rem' }}>
+          {/* Lista */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            {ticketsLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+                <RefreshCw size={18} className="animate-spin" /> Carregando...
+              </div>
+            ) : (
+              <>
+                {tickets?.data?.length === 0 && (
+                  <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum ticket de suporte ainda.</div>
+                )}
+                {tickets?.data?.map((t: {
+                  id: string; subject: string; status: string; updatedAt: string;
+                  user: { name: string; email: string }
+                }) => (
+                  <button
+                    key={t.id}
+                    id={`ticket-${t.id}`}
+                    className="glass"
+                    style={{
+                      borderRadius: 12, padding: '1rem', display: 'flex', alignItems: 'center',
+                      gap: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                      border: selectedTicketId === t.id ? '1px solid var(--accent-blue)' : '1px solid var(--border)',
+                    }}
+                    onClick={() => setSelectedTicketId(t.id)}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#0F2040,#1E3A5F)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#93C5FD', fontSize: '0.85rem' }}>
+                      {t.user.name[0]?.toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{t.subject}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.user.name}</div>
+                    </div>
+                    <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <span style={{
+                        fontSize: '0.6rem', padding: '2px 6px', borderRadius: 99,
+                        background: t.status === 'OPEN' ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
+                        color: t.status === 'OPEN' ? 'var(--accent-blue)' : 'var(--text-muted)',
+                        border: `1px solid ${t.status === 'OPEN' ? 'rgba(59,130,246,0.3)' : 'var(--border)'}`,
+                      }}>
+                        {t.status === 'OPEN' ? <><Clock size={9} style={{ display:'inline', marginRight:2 }} />Aberto</> : <><CheckCircle size={9} style={{ display:'inline', marginRight:2 }} />Fechado</>}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                        {new Date(t.updatedAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+
+          {/* Chat do ticket selecionado */}
+          {selectedTicketId && ticketDetail && (
+            <div className="glass" style={{ borderRadius: 16, display: 'flex', flexDirection: 'column', maxHeight: '70vh' }}>
+              {/* Header do ticket */}
+              <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{ticketDetail.ticket?.subject}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {ticketDetail.ticket?.user?.name} · {ticketDetail.ticket?.user?.email}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTicketStatus.mutate({ id: selectedTicketId, status: ticketDetail.ticket?.status === 'OPEN' ? 'CLOSED' : 'OPEN' })}
+                  className={`btn ${ticketDetail.ticket?.status === 'OPEN' ? 'btn-secondary' : 'btn-primary'}`}
+                  style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
+                >
+                  {ticketDetail.ticket?.status === 'OPEN' ? <><CheckCircle size={13} /> Fechar</> : <><Clock size={13} /> Reabrir</>}
+                </button>
+              </div>
+              {/* Mensagens */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {ticketDetail.ticket?.messages?.map((msg: { id: string; content: string; createdAt: string; sender: { name: string; role: string } }) => {
+                  const isAdmin = ['ADMIN', 'SUPERADMIN'].includes(msg.sender?.role)
+                  return (
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isAdmin ? 'flex-end' : 'flex-start' }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: 3 }}>
+                        {isAdmin ? '👮 Você (Admin)' : `👤 ${msg.sender?.name}`}
+                      </div>
+                      <div style={{
+                        maxWidth: '85%', padding: '8px 12px', borderRadius: 12, fontSize: '0.875rem', lineHeight: 1.5,
+                        ...(isAdmin
+                          ? { background: 'var(--accent-blue)', color: 'white', borderBottomRightRadius: 3 }
+                          : { background: 'var(--bg-base)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderBottomLeftRadius: 3 }
+                        )
+                      }}>
+                        {msg.content}
+                      </div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                        {new Date(msg.createdAt).toLocaleString('pt-BR')}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Reply */}
+              <form
+                onSubmit={(e) => { e.preventDefault(); if (replyText.trim()) sendReply.mutate({ id: selectedTicketId, content: replyText }) }}
+                style={{ padding: '0.75rem', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}
+              >
+                <input
+                  type="text"
+                  placeholder="Escreva sua resposta..."
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  className="input"
+                  style={{ flex: 1, fontSize: '0.875rem' }}
+                />
+                <button type="submit" disabled={sendReply.isPending} className="btn btn-primary" style={{ padding: '0.5rem 0.875rem' }}>
+                  <Send size={14} />
+                </button>
+              </form>
             </div>
           )}
         </div>

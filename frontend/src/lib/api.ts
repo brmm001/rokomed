@@ -103,6 +103,22 @@ export const adminApi = {
     api.get('/admin/logs', { params: { page } }).then(r => r.data),
   specialties: () => api.get('/admin/specialties').then(r => r.data),
   institutions: () => api.get('/admin/institutions').then(r => r.data),
+  abandonedCheckouts: () => api.get('/admin/abandoned-checkouts').then(r => r.data),
+  supportTickets: () => api.get('/admin/support/tickets').then(r => r.data),
+  supportTicket: (id: string) => api.get(`/admin/support/tickets/${id}`).then(r => r.data),
+  supportReply: (ticketId: string, content: string) =>
+    api.post(`/admin/support/tickets/${ticketId}/messages`, { content }).then(r => r.data),
+  supportSetStatus: (ticketId: string, status: string) =>
+    api.patch(`/admin/support/tickets/${ticketId}/status`, { status }).then(r => r.data),
+}
+
+// ── Support ──────────────────────────────────────────────────────────────────
+export const supportApi = {
+  tickets: () => api.get('/support/tickets').then(r => r.data),
+  createTicket: (subject: string, content: string) =>
+    api.post('/support/tickets', { subject, content }).then(r => r.data),
+  sendMessage: (ticketId: string, content: string) =>
+    api.post(`/support/tickets/${ticketId}/messages`, { content }).then(r => r.data),
 }
 
 // ── Subscriptions ────────────────────────────────────────────────────────────

@@ -213,4 +213,93 @@ export default async function adminRoutes(app: FastifyInstance) {
     const institution = await prisma.institution.create({ data: { name, acronym, city, state } })
     return reply.code(201).send({ institution })
   })
+
+  // ── Abandoned Checkouts ──────────────────────────────────────────────────
+  app.get('/abandoned-checkouts', { preHandler: [isAdmin] }, async (_request, reply) => {
+    // Retorna usuários cujo plano é FREE e não têm assinaturas nem pagamentos aprovados recentes
+    // Para simplificar, pegaremos usuários FREE criados nos últimos 7 dias.
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    const leads = await prisma.user.findMany({
+      where: {
+        plan: 'FREE',
+        createdAt: { gte: sevenDaysAgo }
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        payments: {
+          select: { status: true, plan: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        }
+      }
+    })
+
+    return reply.send({ data: leads })
+  })
+
+  // ── Support Tickets ────────────────────────────────────────────────────────
+  app.get('/support/tickets', { preHandler: [isAdmin] }, async (_request, reply) => {
+    const tickets = await prisma.supportTicket.findMany({
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        user: { select: { name: true, email: true } },
+      }
+    })
+    return reply.send({ data: tickets })
+  })
+
+  app.get('/support/tickets/:id', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string }
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, email: true } },
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          include: { sender: { select: { name: true, role: true } } }
+        }
+      }
+    })
+    if (!ticket) return reply.code(404).send({ error: 'Not found' })
+    return reply.send({ ticket })
+  })
+
+  app.post('/support/tickets/:id/messages', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+    const schema = z.object({ content: z.string().min(1) })
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    const message = await prisma.supportMessage.create({
+      data: {
+        ticketId: id,
+        senderId: payload.sub,
+        content: parsed.data.content
+      }
+    })
+    
+    await prisma.supportTicket.update({
+      where: { id },
+      data: { updatedAt: new Date(), status: 'OPEN' } // ou algo similar
+    })
+
+    return reply.send({ message })
+  })
+
+  app.patch('/support/tickets/:id/status', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string }
+    const { status } = request.body as { status: string }
+    const ticket = await prisma.supportTicket.update({
+      where: { id },
+      data: { status }
+    })
+    return reply.send({ ticket })
+  })
 }
