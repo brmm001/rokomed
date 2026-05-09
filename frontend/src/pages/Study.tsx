@@ -131,14 +131,14 @@ export default function StudyPage() {
   const breadcrumb = buildBreadcrumb(q.specialty)
 
   const getOptionClass = (letter: string) => {
-    if (!submitted) return 'option-btn'
-    if (letter === q.correctOption) return 'option-btn correct'
-    if (letter === selected)        return 'option-btn wrong'
-    return 'option-btn'
+    if (!submitted) return 'apple-option'
+    if (letter === q.correctOption) return 'apple-option correct'
+    if (letter === selected)        return 'apple-option wrong'
+    return 'apple-option'
   }
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
+    <div className="animate-spring" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -189,8 +189,8 @@ export default function StudyPage() {
       </div>
 
       {/* ── Question Card ────────────────────────────────────────────────── */}
-      <div className="glass" style={{ borderRadius: 18, padding: '2rem', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '1rem', lineHeight: 1.75, color: 'var(--text-primary)', marginBottom: '1.75rem' }}
+      <div style={{ padding: '0 0.5rem 2rem 0.5rem', marginBottom: '1rem' }}>
+        <div style={{ fontSize: '1.35rem', fontWeight: 500, lineHeight: 1.6, color: 'var(--text-primary)', marginBottom: '2.5rem', letterSpacing: '-0.015em' }}
           dangerouslySetInnerHTML={{ __html: q.statement }} />
 
         {q.images && q.images.length > 0 && (
@@ -212,16 +212,17 @@ export default function StudyPage() {
               onClick={() => handleAnswer(letter)}
               disabled={submitted}>
               <span style={{
-                width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                width: 32, height: 32, borderRadius: 10, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 700, fontSize: '0.875rem',
-                background: submitted && letter === q.correctOption ? 'rgba(16,185,129,0.3)'
-                  : submitted && letter === selected ? 'rgba(239,68,68,0.3)'
-                  : 'rgba(255,255,255,0.06)',
-                transition: 'background 0.3s',
+                fontWeight: 600, fontSize: '1rem',
+                background: submitted && letter === q.correctOption ? '#30D158'
+                  : submitted && letter === selected ? '#FF453A'
+                  : 'rgba(255,255,255,0.1)',
+                color: '#fff',
+                transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
               }}>
-                {submitted && letter === q.correctOption && <CheckCircle size={15} color="#10B981" />}
-                {submitted && letter === selected && letter !== q.correctOption && <XCircle size={15} color="#EF4444" />}
+                {submitted && letter === q.correctOption && <CheckCircle size={18} color="#fff" />}
+                {submitted && letter === selected && letter !== q.correctOption && <XCircle size={18} color="#fff" />}
                 {(!submitted || (letter !== q.correctOption && letter !== selected)) && letter}
               </span>
               <span style={{ flex: 1 }}>{text}</span>
@@ -252,12 +253,12 @@ export default function StudyPage() {
           }}>
             <div style={{
               width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-              background: isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
+              background: isCorrect ? '#30D158' : '#FF453A',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {isCorrect
-                ? <CheckCircle size={28} color="#10B981" />
-                : <XCircle size={28} color="#EF4444" />}
+                ? <CheckCircle size={28} color="#fff" />
+                : <XCircle size={28} color="#fff" />}
             </div>
             <div>
               <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem',
@@ -275,10 +276,10 @@ export default function StudyPage() {
           {/* Cards de estatísticas */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
             {/* % Acerto global */}
-            <div className="glass" style={{ borderRadius: 14, padding: '1rem 1.25rem' }}>
+            <div className="apple-card" style={{ padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <BarChart3 size={16} color="var(--accent-blue)" />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>ACERTO GERAL</span>
+                <BarChart3 size={16} color="var(--text-secondary)" />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>ACERTO GERAL</span>
               </div>
               {q.stats?.correctRate !== null && q.stats?.correctRate !== undefined ? (
                 <>
@@ -301,10 +302,10 @@ export default function StudyPage() {
             </div>
 
             {/* Dificuldade */}
-            <div className="glass" style={{ borderRadius: 14, padding: '1rem 1.25rem' }}>
+            <div className="apple-card" style={{ padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <Target size={16} color="var(--accent-gold)" />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>DIFICULDADE</span>
+                <Target size={16} color="var(--text-secondary)" />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>DIFICULDADE</span>
               </div>
               <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.4rem',
                 color: q.difficulty === 'FACIL' ? '#6EE7B7' : q.difficulty === 'MEDIO' ? '#FCD34D' : '#FCA5A5' }}>
@@ -318,10 +319,10 @@ export default function StudyPage() {
             </div>
 
             {/* Sua performance */}
-            <div className="glass" style={{ borderRadius: 14, padding: '1rem 1.25rem' }}>
+            <div className="apple-card" style={{ padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                <TrendingUp size={16} color="var(--accent-teal)" />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>SEU RESULTADO</span>
+                <TrendingUp size={16} color="var(--text-secondary)" />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>SEU RESULTADO</span>
               </div>
               <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.4rem',
                 color: isCorrect ? '#6EE7B7' : '#FCA5A5' }}>
@@ -421,7 +422,7 @@ export default function StudyPage() {
           <button id="flag-btn" className="btn btn-ghost" style={{ color: 'var(--text-muted)' }}>
             <Flag size={16} /> Sinalizar
           </button>
-          <button className="btn btn-primary"
+          <button className="apple-btn"
             onClick={() => { setSelected(null); setSubmitted(false); setShowExpl(true); navigate('/questoes') }}>
             Próxima questão
           </button>

@@ -137,3 +137,72 @@
   font-weight: 500;
   margin-top: 8px;
 }
+
+/* ── Apple Style Option Cards ────────────────────────────────────────────── */
+.internal-system .apple-option {
+  width: 100%;
+  text-align: left;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(28, 28, 30, 0.4);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.internal-system .apple-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.internal-system .apple-option:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.internal-system .apple-option.selected {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.internal-system .apple-option.correct {
+  border-color: #30D158;
+  background: rgba(48, 209, 88, 0.15);
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.1);
+  animation: pulse-correct 0.5s ease-out;
+}
+
+.internal-system .apple-option.wrong {
+  border-color: #FF453A;
+  background: rgba(255, 69, 58, 0.1);
+  animation: shake-error 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes shake-error {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes pulse-correct {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.internal-system .animate-spring {
+  animation: spring-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes spring-up {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

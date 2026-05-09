@@ -59,8 +59,8 @@ export default function QuestionBankPage() {
   return (
     <div className="animate-fade-in" style={{ maxWidth: 1000, margin: '0 auto' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.625rem', margin: 0, fontWeight: 800 }}>Banco de Questões</h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: 4, fontSize: '0.875rem' }}>
+        <h1 className="apple-title">Banco de Questões</h1>
+        <p className="apple-subtitle">
           {data?.total ? `${data.total.toLocaleString('pt-BR')} questões disponíveis` : 'Carregando...'}
         </p>
       </div>
@@ -80,19 +80,19 @@ export default function QuestionBankPage() {
               style={{ paddingLeft: '2.5rem' }}
             />
           </div>
-          <button type="submit" className="btn btn-secondary"><Search size={16} /></button>
+          <button type="submit" className="apple-btn apple-btn-secondary" style={{ padding: '12px 16px' }}><Search size={16} /></button>
         </form>
 
         <button
           id="toggle-filters-btn"
-          className={`btn ${showFilters ? 'btn-primary' : 'btn-ghost'}`}
+          className={`apple-btn ${!showFilters ? 'apple-btn-secondary' : ''}`}
           onClick={() => setShowFilters(p => !p)}
           style={{ gap: '0.5rem', position: 'relative' }}
         >
           <SlidersHorizontal size={16} />
           Filtros
           {activeFilters > 0 && (
-            <span style={{ position: 'absolute', top: -6, right: -6, background: 'var(--accent-blue)', borderRadius: '50%', width: 18, height: 18, fontSize: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+            <span style={{ position: 'absolute', top: -6, right: -6, background: 'var(--apple-accent-secondary)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
               {activeFilters}
             </span>
           )}
@@ -101,7 +101,7 @@ export default function QuestionBankPage() {
 
       {/* Filters panel */}
       {showFilters && (
-        <div className="glass animate-fade-in" style={{ borderRadius: 14, padding: '1.25rem', marginBottom: '1rem' }}>
+        <div className="apple-card animate-spring" style={{ padding: '24px', marginBottom: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Especialidade</label>
@@ -150,7 +150,7 @@ export default function QuestionBankPage() {
             </label>
 
             {activeFilters > 0 && (
-              <button className="btn btn-ghost" onClick={clearFilters} style={{ fontSize: '0.8125rem' }}>
+              <button className="apple-btn apple-btn-secondary" onClick={clearFilters} style={{ padding: '8px 12px', fontSize: '13px' }}>
                 <X size={14} /> Limpar filtros
               </button>
             )}
@@ -160,19 +160,19 @@ export default function QuestionBankPage() {
 
       {/* Questions list */}
       {isLoading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="glass" style={{ borderRadius: 12, padding: '1.5rem', opacity: 0.4 + i * 0.1 }}>
+            <div key={i} className="apple-card" style={{ padding: '24px', opacity: 0.4 + i * 0.1 }}>
               <div style={{ height: 14, background: 'var(--bg-elevated)', borderRadius: 4, width: '80%', marginBottom: 10 }} />
               <div style={{ height: 12, background: 'var(--bg-elevated)', borderRadius: 4, width: '60%' }} />
             </div>
           ))}
         </div>
       ) : data?.data?.length === 0 ? (
-        <div className="glass" style={{ borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+        <div className="apple-card" style={{ padding: '40px', textAlign: 'center' }}>
           <BookOpen size={48} color="var(--text-muted)" style={{ marginBottom: 16 }} />
           <h3 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Nenhuma questão encontrada</h3>
-          <button className="btn btn-ghost" onClick={clearFilters} style={{ marginTop: 12 }}>
+          <button className="apple-btn apple-btn-secondary" onClick={clearFilters} style={{ marginTop: 16 }}>
             <RefreshCw size={14} /> Limpar filtros
           </button>
         </div>
@@ -197,12 +197,11 @@ export default function QuestionBankPage() {
               key={q.id}
               id={`question-item-${idx}`}
               onClick={() => navigate(`/questoes/${q.id}`)}
-              className="glass glass-hover"
+              className="apple-card"
               style={{
-                borderRadius: 12, padding: '1.25rem',
+                padding: '24px',
                 textAlign: 'left', cursor: 'pointer',
-                border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'flex-start', gap: '1rem',
+                display: 'flex', alignItems: 'flex-start', gap: '16px',
                 width: '100%',
               }}
             >
@@ -235,13 +234,13 @@ export default function QuestionBankPage() {
       {/* Pagination */}
       {data && data.totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
-          <button className="btn btn-ghost" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+          <button className="apple-btn apple-btn-secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: '8px 16px', fontSize: '14px' }}>
             <ChevronLeft size={16} /> Anterior
           </button>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500 }}>
             Página {page} de {data.totalPages}
           </span>
-          <button className="btn btn-ghost" onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}>
+          <button className="apple-btn apple-btn-secondary" onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} style={{ padding: '8px 16px', fontSize: '14px' }}>
             Próxima <ChevronRight size={16} />
           </button>
         </div>

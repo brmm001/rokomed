@@ -226,7 +226,37 @@ export default async function questionRoutes(app: FastifyInstance) {
       data: { userId: payload.sub, questionId: id, selectedOpt: selectedOpt.toUpperCase(), isCorrect, timeSpentSec },
     })
 
-    return reply.code(201).send({ answer, isCorrect, correctOption: question.correctOption })
+    // Atualiza Sequência Ativa (Streak) e Data do Último Estudo
+    const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { streak: true, lastStudyDate: true } })
+    if (user) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const lastStudy = user.lastStudyDate ? new Date(user.lastStudyDate) : null
+      if (lastStudy) lastStudy.setHours(0, 0, 0, 0)
+
+      const msInDay = 24 * 60 * 60 * 1000
+      let newStreak = user.streak
+
+      if (!lastStudy) {
+        newStreak = 1
+      } else {
+        const diffDays = Math.floor((today.getTime() - lastStudy.getTime()) / msInDay)
+        if (diffDays === 1) {
+          newStreak += 1 // Estudou ontem e hoje
+        } else if (diffDays > 1) {
+          newStreak = 1 // Perdeu a sequência
+        }
+        // Se diffDays === 0, ele já estudou hoje, mantém a sequência.
+      }
+
+      await prisma.user.update({
+        where: { id: payload.sub },
+        data: { streak: newStreak, lastStudyDate: new Date() }
+      })
+    }
+
+    return reply.code(201).send({ answer, isCorrect, correctOption: question.correctOption, newStreak: user?.streak })
   })
 
   // POST /api/questions/:id/bookmark — toggle favorito
