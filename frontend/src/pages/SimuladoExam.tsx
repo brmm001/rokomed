@@ -82,7 +82,11 @@ export default function SimuladoExamPage() {
 
   const startMutation = useMutation({
     mutationFn: () => simuladosApi.start(id!),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['simulado', id] }),
+    onSuccess:  (data) => {
+      qc.setQueryData(['simulado', id], (old: any) => old ? { ...old, status: data.exam.status, startedAt: data.exam.startedAt } : old)
+      qc.invalidateQueries({ queryKey: ['simulado', id] })
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Erro ao iniciar simulado'),
   })
 
   const answerMutation = useMutation({

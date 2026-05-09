@@ -122,7 +122,8 @@ const specialtyCache = new Map<string, string>() // slug → id
 
 async function getOrCreateSpecialty(
   name: string,
-  parentId?: string
+  parentId?: string,
+  isGrandeArea: boolean = false
 ): Promise<string> {
   const slug = toSlug(name) + (parentId ? `-${parentId.slice(-6)}` : '')
   const cached = specialtyCache.get(slug)
@@ -130,20 +131,26 @@ async function getOrCreateSpecialty(
 
   const specialty = await prisma.specialty.upsert({
     where:  { slug },
-    create: { name, slug, parentId: parentId ?? null },
-    update: {},
+    create: { name, slug, parentId: parentId ?? null, isGrandeArea },
+    update: { isGrandeArea },
   })
 
   specialtyCache.set(slug, specialty.id)
   return specialty.id
 }
 
-/** Cria hierarquia de 3 níveis: grande_tema → tema → subtema */
+/** Cria hierarquia de níveis: área → grande_tema → tema → subtema */
 async function resolveSpecialtyId(raw: GabaritoItem): Promise<string> {
-  const level1Id = await getOrCreateSpecialty(raw.grande_tema)
-  const level2Id = await getOrCreateSpecialty(raw.tema,     level1Id)
-  const level3Id = await getOrCreateSpecialty(raw.subtema,  level2Id)
-  return level3Id
+  // Level 1: Grande Área (ex: Clínica Médica)
+  const level1Id = await getOrCreateSpecialty(raw.area || 'Outros', undefined, true)
+  // Level 2: Grande Tema (ex: Pneumologia)
+  const level2Id = raw.grande_tema ? await getOrCreateSpecialty(raw.grande_tema, level1Id) : level1Id
+  // Level 3: Tema (ex: Tuberculose pulmonar)
+  const level3Id = raw.tema ? await getOrCreateSpecialty(raw.tema, level2Id) : level2Id
+  // Level 4: Subtema (ex: Investigação de tosse crônica)
+  const level4Id = raw.subtema ? await getOrCreateSpecialty(raw.subtema, level3Id) : level3Id
+
+  return level4Id
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────

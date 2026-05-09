@@ -113,6 +113,10 @@ model Question {
   mockExamQuestions MockExamQuestion[]
   irt           QuestionIRT?
 
+  @@index([specialtyId])
+  @@index([institutionId])
+  @@index([isPublished])
+  @@index([createdAt])
   @@map("questions")
 }
 

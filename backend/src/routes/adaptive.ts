@@ -38,6 +38,15 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
     const thetaStart = existingTheta?.theta ?? 0
     const seStart = existingTheta?.se ?? 1.0
 
+    // Get first item pool
+    const pool = await loadItemPool(specialtyId ?? null)
+    
+    if (pool.length === 0) {
+      return reply.code(400).send({ error: 'Sem questões disponíveis para esta configuração' })
+    }
+
+    const actualNItems = Math.min(nItems, pool.length)
+
     // Create adaptive session
     const session = await prisma.adaptiveSession.create({
       data: {
@@ -45,19 +54,17 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
         specialtyId: specialtyId ?? null,
         thetaStart,
         seStart,
-        totalItems: nItems,
+        totalItems: actualNItems,
         status: 'ACTIVE',
       },
     })
 
-    // Get first item
-    const pool = await loadItemPool(specialtyId ?? null)
     const answeredIds = new Set<string>()
     const firstItem = selectNextItem(thetaStart, pool, answeredIds)
 
     if (!firstItem) {
       await prisma.adaptiveSession.update({ where: { id: session.id }, data: { status: 'FINISHED', finishedAt: new Date() } })
-      return reply.code(400).send({ error: 'Sem questões disponíveis para esta configuração' })
+      return reply.code(400).send({ error: 'Erro ao selecionar questão' })
     }
 
     // Create first session item
@@ -80,7 +87,7 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
         id: session.id,
         thetaStart,
         seStart,
-        totalItems: nItems,
+        totalItems: actualNItems,
         currentIndex: 0,
         status: 'ACTIVE',
       },

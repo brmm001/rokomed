@@ -347,13 +347,11 @@ export default async function questionRoutes(app: FastifyInstance) {
       where: { isGrandeArea: true },
       select: {
         id: true, name: true,
-        _count: { select: { children: true, questions: true } },
         children: {
           select: {
             id: true, name: true,
-            _count: { select: { children: true, questions: true } },
             children: {
-              select: { id: true, name: true, _count: { select: { questions: true } } },
+              select: { id: true, name: true },
               orderBy: { name: 'asc' },
             },
           },
