@@ -102,4 +102,40 @@ export default async function userRoutes(app: FastifyInstance) {
 
     return reply.send({ user })
   })
+
+  // POST /api/user/onboarding — salva dados do onboarding
+  app.post('/onboarding', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const {
+      originInstitution,
+      targetInstitutionId,
+      targetSpecialtyId,
+      examYear,
+    } = request.body as {
+      originInstitution?: string
+      targetInstitutionId?: string
+      targetSpecialtyId?: string
+      examYear?: number
+    }
+
+    const examDate = examYear ? new Date(`${examYear}-01-01`) : undefined
+
+    const user = await prisma.user.update({
+      where: { id: payload.sub },
+      data: {
+        onboardingDone: true,
+        ...(originInstitution && { originInstitution }),
+        ...(targetInstitutionId && { targetInstitutionId }),
+        ...(targetSpecialtyId && { targetSpecialtyId }),
+        ...(examDate && { examDate }),
+      },
+      select: {
+        id: true, name: true, email: true, plan: true, role: true,
+        onboardingDone: true, originInstitution: true,
+        targetInstitutionId: true, targetSpecialtyId: true, examDate: true,
+      },
+    })
+
+    return reply.send({ user })
+  })
 }

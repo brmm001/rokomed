@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import SupportWidget from './SupportWidget'
+import OnboardingModal from './OnboardingModal'
 
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
@@ -23,6 +24,9 @@ export default function Layout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Mostra onboarding para usuários PRO que ainda não completaram
+  const showOnboarding = user?.plan === 'PRO' && user?.onboardingDone === false
 
   const handleLogout = async () => {
     await authApi.logout().catch(() => {})
@@ -176,6 +180,14 @@ export default function Layout() {
       </div>
 
       <SupportWidget />
+      {showOnboarding && (
+        <OnboardingModal onComplete={() => {
+          // Atualiza o store local para não mostrar novamente
+          useAuthStore.setState(state => ({
+            user: state.user ? { ...state.user, onboardingDone: true } : null
+          }))
+        }} />
+      )}
     </div>
   )
 }

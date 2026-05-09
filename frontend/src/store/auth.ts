@@ -10,6 +10,11 @@ interface User {
   plan: 'FREE' | 'PRO' | 'GRUPO'
   xp: number
   streak: number
+  onboardingDone?: boolean
+  originInstitution?: string
+  targetInstitutionId?: string
+  targetSpecialtyId?: string
+  examDate?: string
 }
 
 interface AuthState {
