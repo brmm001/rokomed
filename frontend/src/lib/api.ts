@@ -69,10 +69,10 @@ export const simuladosApi = {
   }) => api.post('/simulados', data).then(r => r.data),
   list: () => api.get('/simulados').then(r => r.data),
   get:  (id: string) => api.get(`/simulados/${id}`).then(r => r.data),
-  start:  (id: string) => api.patch(`/simulados/${id}/start`).then(r => r.data),
+  start:  (id: string) => api.patch(`/simulados/${id}/start`, {}).then(r => r.data),
   answer: (id: string, data: { order: number; selectedOpt: string }) =>
     api.patch(`/simulados/${id}/answer`, data).then(r => r.data),
-  finish: (id: string) => api.patch(`/simulados/${id}/finish`).then(r => r.data),
+  finish: (id: string) => api.patch(`/simulados/${id}/finish`, {}).then(r => r.data),
 }
 
 // ── User ────────────────────────────────────────────────────────────────────

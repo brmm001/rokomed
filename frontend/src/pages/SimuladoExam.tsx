@@ -86,7 +86,11 @@ export default function SimuladoExamPage() {
       qc.setQueryData(['simulado', id], (old: any) => old ? { ...old, status: data.exam.status, startedAt: data.exam.startedAt } : old)
       qc.invalidateQueries({ queryKey: ['simulado', id] })
     },
-    onError: (err: any) => toast.error(err?.response?.data?.error || 'Erro ao iniciar simulado'),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error || err?.message || 'Erro ao iniciar simulado';
+      toast.error(msg);
+      console.error('[Simulado] Error starting exam:', err);
+    },
   })
 
   const answerMutation = useMutation({
@@ -100,7 +104,11 @@ export default function SimuladoExamPage() {
       qc.invalidateQueries({ queryKey: ['simulado', id] })
       setShowResult(true)
     },
-    onError: () => toast.error('Erro ao finalizar simulado'),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error || err?.message || 'Erro ao finalizar simulado';
+      toast.error(msg);
+      console.error('[Simulado] Error finishing exam:', err);
+    },
   })
 
   const handleStart = () => startMutation.mutate()
