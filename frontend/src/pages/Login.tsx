@@ -126,12 +126,7 @@ export default function LoginPage() {
             </Link>
           </p>
           
-          {/* Demo credentials */}
-          <div className="mt-12 pt-6 border-t border-[rgba(0,0,0,0.1)] text-center">
-            <p className="font-['IBM_Plex_Mono',monospace] text-[0.6rem] text-[rgba(0,0,0,0.4)] tracking-widest uppercase">
-              Demo Admin: admin@residencia.app / admin123
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
