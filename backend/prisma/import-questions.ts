@@ -72,7 +72,7 @@ function buildCode(instituicao: string, ano: number, numero: number): string {
 }
 
 async function main() {
-  const filePath = path.resolve(__dirname, '../../questoes_importar.jsonl')
+  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '../../questoes_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Arquivo não encontrado: ${filePath}`)

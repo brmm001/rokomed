@@ -156,7 +156,7 @@ async function resolveSpecialtyId(raw: GabaritoItem): Promise<string> {
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
-  const filePath = path.resolve(__dirname, '../../gabarito_importar.jsonl')
+  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '../../gabarito_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Arquivo não encontrado: ${filePath}`)
