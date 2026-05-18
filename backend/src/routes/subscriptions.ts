@@ -52,7 +52,6 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               transaction_amount: 29.00,
               currency_id: "BRL"
             },
-            payer_email: user.email,
             status: "pending"
           }
         })
@@ -74,9 +73,6 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
                 currency_id: "BRL"
               }
             ],
-            payer: {
-              email: user.email
-            },
             back_urls: {
               success: `${frontUrl}/dashboard?payment=success`,
               failure: `${frontUrl}/checkout?payment=failure`,
