@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { requireAuth } from '../middleware/auth'
-import { MercadoPagoConfig, Preference, PreApproval } from 'mercadopago'
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
   // GET /api/subscriptions/current — assinatura atual
@@ -24,69 +24,63 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
   // POST /api/subscriptions/checkout — iniciar checkout Mercado Pago
   app.post('/checkout', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { plan } = request.body as { plan: 'monthly' | 'semiannual' | 'annual' }
-    
+
     const payload = request.user as { sub: string }
     const user = await prisma.user.findUnique({ where: { id: payload.sub } })
     if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-      // Retorna URL de fallback para dev se não houver MP configurado
-      app.log.warn('MERCADO_PAGO_ACCESS_TOKEN não configurado. Retornando URL fake.');
-      return reply.send({ checkoutUrl: 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=fake' });
+      app.log.warn('MERCADO_PAGO_ACCESS_TOKEN não configurado. Retornando URL fake.')
+      return reply.send({ checkoutUrl: 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=fake' })
     }
 
     const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
     const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
 
+    const planConfig: Record<string, { title: string; amount: number }> = {
+      monthly:    { title: 'RokoMed - Plano Mensal',    amount: 29.00  },
+      semiannual: { title: 'RokoMed - Plano Semestral', amount: 97.00  },
+      annual:     { title: 'RokoMed - Plano Anual',     amount: 147.00 },
+    }
+
+    const config = planConfig[plan]
+    if (!config) return reply.code(400).send({ error: 'Plano inválido' })
+
     try {
-      if (plan === 'monthly') {
-        // Assinatura com renovação automática
-        const preApproval = new PreApproval(client)
-        const result = await preApproval.create({
-          body: {
-            back_url: `${frontUrl}/dashboard?payment=success`,
-            reason: "RokoMed - Plano Mensal (Renovação Automática)",
-            auto_recurring: {
-              frequency: 1,
-              frequency_type: "months",
-              transaction_amount: 29.00,
-              currency_id: "BRL"
-            },
-            status: "pending"
-          }
-        })
-        return reply.send({ checkoutUrl: result.init_point })
-      } else {
-        // Pagamento único (que pode ser parcelado no MP)
-        const amount = plan === 'semiannual' ? 97.00 : 147.00
-        const title = plan === 'semiannual' ? 'RokoMed - Plano Semestral' : 'RokoMed - Plano Anual'
-        
-        const preference = new Preference(client)
-        const result = await preference.create({
-          body: {
-            items: [
-              {
-                id: plan,
-                title,
-                quantity: 1,
-                unit_price: amount,
-                currency_id: "BRL"
-              }
-            ],
-            back_urls: {
-              success: `${frontUrl}/dashboard?payment=success`,
-              failure: `${frontUrl}/checkout?payment=failure`,
-              pending: `${frontUrl}/dashboard?payment=pending`
-            },
-            auto_return: "approved",
-            external_reference: `${user.id}_${plan}`
-          }
-        })
-        return reply.send({ checkoutUrl: result.init_point })
+      const preference = new Preference(client)
+      const result = await preference.create({
+        body: {
+          items: [
+            {
+              id: plan,
+              title: config.title,
+              quantity: 1,
+              unit_price: config.amount,
+              currency_id: 'BRL',
+            }
+          ],
+          back_urls: {
+            success: `${frontUrl}/dashboard?payment=success`,
+            failure: `${frontUrl}/checkout?payment=failure`,
+            pending: `${frontUrl}/dashboard?payment=pending`,
+          },
+          auto_return: 'approved',
+          external_reference: `${user.id}__${plan}`,
+        }
+      })
+
+      if (!result.init_point) {
+        app.log.error('MP não retornou init_point: ' + JSON.stringify(result))
+        return reply.code(500).send({ error: 'Erro ao gerar link de pagamento' })
       }
-    } catch (err) {
-      app.log.error(err)
-      return reply.code(500).send({ error: 'Erro ao gerar checkout do Mercado Pago' })
+
+      return reply.send({ checkoutUrl: result.init_point })
+    } catch (err: any) {
+      app.log.error({ err }, 'Erro ao gerar checkout do Mercado Pago')
+      return reply.code(500).send({
+        error: 'Erro ao gerar checkout do Mercado Pago',
+        detail: err?.message
+      })
     }
   })
 
@@ -101,21 +95,19 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
     try {
       const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
-      
+
       const topic = body.type || body.topic
       if (topic === 'payment' && body.data?.id) {
-        // Usa `require('mercadopago').Payment` pq importamos Payment no top
-        const { Payment } = require('mercadopago')
         const paymentClient = new Payment(client)
         const paymentInfo = await paymentClient.get({ id: body.data.id })
 
         if (paymentInfo.status === 'approved') {
-          // Precisamos identificar o usuário. Pode vir por external_reference ou pelo e-mail
           let userId: string | null = null
           let planKey = 'monthly'
 
           if (paymentInfo.external_reference) {
-            const parts = paymentInfo.external_reference.split('_')
+            // Separador duplo __ para evitar conflito com UUID que usa -
+            const parts = paymentInfo.external_reference.split('__')
             userId = parts[0]
             planKey = parts[1] || 'monthly'
           } else if (paymentInfo.payer?.email) {
@@ -124,12 +116,10 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           }
 
           if (userId) {
-            // Calcula vencimento
             const months = planKey === 'semiannual' ? 6 : planKey === 'annual' ? 12 : 1
             const expiresAt = new Date()
             expiresAt.setMonth(expiresAt.getMonth() + months)
 
-            // Registra Pagamento
             await prisma.payment.upsert({
               where: { mercadoPagoId: String(paymentInfo.id) },
               update: { status: 'approved' },
@@ -143,13 +133,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               }
             })
 
-            // Atualiza usuário para PRO
             await prisma.user.update({
               where: { id: userId },
               data: { plan: 'PRO' }
             })
 
-            // Cria / atualiza Assinatura
             await prisma.subscription.create({
               data: {
                 userId,
@@ -158,8 +146,8 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
                 expiresAt
               }
             })
-            
-            app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} atualizada para PRO. Vencimento: ${expiresAt}`)
+
+            app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} → PRO. Vencimento: ${expiresAt}`)
           }
         }
       }
