@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { requireAuth } from '../middleware/auth'
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
+import { sendEmail } from '../lib/resend'
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
   // GET /api/subscriptions/current — assinatura atual
@@ -133,7 +134,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               }
             })
 
-            await prisma.user.update({
+            const updatedUser = await prisma.user.update({
               where: { id: userId },
               data: { plan: 'PRO' }
             })
@@ -146,6 +147,20 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
                 expiresAt
               }
             })
+
+            // Envia o e-mail de confirmação da compra
+            sendEmail({
+              to: updatedUser.email,
+              subject: 'Pagamento Aprovado! Bem-vindo ao Rokomedicina PRO',
+              html: `
+                <h2>Seu pagamento foi aprovado! 🎉</h2>
+                <p>Olá, ${updatedUser.name}!</p>
+                <p>Sua assinatura do plano <strong>${planKey.toUpperCase()}</strong> foi ativada com sucesso e é válida até ${expiresAt.toLocaleDateString('pt-BR')}.</p>
+                <p>Aproveite todos os recursos exclusivos da plataforma para impulsionar seus estudos.</p>
+                <br />
+                <p>Bons estudos,<br/>Equipe Rokomedicina</p>
+              `
+            }).catch(err => app.log.error('Erro ao enviar email de assinatura: ' + err.message))
 
             app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} → PRO. Vencimento: ${expiresAt}`)
           }
