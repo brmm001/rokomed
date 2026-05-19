@@ -142,6 +142,7 @@ export const subscriptionApi = {
   current: () => api.get('/subscriptions/current').then(r => r.data),
   checkout: (plan: string, couponCode?: string) =>
     api.post('/subscriptions/checkout', { plan, couponCode }).then(r => r.data),
+  cancel: () => api.post('/subscriptions/cancel').then(r => r.data),
 }
 
 // ── Adaptive (CAT / IRT) ─────────────────────────────────────────────────────

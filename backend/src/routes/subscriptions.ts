@@ -22,6 +22,48 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     return reply.send({ subscription, plan: user?.plan })
   })
 
+  // POST /api/subscriptions/cancel — cancelar assinatura atual
+  app.post('/cancel', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user || user.plan === 'FREE') return reply.code(400).send({ error: 'Nenhuma assinatura PRO ativa.' })
+
+    // Busca a assinatura ativa mais recente
+    const activeSub = await prisma.subscription.findFirst({
+      where: { userId: user.id, status: 'active' },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    if (activeSub) {
+      await prisma.subscription.update({
+        where: { id: activeSub.id },
+        data: { status: 'cancelled' }
+      })
+    }
+
+    // Reverte plano do usuário para FREE
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { plan: 'FREE' }
+    })
+
+    // E-mail de confirmação de cancelamento
+    sendEmail({
+      to: user.email,
+      subject: 'Confirmação de Cancelamento - Rokomedicina',
+      html: `
+        <h2>Assinatura Cancelada</h2>
+        <p>Olá, ${user.name}.</p>
+        <p>Sua assinatura PRO foi cancelada com sucesso. Seu plano retornou para a versão <strong>Gratuita</strong> (limite de 10 questões por dia).</p>
+        <p>Caso mude de ideia, você pode reativar seu plano a qualquer momento no nosso painel.</p>
+        <br/>
+        <p>Agradecemos por ter estudado com a gente!<br/>Equipe Rokomedicina</p>
+      `
+    }).catch(err => app.log.error('Erro ao enviar email de cancelamento: ' + err.message))
+
+    return reply.send({ success: true, message: 'Assinatura cancelada com sucesso' })
+  })
+
   // POST /api/subscriptions/checkout — iniciar checkout Mercado Pago
   app.post('/checkout', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { plan } = request.body as { plan: 'monthly' | 'semiannual' | 'annual' }

@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth'
-import { userApi } from '../lib/api'
+import { userApi, subscriptionApi } from '../lib/api'
 import {
   User, Crown, Flame, BookOpen, CheckCircle,
-  Star, Award, Settings
+  Star, Award, Settings, AlertTriangle
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function ProfilePage() {
-  const { user } = useAuthStore()
+  const { user, setAuth } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'overview' | 'history'>('overview')
+  const [isCancelling, setIsCancelling] = useState(false)
 
   const { data: stats }   = useQuery({ queryKey: ['user-stats'],   queryFn: userApi.stats })
   const { data: histData } = useQuery({
@@ -20,6 +22,24 @@ export default function ProfilePage() {
 
   const planColors = { FREE: 'var(--text-muted)', PRO: 'var(--accent-gold)', GRUPO: 'var(--accent-teal)' }
   const planColor  = planColors[user?.plan || 'FREE']
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Tem certeza que deseja cancelar sua assinatura PRO? Seu plano retornará para o Gratuito.')) return
+    
+    setIsCancelling(true)
+    try {
+      await subscriptionApi.cancel()
+      toast.success('Assinatura cancelada com sucesso.')
+      // Atualiza o store local (idealmente recarregaria os dados completos do /auth/me)
+      if (user) {
+        setAuth({ ...user, plan: 'FREE' }, useAuthStore.getState().token!)
+      }
+    } catch (err) {
+      toast.error('Erro ao cancelar assinatura.')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -120,10 +140,19 @@ export default function ProfilePage() {
                   <Crown size={13} /> {user?.plan}
                 </span>
               </div>
-              {user?.plan === 'FREE' && (
+              {user?.plan === 'FREE' ? (
                 <a href="/pricing" className="btn btn-primary" style={{ fontSize: '0.875rem' }}>
                   <Crown size={15} /> Fazer upgrade Pro
                 </a>
+              ) : (
+                <button 
+                  onClick={handleCancelSubscription} 
+                  disabled={isCancelling}
+                  className="btn btn-ghost" 
+                  style={{ fontSize: '0.875rem', color: '#EF4444' }}
+                >
+                  <AlertTriangle size={15} /> {isCancelling ? 'Cancelando...' : 'Cancelar Assinatura'}
+                </button>
               )}
             </div>
           </div>
