@@ -19,6 +19,8 @@ import AdaptiveSessionPage from './pages/AdaptiveSession'
 import AnalyticsPage from './pages/Analytics'
 import CheckoutPage from './pages/Checkout'
 import PartnershipsPage from './pages/Partnerships'
+import ForgotPasswordPage from './pages/ForgotPassword'
+import ResetPasswordPage from './pages/ResetPassword'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -63,6 +65,8 @@ export default function App() {
           <Route path="/simulado-gratis" element={<FreeExamPage />} />
           <Route path="/login"    element={<PublicOnly><LoginPage /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
+          <Route path="/forgot-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
+          <Route path="/reset-password" element={<PublicOnly><ResetPasswordPage /></PublicOnly>} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/pricing"  element={<PricingPage />} />
           <Route path="/parcerias" element={<PartnershipsPage />} />
