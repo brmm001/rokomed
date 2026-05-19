@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
+import { sendEmail } from '../lib/resend'
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
@@ -47,6 +48,19 @@ export default async function authRoutes(app: FastifyInstance) {
     await prisma.trialIp.create({ data: { ip, userId: user.id } })
 
     const token = app.jwt.sign({ sub: user.id, role: user.role, plan: user.plan })
+
+    // Enviar e-mail de boas-vindas assincronamente (não precisa usar await para não travar o fluxo)
+    sendEmail({
+      to: user.email,
+      subject: 'Boas-vindas ao Rokomedicina!',
+      html: `
+        <h2>Olá, ${user.name}!</h2>
+        <p>Sua conta foi criada com sucesso. Seja bem-vindo(a) ao Rokomedicina!</p>
+        <p>Para acessar sua conta, vá para a <a href="${process.env.FRONTEND_URL || 'https://rokomedicina.com.br'}/login">página de login</a> e utilize suas credenciais.</p>
+        <br />
+        <p>Bons estudos!</p>
+      `,
+    }).catch(err => console.error('Erro ao enviar email de boas-vindas', err));
 
     return reply.code(201).send({ token, user })
   })
@@ -119,5 +133,62 @@ export default async function authRoutes(app: FastifyInstance) {
     }
     
     return reply.send({ success: true, userId: user.id })
+  })
+
+  // POST /api/auth/forgot-password (Envia o e-mail de recuperação)
+  app.post('/forgot-password', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email } = request.body as { email: string }
+    if (!email) return reply.code(400).send({ error: 'E-mail obrigatório' })
+
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user) {
+      // Retorna sucesso de qualquer forma por segurança (para não confirmar quais emails existem)
+      return reply.send({ message: 'Se o e-mail existir em nossa base, enviaremos as instruções.' })
+    }
+
+    // Gerar um token JWT com duração de 1 hora para o reset
+    const resetToken = app.jwt.sign({ sub: user.id, purpose: 'reset_password' }, { expiresIn: '1h' })
+    
+    // O link aponta para o Frontend, que vai ler da URL e mandar para a rota de reset
+    const resetLink = `${process.env.FRONTEND_URL || 'https://rokomedicina.com.br'}/reset-password?token=${resetToken}`
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Recuperação de Senha - Rokomedicina',
+      html: `
+        <h2>Recuperação de Senha</h2>
+        <p>Olá, ${user.name}. Recebemos um pedido para alterar a senha da sua conta.</p>
+        <p>Clique no link abaixo para criar uma nova senha. Este link expira em 1 hora.</p>
+        <p><a href="${resetLink}">Redefinir minha senha</a></p>
+        <p>Se você não solicitou isso, pode ignorar este e-mail.</p>
+      `
+    })
+
+    return reply.send({ message: 'Se o e-mail existir em nossa base, enviaremos as instruções.' })
+  })
+
+  // POST /api/auth/reset-password (Altera a senha baseada no token)
+  app.post('/reset-password', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { token, newPassword } = request.body as { token?: string, newPassword?: string }
+    if (!token || !newPassword || newPassword.length < 6) {
+      return reply.code(400).send({ error: 'Token inválido ou senha muito curta.' })
+    }
+
+    try {
+      const decoded = app.jwt.verify(token) as { sub: string, purpose: string }
+      if (decoded.purpose !== 'reset_password') {
+        throw new Error('Invalid token purpose')
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 12)
+      await prisma.user.update({
+        where: { id: decoded.sub },
+        data: { passwordHash }
+      })
+
+      return reply.send({ message: 'Senha alterada com sucesso.' })
+    } catch (err) {
+      return reply.code(400).send({ error: 'Token inválido ou expirado.' })
+    }
   })
 }
