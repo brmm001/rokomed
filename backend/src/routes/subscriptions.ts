@@ -3,11 +3,34 @@ import { prisma } from '../lib/prisma'
 import { requireAuth } from '../middleware/auth'
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 import { sendEmail } from '../lib/resend'
+import crypto from 'crypto'
+
+// ── Utilitário: verifica se uma assinatura expirou e rebaixa o plano ─────────
+async function checkAndExpireSubscription(userId: string): Promise<void> {
+  const activeSub = await prisma.subscription.findFirst({
+    where: { userId, status: 'active' },
+    orderBy: { expiresAt: 'desc' },
+  })
+
+  if (activeSub?.expiresAt && activeSub.expiresAt < new Date()) {
+    await prisma.subscription.update({
+      where: { id: activeSub.id },
+      data: { status: 'expired' },
+    })
+    await prisma.user.update({
+      where: { id: userId },
+      data: { plan: 'FREE' },
+    })
+  }
+}
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
-  // GET /api/subscriptions/current — assinatura atual
+  // GET /api/subscriptions/current — assinatura atual (com verificação de expiração)
   app.get('/current', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
+
+    // FIX #5: Verifica se a assinatura ativa expirou e rebaixa para FREE
+    await checkAndExpireSubscription(payload.sub)
 
     const subscription = await prisma.subscription.findFirst({
       where:   { userId: payload.sub },
@@ -20,6 +43,33 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ subscription, plan: user?.plan })
+  })
+
+  // POST /api/subscriptions/check-expiry — cron job endpoint (sem auth, chamado internamente)
+  // Varre todos os usuários PRO com assinatura vencida e os rebaixa para FREE
+  app.post('/check-expiry', async (request: FastifyRequest, reply: FastifyReply) => {
+    const cronSecret = request.headers['x-cron-secret']
+    if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
+      return reply.code(401).send({ error: 'Não autorizado' })
+    }
+
+    const expired = await prisma.subscription.findMany({
+      where: {
+        status: 'active',
+        expiresAt: { lt: new Date() },
+      },
+      select: { id: true, userId: true },
+    })
+
+    let count = 0
+    for (const sub of expired) {
+      await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'expired' } })
+      await prisma.user.update({ where: { id: sub.userId }, data: { plan: 'FREE' } })
+      count++
+    }
+
+    app.log.info(`[check-expiry] ${count} assinatura(s) expirada(s) processada(s)`)
+    return reply.send({ expired: count })
   })
 
   // POST /api/subscriptions/cancel — cancelar assinatura atual
@@ -132,6 +182,43 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     const body = request.body as any
     app.log.info(`Webhook MP recebido: ${JSON.stringify(body)}`)
 
+    // FIX #1: Verificação de assinatura HMAC-SHA256 do Mercado Pago
+    if (process.env.MERCADO_PAGO_WEBHOOK_SECRET) {
+      const xSignature = request.headers['x-signature'] as string | undefined
+      const xRequestId = request.headers['x-request-id'] as string | undefined
+      const dataId = body?.data?.id ?? ''
+
+      if (!xSignature) {
+        app.log.warn('[Webhook] Requisição sem x-signature — rejeitada')
+        return reply.code(400).send({ error: 'Assinatura ausente' })
+      }
+
+      // Formato da assinatura: "ts=<timestamp>,v1=<hash>"
+      const parts = Object.fromEntries(
+        xSignature.split(',').map(p => p.split('=') as [string, string])
+      )
+      const ts = parts['ts']
+      const v1 = parts['v1']
+
+      if (!ts || !v1) {
+        app.log.warn('[Webhook] Formato de x-signature inválido — rejeitado')
+        return reply.code(400).send({ error: 'Assinatura inválida' })
+      }
+
+      const manifest = `id:${dataId};request-id:${xRequestId ?? ''};ts:${ts};`
+      const expected = crypto
+        .createHmac('sha256', process.env.MERCADO_PAGO_WEBHOOK_SECRET)
+        .update(manifest)
+        .digest('hex')
+
+      if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))) {
+        app.log.warn('[Webhook] Assinatura HMAC não confere — rejeitada')
+        return reply.code(400).send({ error: 'Assinatura inválida' })
+      }
+    } else {
+      app.log.warn('[Webhook] MERCADO_PAGO_WEBHOOK_SECRET não configurado — verificação ignorada')
+    }
+
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
       return reply.code(200).send({ received: true })
     }
@@ -143,6 +230,12 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       if (topic === 'payment' && body.data?.id) {
         const paymentClient = new Payment(client)
         const paymentInfo = await paymentClient.get({ id: body.data.id })
+
+        // FIX #2: Validar que paymentInfo.id não é nulo antes de qualquer operação
+        if (!paymentInfo.id) {
+          app.log.error('[Webhook] paymentInfo.id é nulo — abortando processamento')
+          return reply.code(200).send({ received: true })
+        }
 
         if (paymentInfo.status === 'approved') {
           let userId: string | null = null
@@ -162,13 +255,15 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
             const months = planKey === 'semiannual' ? 6 : planKey === 'annual' ? 12 : 1
             const expiresAt = new Date()
             expiresAt.setMonth(expiresAt.getMonth() + months)
+            const mpId = String(paymentInfo.id)
 
+            // FIX #2: Upsert seguro no Payment (mercadoPagoId garantidamente não-nulo)
             await prisma.payment.upsert({
-              where: { mercadoPagoId: String(paymentInfo.id) },
+              where: { mercadoPagoId: mpId },
               update: { status: 'approved' },
               create: {
                 userId,
-                mercadoPagoId: String(paymentInfo.id),
+                mercadoPagoId: mpId,
                 plan: 'PRO',
                 amount: Number(paymentInfo.transaction_amount) || 0,
                 status: 'approved',
@@ -181,14 +276,21 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               data: { plan: 'PRO' }
             })
 
-            await prisma.subscription.create({
-              data: {
-                userId,
-                plan: 'PRO',
-                status: 'active',
-                expiresAt
-              }
+            // FIX #4: Idempotência — evitar duplicatas se o MP reenviar o webhook
+            const existingSub = await prisma.subscription.findFirst({
+              where: { userId, status: 'active', expiresAt },
             })
+
+            if (!existingSub) {
+              await prisma.subscription.create({
+                data: {
+                  userId,
+                  plan: 'PRO',
+                  status: 'active',
+                  expiresAt
+                }
+              })
+            }
 
             // Envia o e-mail de confirmação da compra
             sendEmail({

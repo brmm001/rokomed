@@ -67,16 +67,19 @@ export default function CheckoutPage() {
   }
 
   const setAuth = useAuthStore(state => state.setAuth)
-  const token = useAuthStore(state => state.token)
+  // FIX #6: Sempre lê o token mais recente do store (evita stale closure)
+  const token = useAuthStore.getState().token
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     
     try {
-      if (!token) {
-        // Tentar registrar usuário. Se falhar por e-mail já existente, poderia tentar login,
-        // mas como é fluxo de checkout, exibimos erro ou logamos
+      // FIX #6: Sempre lê o token mais atualizado do store no momento do submit
+      const currentToken = useAuthStore.getState().token
+
+      if (!currentToken) {
+        // Usuário não logado: registrar primeiro, depois fazer checkout
         try {
           const authRes = await api.post('/auth/register', {
             name: formData.name,
@@ -84,6 +87,8 @@ export default function CheckoutPage() {
             password: formData.password
           })
           setAuth(authRes.data.user, authRes.data.token)
+          // Garante que o interceptor do axios use o token reciém-gravado
+          api.defaults.headers.common['Authorization'] = `Bearer ${authRes.data.token}`
         } catch (err: any) {
           if (err.response?.status === 409) {
             toast.error('Este e-mail já está cadastrado. Por favor, faça login primeiro.', {
@@ -97,7 +102,7 @@ export default function CheckoutPage() {
         }
       }
 
-      // Iniciar checkout Mercado Pago
+      // Inicia checkout Mercado Pago (token já estará no header via interceptor ou header direto acima)
       const subRes = await api.post('/subscriptions/checkout', { plan })
       if (subRes.data.checkoutUrl) {
         window.location.href = subRes.data.checkoutUrl
