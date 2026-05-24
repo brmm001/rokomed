@@ -4,6 +4,111 @@ import { requireAuth } from '../middleware/auth'
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 import { sendEmail } from '../lib/resend'
 import crypto from 'crypto'
+import { PLANS } from '../config/plans'
+
+// ── Utilitário: Gera templates de e-mail estilizados com HTML/CSS inline ─────
+function getEmailTemplate(title: string, bodyHtml: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 40px 20px;
+            color: #1f2937;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+          }
+          .header {
+            background-color: #111111;
+            padding: 30px;
+            text-align: center;
+          }
+          .logo {
+            font-family: Georgia, serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: 1px;
+          }
+          .logo em {
+            color: #3b82f6;
+            font-style: normal;
+          }
+          .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+          }
+          .content h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111111;
+            margin-top: 0;
+            margin-bottom: 20px;
+          }
+          .content p {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 15px;
+            color: #4b5563;
+          }
+          .card {
+            background-color: #f9fafb;
+            border: 1px solid #f3f4f6;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 25px 0;
+          }
+          .card p {
+            margin: 0;
+            font-size: 14px;
+            color: #374151;
+          }
+          .footer {
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #f3f4f6;
+            font-size: 13px;
+            color: #9ca3af;
+          }
+          .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <span class="logo">Roko<em>Med</em></span>
+          </div>
+          <div class="content">
+            \${bodyHtml}
+          </div>
+          <div class="footer">
+            <p>Este é um e-mail automático enviado pelo RokoMed.</p>
+            <p>&copy; \${new Date().getFullYear()} RokoMed. Todos os direitos reservados.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+}
 
 // ── Utilitário: verifica se uma assinatura expirou e rebaixa o plano ─────────
 async function checkAndExpireSubscription(userId: string): Promise<void> {
@@ -25,6 +130,44 @@ async function checkAndExpireSubscription(userId: string): Promise<void> {
 }
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
+  // GET /api/subscriptions/plans — planos e preços
+  app.get('/plans', async (request: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(PLANS)
+  })
+
+  // POST /api/subscriptions/coupon/validate — validar cupom de desconto
+  app.post('/coupon/validate', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { code } = request.body as { code: string }
+    if (!code) return reply.code(400).send({ error: 'Código do cupom é obrigatório.' })
+
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: code.toUpperCase() }
+    })
+
+    if (!coupon) {
+      return reply.code(404).send({ error: 'Cupom inválido ou inexistente.' })
+    }
+
+    if (!coupon.isActive) {
+      return reply.code(400).send({ error: 'Este cupom não está mais ativo.' })
+    }
+
+    if (coupon.usesRemaining <= 0) {
+      return reply.code(400).send({ error: 'Este cupom já atingiu o limite de usos.' })
+    }
+
+    if (coupon.validUntil && coupon.validUntil < new Date()) {
+      return reply.code(400).send({ error: 'Este cupom está expirado.' })
+    }
+
+    return reply.send({
+      valid: true,
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value
+    })
+  })
+
   // GET /api/subscriptions/current — assinatura atual (com verificação de expiração)
   app.get('/current', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
@@ -97,18 +240,26 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       data: { plan: 'FREE' }
     })
 
-    // E-mail de confirmação de cancelamento
+    // E-mail de confirmação de cancelamento (estilizado)
+    const cancelEmailHtml = getEmailTemplate(
+      'Confirmação de Cancelamento - RokoMed',
+      `
+        <h2>Assinatura Cancelada</h2>
+        <p>Olá, <strong>${user.name}</strong>.</p>
+        <p>Confirmamos que sua assinatura do plano RokoMed PRO foi cancelada com sucesso. Seu acesso retornou para a versão gratuita (limite de 10 questões por dia).</p>
+        <div class="card">
+          <p>Seus dados de desempenho e histórico de estudos continuam salvos com segurança. Se quiser assinar novamente e retomar o acesso ilimitado, basta acessar a plataforma a qualquer momento.</p>
+        </div>
+        <p>Agradecemos por ter estudado com a gente e desejamos muito sucesso em sua jornada de estudos!</p>
+        <br/>
+        <p>Abraços,<br/><strong>Equipe RokoMed</strong></p>
+      `
+    )
+
     sendEmail({
       to: user.email,
-      subject: 'Confirmação de Cancelamento - Rokomedicina',
-      html: `
-        <h2>Assinatura Cancelada</h2>
-        <p>Olá, ${user.name}.</p>
-        <p>Sua assinatura PRO foi cancelada com sucesso. Seu plano retornou para a versão <strong>Gratuita</strong> (limite de 10 questões por dia).</p>
-        <p>Caso mude de ideia, você pode reativar seu plano a qualquer momento no nosso painel.</p>
-        <br/>
-        <p>Agradecemos por ter estudado com a gente!<br/>Equipe Rokomedicina</p>
-      `
+      subject: 'Confirmação de Cancelamento - RokoMed',
+      html: cancelEmailHtml
     }).catch(err => app.log.error('Erro ao enviar email de cancelamento: ' + err.message))
 
     return reply.send({ success: true, message: 'Assinatura cancelada com sucesso' })
@@ -116,7 +267,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
 
   // POST /api/subscriptions/checkout — iniciar checkout Mercado Pago
   app.post('/checkout', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { plan } = request.body as { plan: 'monthly' | 'semiannual' | 'annual' }
+    const { plan, couponCode } = request.body as { plan: 'monthly' | 'semiannual' | 'annual'; couponCode?: string }
 
     const payload = request.user as { sub: string }
     const user = await prisma.user.findUnique({ where: { id: payload.sub } })
@@ -130,14 +281,28 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
     const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
 
-    const planConfig: Record<string, { title: string; amount: number }> = {
-      monthly:    { title: 'RokoMed - Plano Mensal',    amount: 29.00  },
-      semiannual: { title: 'RokoMed - Plano Semestral', amount: 97.00  },
-      annual:     { title: 'RokoMed - Plano Anual',     amount: 147.00 },
-    }
-
-    const config = planConfig[plan]
+    const config = PLANS[plan]
     if (!config) return reply.code(400).send({ error: 'Plano inválido' })
+
+    let finalAmount = config.amount
+    let discountApplied = 0
+    let validCoupon: any = null
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: couponCode.toUpperCase() }
+      })
+
+      if (coupon && coupon.isActive && coupon.usesRemaining > 0 && (!coupon.validUntil || coupon.validUntil >= new Date())) {
+        validCoupon = coupon
+        if (coupon.type === 'percent') {
+          discountApplied = (config.amount * coupon.value) / 100
+        } else if (coupon.type === 'fixed') {
+          discountApplied = coupon.value
+        }
+        finalAmount = Math.max(0.1, config.amount - discountApplied)
+      }
+    }
 
     try {
       const preference = new Preference(client)
@@ -146,9 +311,9 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           items: [
             {
               id: plan,
-              title: config.title,
+              title: `${config.title}${validCoupon ? ` (Cupom: ${validCoupon.code})` : ''}`,
               quantity: 1,
-              unit_price: config.amount,
+              unit_price: Number(finalAmount.toFixed(2)),
               currency_id: 'BRL',
             }
           ],
@@ -158,7 +323,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
             pending: `${frontUrl}/dashboard?payment=pending`,
           },
           auto_return: 'approved',
-          external_reference: `${user.id}__${plan}`,
+          external_reference: `${user.id}__${plan}__${validCoupon ? validCoupon.code : ''}`,
         }
       })
 
@@ -240,12 +405,14 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
         if (paymentInfo.status === 'approved') {
           let userId: string | null = null
           let planKey = 'monthly'
+          let couponCode: string | null = null
 
           if (paymentInfo.external_reference) {
             // Separador duplo __ para evitar conflito com UUID que usa -
             const parts = paymentInfo.external_reference.split('__')
             userId = parts[0]
             planKey = parts[1] || 'monthly'
+            couponCode = parts[2] || null
           } else if (paymentInfo.payer?.email) {
             const user = await prisma.user.findUnique({ where: { email: paymentInfo.payer.email } })
             if (user) userId = user.id
@@ -267,6 +434,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
                 plan: 'PRO',
                 amount: Number(paymentInfo.transaction_amount) || 0,
                 status: 'approved',
+                couponCode: couponCode || null,
                 webhookPayload: JSON.stringify(body)
               }
             })
@@ -275,6 +443,22 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               where: { id: userId },
               data: { plan: 'PRO' }
             })
+
+            // Decrementa usos do cupom se aplicável
+            if (couponCode) {
+              try {
+                const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
+                if (coupon && coupon.usesRemaining > 0) {
+                  await prisma.coupon.update({
+                    where: { id: coupon.id },
+                    data: { usesRemaining: coupon.usesRemaining - 1 }
+                  })
+                  app.log.info(`[Webhook] Cupom ${couponCode} decrementado. Usos restantes: ${coupon.usesRemaining - 1}`)
+                }
+              } catch (couponErr) {
+                app.log.error(couponErr, 'Erro ao decrementar uso do cupom')
+              }
+            }
 
             // FIX #4: Idempotência — evitar duplicatas se o MP reenviar o webhook
             const existingSub = await prisma.subscription.findFirst({
@@ -292,18 +476,32 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               })
             }
 
-            // Envia o e-mail de confirmação da compra
+            // Envia o e-mail de confirmação da compra (estilizado)
+            const successEmailHtml = getEmailTemplate(
+              'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
+              `
+                <h2>Seu pagamento foi aprovado! 🎉</h2>
+                <p>Olá, <strong>${updatedUser.name}</strong>!</p>
+                <p>É com muita alegria que damos as boas-vindas ao <strong>RokoMed PRO</strong>. Sua assinatura do plano <strong>${planKey.toUpperCase()}</strong> foi ativada com sucesso.</p>
+                
+                <div class="card">
+                  <p><strong>Detalhes da sua assinatura:</strong></p>
+                  <p style="margin-top: 8px;">• Plano: RokoMed PRO (${planKey === 'annual' ? 'Anual' : planKey === 'semiannual' ? 'Semestral' : 'Mensal'})</p>
+                  <p>• Data de expiração: <strong>${expiresAt.toLocaleDateString('pt-BR')}</strong></p>
+                  <p>• Status: <strong>Ativo</strong></p>
+                </div>
+
+                <p>Aproveite agora mesmo todos os recursos ilimitados, simulados inteligentes com inteligência artificial, flashcards e estatísticas detalhadas de desempenho para acelerar sua aprovação.</p>
+                
+                <br />
+                <p>Bons estudos e conte conosco,<br/><strong>Equipe RokoMed</strong></p>
+              `
+            )
+
             sendEmail({
               to: updatedUser.email,
-              subject: 'Pagamento Aprovado! Bem-vindo ao Rokomedicina PRO',
-              html: `
-                <h2>Seu pagamento foi aprovado! 🎉</h2>
-                <p>Olá, ${updatedUser.name}!</p>
-                <p>Sua assinatura do plano <strong>${planKey.toUpperCase()}</strong> foi ativada com sucesso e é válida até ${expiresAt.toLocaleDateString('pt-BR')}.</p>
-                <p>Aproveite todos os recursos exclusivos da plataforma para impulsionar seus estudos.</p>
-                <br />
-                <p>Bons estudos,<br/>Equipe Rokomedicina</p>
-              `
+              subject: 'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
+              html: successEmailHtml
             }).catch(err => app.log.error('Erro ao enviar email de assinatura: ' + err.message))
 
             app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} → PRO. Vencimento: ${expiresAt}`)

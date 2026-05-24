@@ -143,6 +143,9 @@ export const subscriptionApi = {
   checkout: (plan: string, couponCode?: string) =>
     api.post('/subscriptions/checkout', { plan, couponCode }).then(r => r.data),
   cancel: () => api.post('/subscriptions/cancel').then(r => r.data),
+  plans: () => api.get('/subscriptions/plans').then(r => r.data),
+  validateCoupon: (code: string) =>
+    api.post('/subscriptions/coupon/validate', { code }).then(r => r.data),
 }
 
 // ── Adaptive (CAT / IRT) ─────────────────────────────────────────────────────

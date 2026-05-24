@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { X, MessageCircle, Lock, Plus, Minus, ShieldCheck } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { subscriptionApi } from '../lib/api'
 
 export default function LandingPage() {
   const [showExitPopup, setShowExitPopup] = useState(false)
@@ -9,6 +11,18 @@ export default function LandingPage() {
   
   const [leadEmail, setLeadEmail] = useState('')
   const [loadingLead, setLoadingLead] = useState(false)
+
+  const { data: plansData } = useQuery({
+    queryKey: ['plans'],
+    queryFn: subscriptionApi.plans,
+  })
+
+  const monthlyPrice = plansData?.monthly?.amount || 29
+  const semiannualTotal = plansData?.semiannual?.amount || 97
+  const annualTotal = plansData?.annual?.amount || 147
+
+  const semiannualInstallment = Math.round(semiannualTotal / 6)
+  const annualInstallment = Math.round(annualTotal / 12)
 
   const handleLeadCapture = async () => {
     if(!leadEmail.includes('@')) { alert('Por favor, insira um e-mail válido.'); return; }
@@ -293,7 +307,7 @@ export default function LandingPage() {
             <div className="lp-hero-bottom">
               <p className="lp-hero-desc">Mais de 15.000 questões comentadas, simulados adaptativos e análise de desempenho por especialidade. Tudo que você precisa, sem o que você não precisa.</p>
               <div className="lp-hero-actions">
-                <Link to="/checkout" className="lp-btn-ink">Começar por R$29/mês</Link>
+                <Link to="/checkout" className="lp-btn-ink">Começar por R${monthlyPrice}/mês</Link>
                 <a href="#recursos" className="lp-btn-link">Ver recursos →</a>
               </div>
               <p className="lp-hero-note">Sem taxa de adesão · Acesso imediato · Cancele quando quiser</p>
@@ -303,7 +317,7 @@ export default function LandingPage() {
           <div className="lp-hero-right">
             <div className="lp-hero-price-block">
               <div className="lp-price-label">A partir de</div>
-              <div className="lp-price-big"><sup>R$</sup>29</div>
+              <div className="lp-price-big"><sup>R$</sup>{monthlyPrice}</div>
               <div className="lp-price-period">por mês</div>
               <div className="lp-hero-stamp">
                 <span>mais de</span>
@@ -454,7 +468,7 @@ export default function LandingPage() {
           <div className="lp-pcards">
             <div className="lp-pc">
               <div className="lp-pc-lbl">Mensal</div>
-              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">29</span><span className="lp-per">/mês</span></div>
+              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">{monthlyPrice}</span><span className="lp-per">/mês</span></div>
               <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>renovação automática</div>
               <hr className="lp-r" style={{marginTop:'0.8rem'}} />
               <ul className="lp-pc-feats">
@@ -469,9 +483,9 @@ export default function LandingPage() {
               <span className="lp-pflag" style={{ background: '#FFC107', color: '#000', fontWeight: 'bold', fontSize: '0.65rem', padding: '0.4rem 0.8rem', boxShadow: '0 4px 12px rgba(255, 193, 7, 0.4)' }}>Mais Vendido</span>
               <div className="lp-pc-lbl">Semestral</div>
               <div className="lp-pc-price" style={{alignItems:'baseline'}}>
-                <span className="lp-cur">6x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">19</span>
+                <span className="lp-cur">6x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">{semiannualInstallment}</span>
               </div>
-              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginTop:'0.2rem'}}>ou à vista por R$ 97</div>
+              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'rgba(255,255,255,0.5)', marginTop:'0.2rem'}}>ou à vista por R$ {semiannualTotal}</div>
               <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'#60A5FA', marginTop:'0.5rem', textTransform:'uppercase', letterSpacing:'0.05em', display:'flex', alignItems:'center', gap:'0.3rem'}}>
                 <ShieldCheck size={14}/> 7 dias de garantia
               </div>
@@ -487,9 +501,9 @@ export default function LandingPage() {
             <div className="lp-pc">
               <div className="lp-pc-lbl">Anual</div>
               <div className="lp-pc-price" style={{alignItems:'baseline'}}>
-                <span className="lp-cur">12x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">15</span>
+                <span className="lp-cur">12x</span><span className="lp-cur" style={{marginLeft:'0.3rem'}}>R$</span><span className="lp-amt">{annualInstallment}</span>
               </div>
-              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>ou à vista por R$ 147</div>
+              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>ou à vista por R$ {annualTotal}</div>
               <div style={{fontFamily:'var(--mono)', fontSize:'0.65rem', color:'var(--red)', marginTop:'0.5rem', textTransform:'uppercase', letterSpacing:'0.05em', display:'flex', alignItems:'center', gap:'0.3rem'}}>
                 <ShieldCheck size={14}/> 7 dias de garantia
               </div>

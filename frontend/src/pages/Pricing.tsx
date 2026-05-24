@@ -1,68 +1,83 @@
 import { useNavigate } from 'react-router-dom'
-import { Crown, Check, Zap, Users } from 'lucide-react'
-
-const plans = [
-  {
-    id: 'FREE',
-    name: 'Gratuito',
-    price: 'R$ 0',
-    period: 'para sempre',
-    description: 'Para começar seus estudos',
-    color: 'var(--text-muted)',
-    features: [
-      '10 questões por dia',
-      'Gabarito comentado',
-      'Favoritar questões',
-      'Filtros básicos',
-    ],
-    missing: ['Questões ilimitadas', 'Tutor IA', 'Flashcards adaptativos', 'Relatórios avançados'],
-    cta: 'Plano atual',
-    ctaDisabled: true,
-  },
-  {
-    id: 'PRO',
-    name: 'Pro',
-    price: 'R$ 49,90',
-    period: '/ mês',
-    description: 'Para quem está focado na aprovação',
-    color: 'var(--accent-blue)',
-    highlighted: true,
-    features: [
-      'Questões ilimitadas',
-      'Gabarito comentado',
-      'Favoritar + anotações + grifos',
-      'Todos os filtros',
-      'Tutor IA (GPT-4o)',
-      'Flashcards adaptativos (SM-2)',
-      'Relatórios de desempenho',
-      'Suporte prioritário',
-    ],
-    missing: [],
-    cta: 'Assinar Pro',
-    bestValue: true,
-  },
-  {
-    id: 'GRUPO',
-    name: 'Grupo',
-    price: 'R$ 299,90',
-    period: '/ mês',
-    description: 'Para cursinhos e grupos de estudos',
-    color: 'var(--accent-teal)',
-    features: [
-      'Tudo do Pro',
-      'Até 30 alunos',
-      'Dashboard do professor',
-      'Relatórios da turma',
-      'Simulados personalizados',
-      'Link de convite',
-    ],
-    missing: [],
-    cta: 'Assinar Grupo',
-  },
-]
+import { Crown, Check, Zap, Users, Sparkles } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { subscriptionApi } from '../lib/api'
 
 export default function PricingPage() {
   const navigate = useNavigate()
+
+  const { data: plansData } = useQuery({
+    queryKey: ['plans'],
+    queryFn: subscriptionApi.plans,
+  })
+
+  const plans = [
+    {
+      id: 'FREE',
+      name: 'Gratuito',
+      price: 'R$ 0',
+      period: 'para sempre',
+      description: 'Para começar seus estudos',
+      color: 'var(--text-muted)',
+      features: [
+        '10 questões por dia',
+        'Gabarito comentado',
+        'Favoritar questões',
+        'Filtros básicos',
+      ],
+      missing: ['Questões ilimitadas', 'Tutor IA', 'Flashcards adaptativos', 'Relatórios avançados'],
+      cta: 'Plano atual',
+      ctaDisabled: true,
+    },
+    {
+      id: 'monthly',
+      name: 'Mensal',
+      price: plansData?.monthly?.priceFormatted ?? 'R$ 29,00',
+      period: '/ mês',
+      description: plansData?.monthly?.description ?? 'Acesso completo com renovação automática. Cancele quando quiser.',
+      color: 'var(--accent-blue)',
+      features: plansData?.monthly?.features ?? [
+        'Acesso a todo o banco de questões',
+        'Simulados por especialidade',
+        'Gabaritos comentados',
+      ],
+      missing: ['Simulados personalizados por IA', 'Suporte prioritário', 'Flashcards integrados'],
+      cta: 'Assinar Mensal',
+      highlighted: false,
+    },
+    {
+      id: 'semiannual',
+      name: 'Semestral',
+      price: plansData?.semiannual?.priceFormatted ?? '6x de R$ 19,00',
+      period: '',
+      description: plansData?.semiannual?.description ?? 'Nosso plano mais vendido. Sem renovação automática.',
+      color: '#F59E0B',
+      highlighted: true,
+      bestValue: true,
+      features: plansData?.semiannual?.features ?? [
+        'Tudo do plano Mensal',
+        'Simulados personalizados por IA',
+        'Suporte prioritário',
+      ],
+      missing: ['Flashcards integrados'],
+      cta: 'Assinar Semestral',
+    },
+    {
+      id: 'annual',
+      name: 'Anual',
+      price: plansData?.annual?.priceFormatted ?? '12x de R$ 15,00',
+      period: '',
+      description: plansData?.annual?.description ?? 'O melhor custo-benefício. Sem renovação automática.',
+      color: 'var(--accent-teal)',
+      features: plansData?.annual?.features ?? [
+        'Tudo do plano Semestral',
+        'Flashcards integrados',
+        'Planilha de evolução exportável',
+      ],
+      missing: [],
+      cta: 'Assinar Anual',
+    },
+  ]
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '3rem 1.5rem' }} className="animate-fade-in">
@@ -107,9 +122,10 @@ export default function PricingPage() {
 
             <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                {plan.id === 'PRO' && <Zap size={20} color={plan.color} />}
-                {plan.id === 'GRUPO' && <Users size={20} color={plan.color} />}
                 {plan.id === 'FREE' && <Crown size={20} color={plan.color} />}
+                {plan.id === 'monthly' && <Zap size={20} color={plan.color} />}
+                {plan.id === 'semiannual' && <Sparkles size={20} color={plan.color} />}
+                {plan.id === 'annual' && <Users size={20} color={plan.color} />}
                 <h2 style={{ margin: 0, fontSize: '1.25rem', color: plan.color }}>{plan.name}</h2>
               </div>
               <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit', color: 'var(--text-primary)' }}>
@@ -125,7 +141,7 @@ export default function PricingPage() {
               id={`plan-cta-${plan.id.toLowerCase()}`}
               className={plan.ctaDisabled ? 'btn btn-ghost' : 'btn btn-primary'}
               disabled={plan.ctaDisabled}
-              onClick={() => !plan.ctaDisabled && navigate('/register')}
+              onClick={() => !plan.ctaDisabled && navigate(`/checkout?plan=${plan.id}`)}
               style={{ width: '100%', marginBottom: '1.5rem', padding: '0.875rem', fontSize: '0.9375rem',
                 ...(!plan.highlighted && !plan.ctaDisabled ? { background: `${plan.color}22`, color: plan.color, boxShadow: 'none' } : {}),
               }}
@@ -134,13 +150,13 @@ export default function PricingPage() {
             </button>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              {plan.features.map(f => (
+              {plan.features.map((f: string) => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.875rem' }}>
                   <Check size={15} color={plan.color} strokeWidth={2.5} style={{ flexShrink: 0 }} />
                   <span style={{ color: 'var(--text-secondary)' }}>{f}</span>
                 </div>
               ))}
-              {plan.missing.map(f => (
+              {plan.missing.map((f: string) => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.875rem', opacity: 0.4 }}>
                   <div style={{ width: 15, height: 15, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ width: 12, height: 1.5, background: 'var(--text-muted)', borderRadius: 1 }} />

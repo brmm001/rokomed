@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import { userApi } from '../lib/api'
 import {
@@ -10,6 +11,26 @@ import {
 export default function DashboardPage() {
   const user     = useAuthStore(s => s.user)
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [paymentNotification, setPaymentNotification] = useState<'success' | 'pending' | 'failure' | null>(null)
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment')
+    if (paymentStatus === 'success') {
+      setPaymentNotification('success')
+    } else if (paymentStatus === 'pending') {
+      setPaymentNotification('pending')
+    } else if (paymentStatus === 'failure') {
+      setPaymentNotification('failure')
+    }
+
+    if (paymentStatus) {
+      // Remove payment status from URL so it doesn't reappear on refresh
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('payment')
+      setSearchParams(newParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['user-stats'],
@@ -32,6 +53,71 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: 1100, margin: '0 auto' }}>
+      {paymentNotification && (
+        <div 
+          className="animate-in fade-in slide-in-from-top-4 duration-300"
+          style={{
+            padding: '16px 24px',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            border: '1px solid',
+            background: paymentNotification === 'success' 
+              ? 'rgba(16, 185, 129, 0.1)' 
+              : paymentNotification === 'pending'
+              ? 'rgba(245, 158, 11, 0.1)'
+              : 'rgba(239, 68, 68, 0.1)',
+            borderColor: paymentNotification === 'success'
+              ? 'rgba(16, 185, 129, 0.3)'
+              : paymentNotification === 'pending'
+              ? 'rgba(245, 158, 11, 0.3)'
+              : 'rgba(239, 68, 68, 0.3)',
+            color: paymentNotification === 'success'
+              ? '#10B981'
+              : paymentNotification === 'pending'
+              ? '#F59E0B'
+              : '#EF4444',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '1.25rem' }}>
+              {paymentNotification === 'success' ? '🎉' : paymentNotification === 'pending' ? '⏳' : '❌'}
+            </span>
+            <div>
+              <strong style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--text-primary)' }}>
+                {paymentNotification === 'success' 
+                  ? 'Assinatura Ativada!' 
+                  : paymentNotification === 'pending'
+                  ? 'Pagamento em Processamento'
+                  : 'Falha no Pagamento'}
+              </strong>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                {paymentNotification === 'success' 
+                  ? 'Seu acesso ao RokoMed PRO está totalmente liberado. Bons estudos!' 
+                  : paymentNotification === 'pending'
+                  ? 'Seu pagamento está pendente de aprovação. Assim que for confirmado, seu plano PRO será liberado.'
+                  : 'Não conseguimos processar sua transação. Por favor, tente novamente ou fale com o suporte.'}
+              </span>
+            </div>
+          </div>
+          <button 
+            onClick={() => setPaymentNotification(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              fontSize: '1.125rem',
+              padding: '4px',
+            }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
       {/* Welcome */}
       <div className="dashboard-header" style={{ marginBottom: '32px' }}>
         <h1 className="apple-title">
