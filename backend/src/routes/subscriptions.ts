@@ -317,6 +317,11 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
               currency_id: 'BRL',
             }
           ],
+          payer: {
+            name: user.name?.split(' ')[0] ?? '',
+            surname: user.name?.split(' ').slice(1).join(' ') ?? '',
+            email: user.email,
+          },
           back_urls: {
             success: `${frontUrl}/dashboard?payment=success`,
             failure: `${frontUrl}/checkout?payment=failure`,
