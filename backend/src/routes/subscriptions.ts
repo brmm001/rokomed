@@ -304,14 +304,21 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       }
     }
 
+    // Ambiente de teste: usa sandbox_init_point para evitar bloqueio de autopagamento
+    const isTestMode = process.env.MERCADO_PAGO_ACCESS_TOKEN?.startsWith('TEST-')
+
     try {
       const preference = new Preference(client)
+      const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString() // 6 horas
+
       const result = await preference.create({
         body: {
           items: [
             {
               id: plan,
-              title: `${config.title}${validCoupon ? ` (Cupom: ${validCoupon.code})` : ''}`,
+              title: config.title,
+              description: config.description,
+              category_id: 'services',
               quantity: 1,
               unit_price: Number(finalAmount.toFixed(2)),
               currency_id: 'BRL',
@@ -328,16 +335,24 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
             pending: `${frontUrl}/dashboard?payment=pending`,
           },
           auto_return: 'approved',
+          statement_descriptor: 'ROKOMED',
           external_reference: `${user.id}__${plan}__${validCoupon ? validCoupon.code : ''}`,
+          expiration_date_to: expiresAt,
+          expires: true,
         }
       })
 
-      if (!result.init_point) {
+      // Em modo de teste usa sandbox_init_point; em produção usa init_point
+      const checkoutUrl = isTestMode
+        ? (result.sandbox_init_point ?? result.init_point)
+        : result.init_point
+
+      if (!checkoutUrl) {
         app.log.error('MP não retornou init_point: ' + JSON.stringify(result))
         return reply.code(500).send({ error: 'Erro ao gerar link de pagamento' })
       }
 
-      return reply.send({ checkoutUrl: result.init_point })
+      return reply.send({ checkoutUrl })
     } catch (err: any) {
       app.log.error({ err }, 'Erro ao gerar checkout do Mercado Pago')
       return reply.code(500).send({
