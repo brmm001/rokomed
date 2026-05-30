@@ -98,11 +98,11 @@ function getEmailTemplate(title: string, bodyHtml: string): string {
             <span class="logo">Roko<em>Med</em></span>
           </div>
           <div class="content">
-            \${bodyHtml}
+            ${bodyHtml}
           </div>
           <div class="footer">
             <p>Este é um e-mail automático enviado pelo RokoMed.</p>
-            <p>&copy; \${new Date().getFullYear()} RokoMed. Todos os direitos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} RokoMed. Todos os direitos reservados.</p>
           </div>
         </div>
       </body>
