@@ -15,7 +15,7 @@ import '../internal-theme.css'
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/questoes',       icon: BookOpen,         label: 'Banco de Questões' },
-  { to: '/simulados/novo', icon: ClipboardList,    label: 'Simulado' },
+  { to: '/simulados',      icon: ClipboardList,    label: 'Simulados' },
   { to: '/adaptive',       icon: Brain,            label: 'Trilha Adaptativa' },
   { to: '/analytics',      icon: BarChart3,        label: 'Análise' },
   { to: '/perfil',         icon: User,             label: 'Perfil' },

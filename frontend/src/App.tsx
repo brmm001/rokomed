@@ -15,6 +15,7 @@ import LandingPage from './pages/Landing'
 import FreeExamPage from './pages/FreeExam'
 import SimuladoConfigPage from './pages/SimuladoConfig'
 import SimuladoExamPage from './pages/SimuladoExam'
+import SimuladoListPage from './pages/SimuladoList'
 import AdaptiveSessionPage from './pages/AdaptiveSession'
 import AnalyticsPage from './pages/Analytics'
 import CheckoutPage from './pages/Checkout'
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/questoes"       element={<QuestionBankPage />} />
             <Route path="/questoes/:id"   element={<StudyPage />} />
             <Route path="/simulados/novo" element={<SimuladoConfigPage />} />
+            <Route path="/simulados"      element={<SimuladoListPage />} />
             <Route path="/simulados/:id"  element={<SimuladoExamPage />} />
             <Route path="/adaptive"       element={<AdaptiveSessionPage />} />
             <Route path="/analytics"      element={<AnalyticsPage />} />
