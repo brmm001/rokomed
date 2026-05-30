@@ -106,8 +106,8 @@ export default function SimuladoConfigPage() {
     setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val])
 
   const notEnough  = availableCount !== null && availableCount < effectiveCount
-  const canCreate  = !notEnough && difficulties.length > 0 && effectiveCount >= 5 && availableCount !== null && availableCount > 0
-  const canCreatePartial = notEnough && availableCount !== null && availableCount >= 5
+  const canCreate  = !notEnough && difficulties.length > 0 && effectiveCount >= 1 && availableCount !== null && availableCount > 0
+  const canCreatePartial = notEnough && availableCount !== null && availableCount >= 1
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: 760, margin: '0 auto', paddingBottom: '3rem' }}>
@@ -158,8 +158,8 @@ export default function SimuladoConfigPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>Ou digite:</span>
-            <input id="custom-count" className="input" type="number" min={5} max={120}
-              placeholder="5–120" value={customCount}
+            <input id="custom-count" className="input" type="number" min={1} max={120}
+              placeholder="1–120" value={customCount}
               onChange={e => setCustomCount(e.target.value)} style={{ width: 100 }} />
           </div>
 
@@ -194,9 +194,9 @@ export default function SimuladoConfigPage() {
                     </button>
                   </div>
                 )}
-                {!canCreatePartial && availableCount < 5 && (
+                {!canCreatePartial && availableCount < 1 && (
                   <p style={{ color: '#EF4444', fontSize: '0.8125rem', margin: 0 }}>
-                    Há menos de 5 questões disponíveis. Amplie os filtros (especialidade, instituição ou dificuldade) para criar um simulado.
+                    Há menos de 1 questão disponível. Amplie os filtros (especialidade, instituição ou dificuldade) para criar um simulado.
                   </p>
                 )}
               </div>

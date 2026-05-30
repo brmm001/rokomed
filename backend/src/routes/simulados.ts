@@ -15,7 +15,7 @@ import { requireAuth } from '../middleware/auth'
 
 const createSchema = z.object({
   title:          z.string().min(1).max(100).optional(),
-  totalQuestions: z.number().int().min(5).max(120),
+  totalQuestions: z.number().int().min(1).max(120),
   timeLimitMin:   z.number().int().min(10).max(360).optional().nullable(),
   difficulties:   z.array(z.enum(['FACIL', 'MEDIO', 'DIFICIL'])).optional(),
   institutionIds: z.array(z.string()).optional(),
