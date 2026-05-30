@@ -340,8 +340,10 @@ export default async function questionRoutes(app: FastifyInstance) {
     return reply.send({ specialties, institutions, years: years.map(q => q.year) })
   })
 
-  // GET /api/questions/meta/specialty-tree — hierarquia completa para UI de seleção
-  // Retorna: Grande Área → Temas → Subtemas (3 níveis), agrupando por nome para evitar duplicatas
+
+  // GET /api/questions/meta/specialty-tree
+  // Agrupa raízes por prefixo para eliminar duplicatas como:
+  //   "Cardiologia", "Cardiologia/Emergência", "Cardiologia Pediátrica" → 1 entrada "Cardiologia"
   app.get('/meta/specialty-tree', { preHandler: [requireAuth] }, async (_request, reply) => {
     const roots = await prisma.specialty.findMany({
       where: { isGrandeArea: true },
@@ -350,10 +352,7 @@ export default async function questionRoutes(app: FastifyInstance) {
         children: {
           select: {
             id: true, name: true,
-            children: {
-              select: { id: true, name: true },
-              orderBy: { name: 'asc' },
-            },
+            children: { select: { id: true, name: true }, orderBy: { name: 'asc' } },
           },
           orderBy: { name: 'asc' },
         },
@@ -361,33 +360,71 @@ export default async function questionRoutes(app: FastifyInstance) {
       orderBy: { name: 'asc' },
     })
 
-    // Agrupa grandes áreas com o mesmo nome (normalizado) numa única entrada
-    const areaMap = new Map<string, {
-      ids: string[]
-      name: string
-      themeMap: Map<string, { ids: string[]; name: string; subthemeMap: Map<string, { id: string; name: string }> }>
-    }>()
+    type MergedTheme = { ids: string[]; name: string; subthemeMap: Map<string, { id: string; name: string }> }
+    type MergedArea  = { ids: string[]; name: string; themeMap: Map<string, MergedTheme> }
+
+    // ── Passo 1: coleta bases dos nomes com "/" (ex: "Cardiologia" de "Cardiologia/Emergência") ──
+    const slashBases = new Map<string, string>() // normalizado → nome original
+    for (const root of roots) {
+      const slash = root.name.indexOf('/')
+      if (slash > 0) {
+        const base = root.name.slice(0, slash).trim()
+        slashBases.set(base.toLowerCase(), base)
+      }
+    }
+
+    // ── Passo 2: determina base efetiva de cada raiz ──
+    function getEffectiveBase(name: string): { base: string; qualifier: string | null } {
+      const slash = name.indexOf('/')
+      if (slash > 0) {
+        return { base: name.slice(0, slash).trim(), qualifier: name.slice(slash + 1).trim() }
+      }
+      // Verifica se começa com alguma base conhecida seguida de espaço
+      for (const [normBase, origBase] of slashBases) {
+        if (name.toLowerCase() === normBase) return { base: origBase, qualifier: null }
+        if (name.toLowerCase().startsWith(normBase + ' ')) {
+          return { base: origBase, qualifier: name.slice(origBase.length).trim() }
+        }
+      }
+      return { base: name.trim(), qualifier: null }
+    }
+
+    // ── Passo 3: agrega ──
+    const areaMap = new Map<string, MergedArea>()
 
     for (const root of roots) {
-      const key = root.name.trim().toLowerCase()
-      if (!areaMap.has(key)) {
-        areaMap.set(key, { ids: [], name: root.name.trim(), themeMap: new Map() })
+      const { base, qualifier } = getEffectiveBase(root.name)
+      const aKey = base.toLowerCase()
+
+      if (!areaMap.has(aKey)) {
+        areaMap.set(aKey, { ids: [], name: base, themeMap: new Map() })
       }
-      const area = areaMap.get(key)!
+      const area = areaMap.get(aKey)!
       area.ids.push(root.id)
 
-      for (const theme of root.children) {
-        const tKey = theme.name.trim().toLowerCase()
+      if (qualifier) {
+        // Raiz qualificada → o qualifier vira tema; filhos da raiz viram subtemas desse tema
+        const tKey = qualifier.toLowerCase()
         if (!area.themeMap.has(tKey)) {
-          area.themeMap.set(tKey, { ids: [], name: theme.name.trim(), subthemeMap: new Map() })
+          area.themeMap.set(tKey, { ids: [root.id], name: qualifier, subthemeMap: new Map() })
         }
         const t = area.themeMap.get(tKey)!
-        t.ids.push(theme.id)
-
-        for (const sub of theme.children) {
-          const sKey = sub.name.trim().toLowerCase()
-          if (!t.subthemeMap.has(sKey)) {
-            t.subthemeMap.set(sKey, { id: sub.id, name: sub.name.trim() })
+        for (const child of root.children) {
+          const sKey = child.name.trim().toLowerCase()
+          if (!t.subthemeMap.has(sKey)) t.subthemeMap.set(sKey, { id: child.id, name: child.name.trim() })
+        }
+      } else {
+        // Raiz sem qualifier → filhos viram temas normalmente
+        for (const theme of root.children) {
+          const tKey = theme.name.trim().toLowerCase()
+          if (!area.themeMap.has(tKey)) {
+            area.themeMap.set(tKey, { ids: [], name: theme.name.trim(), subthemeMap: new Map() })
+          }
+          const t = area.themeMap.get(tKey)!
+          t.ids.push(theme.id)
+          for (const sub of theme.children) {
+            const sKey = sub.name.trim().toLowerCase()
+            if (!t.subthemeMap.has(sKey)) t.subthemeMap.set(sKey, { id: sub.id, name: sub.name.trim() })
           }
         }
       }
@@ -396,21 +433,20 @@ export default async function questionRoutes(app: FastifyInstance) {
     const tree = Array.from(areaMap.values())
       .sort((a, b) => a.name.localeCompare(b.name, 'pt'))
       .map(area => ({
-        // usa o primeiro id como representante; todos os ids são enviados como aliases
-        id: area.ids[0],
-        ids: area.ids,
+        id:   area.ids[0],
+        ids:  area.ids,
         name: area.name,
         themes: Array.from(area.themeMap.values())
           .sort((a, b) => a.name.localeCompare(b.name, 'pt'))
           .map(t => ({
-            id: t.ids[0],
-            ids: t.ids,
-            name: t.name,
-            subthemes: Array.from(t.subthemeMap.values())
-              .sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+            id:        t.ids[0] ?? area.ids[0],
+            ids:       t.ids,
+            name:      t.name,
+            subthemes: Array.from(t.subthemeMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt')),
           })),
       }))
 
     return reply.send({ tree })
   })
 }
+
