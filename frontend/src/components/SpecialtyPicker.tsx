@@ -9,8 +9,8 @@ interface SpecialtyPickerProps {
 }
 
 interface Subtheme { id: string; name: string }
-interface Theme    { id: string; name: string; subthemes: Subtheme[] }
-interface Area     { id: string; name: string; themes: Theme[] }
+interface Theme    { id: string; ids: string[]; name: string; subthemes: Subtheme[] }
+interface Area     { id: string; ids: string[]; name: string; themes: Theme[] }
 
 export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPickerProps) {
   const [expandedArea,  setExpandedArea]  = useState<string | null>(null)
@@ -25,15 +25,12 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
 
   const tree: Area[] = data?.tree || []
 
-  // ── helpers de seleção ──────────────────────────────────────────────────────
+  // ── helpers de IDs (area e theme podem ter múltiplos ids por deduplicação) ──
+  const areaAllIds  = (area: Area)  => [...(area.ids ?? [area.id]), ...area.themes.flatMap(t => [...(t.ids ?? [t.id]), ...t.subthemes.map(s => s.id)])]
+  const themeAllIds = (theme: Theme) => [...(theme.ids ?? [theme.id]), ...theme.subthemes.map(s => s.id)]
+
   const toggle = (id: string) =>
     onChange(selectedIds.includes(id) ? selectedIds.filter(x => x !== id) : [...selectedIds, id])
-
-  const areaAllIds = (area: Area) =>
-    [area.id, ...area.themes.flatMap(t => [t.id, ...t.subthemes.map(s => s.id)])]
-
-  const themeAllIds = (theme: Theme) =>
-    [theme.id, ...theme.subthemes.map(s => s.id)]
 
   const toggleArea = (area: Area) => {
     const ids = areaAllIds(area)
@@ -47,10 +44,10 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
     onChange(allOn ? selectedIds.filter(id => !ids.includes(id)) : [...new Set([...selectedIds, ...ids])])
   }
 
-  const areaFull    = (area: Area)  => areaAllIds(area).every(id => selectedIds.includes(id))
-  const areaPartial = (area: Area)  => areaAllIds(area).some(id => selectedIds.includes(id)) && !areaFull(area)
-  const themeFull   = (t: Theme)    => themeAllIds(t).every(id => selectedIds.includes(id))
-  const themePartial= (t: Theme)    => themeAllIds(t).some(id => selectedIds.includes(id)) && !themeFull(t)
+  const areaFull    = (area: Area)   => areaAllIds(area).every(id => selectedIds.includes(id))
+  const areaPartial = (area: Area)   => areaAllIds(area).some(id => selectedIds.includes(id)) && !areaFull(area)
+  const themeFull   = (t: Theme)     => themeAllIds(t).every(id => selectedIds.includes(id))
+  const themePartial= (t: Theme)     => themeAllIds(t).some(id => selectedIds.includes(id)) && !themeFull(t)
 
   // ── filtro de busca ─────────────────────────────────────────────────────────
   const q = search.toLowerCase().trim()
@@ -63,15 +60,11 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
       })).filter(a => a.name.toLowerCase().includes(q) || a.themes.length > 0)
     : tree
 
-  // Quando busca está ativa, expande tudo automaticamente
   const isAreaOpen  = (id: string) => !!q || expandedArea  === id
   const isThemeOpen = (id: string) => !!q || expandedTheme === id
 
-  // ── chips das áreas com seleção (para limpeza rápida) ──────────────────────
   const selectedAreas = tree.filter(a => areaAllIds(a).some(id => selectedIds.includes(id)))
-
-  const removeArea = (area: Area) =>
-    onChange(selectedIds.filter(id => !areaAllIds(area).includes(id)))
+  const removeArea    = (area: Area) => onChange(selectedIds.filter(id => !areaAllIds(area).includes(id)))
 
   // ── estilos reutilizáveis ──────────────────────────────────────────────────
   const rowBase: React.CSSProperties = {
@@ -91,7 +84,7 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
   return (
     <div className="glass" style={{ borderRadius: 16, padding: '1.25rem' }}>
 
-      {/* ── cabeçalho ────────────────────────────────────────────────────── */}
+      {/* ── cabeçalho ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <BookOpen size={16} color="var(--accent-teal)" />
@@ -108,7 +101,7 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
         )}
       </div>
 
-      {/* ── chips das áreas com seleção ──────────────────────────────────── */}
+      {/* ── chips das áreas selecionadas ──────────────────────────────────── */}
       {selectedAreas.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.625rem' }}>
           {selectedAreas.map(area => (
@@ -129,7 +122,7 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
         </div>
       )}
 
-      {/* ── busca ────────────────────────────────────────────────────────── */}
+      {/* ── busca ─────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '0.5rem',
         padding: '0.45rem 0.75rem', borderRadius: 8, marginBottom: '0.625rem',
@@ -150,7 +143,7 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
         )}
       </div>
 
-      {/* ── árvore com scroll ────────────────────────────────────────────── */}
+      {/* ── árvore com scroll ─────────────────────────────────────────────── */}
       <div style={{ maxHeight: 280, overflowY: 'auto', overflowX: 'hidden' }}>
         {filtered.length === 0 ? (
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem', padding: '1rem 0' }}>
@@ -162,28 +155,18 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
 
           return (
             <div key={area.id} style={{ marginBottom: 2 }}>
-
               {/* ── Grande Área ── */}
               <div style={{
-                display: 'flex', alignItems: 'center',
-                borderRadius: 8, overflow: 'hidden',
+                display: 'flex', alignItems: 'center', borderRadius: 8, overflow: 'hidden',
                 background: afull ? 'rgba(20,184,166,0.1)' : apart ? 'rgba(20,184,166,0.05)' : 'transparent',
                 transition: 'background 0.12s',
               }}>
-                {/* chevron expande */}
                 <button
-                  onClick={() => {
-                    setExpandedArea(aOpen && !q ? null : area.id)
-                    setExpandedTheme(null)
-                  }}
+                  onClick={() => { setExpandedArea(aOpen && !q ? null : area.id); setExpandedTheme(null) }}
                   style={{ ...rowBase, width: 32, flexShrink: 0, justifyContent: 'center', paddingLeft: 4 }}
                 >
-                  {aOpen
-                    ? <ChevronDown  size={14} color="var(--text-muted)" />
-                    : <ChevronRight size={14} color="var(--text-muted)" />}
+                  {aOpen ? <ChevronDown size={14} color="var(--text-muted)" /> : <ChevronRight size={14} color="var(--text-muted)" />}
                 </button>
-
-                {/* checkbox + nome seleciona área inteira */}
                 <button onClick={() => toggleArea(area)}
                   style={{ ...rowBase, flex: 1, padding: '0.5rem 0.5rem 0.5rem 0' }}>
                   <div style={checkbox(afull, apart, 'var(--accent-teal)')}>
@@ -192,14 +175,16 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
                   <span style={{ fontWeight: 600, fontSize: '0.84rem', color: afull ? 'var(--accent-teal)' : 'var(--text-primary)', flex: 1 }}>
                     {area.name}
                   </span>
-                  <span style={{ fontSize: '0.63rem', color: 'var(--text-muted)', paddingRight: '0.5rem', whiteSpace: 'nowrap' }}>
-                    {area.themes.length} temas
-                  </span>
+                  {area.themes.length > 0 && (
+                    <span style={{ fontSize: '0.63rem', color: 'var(--text-muted)', paddingRight: '0.5rem', whiteSpace: 'nowrap' }}>
+                      {area.themes.length} temas
+                    </span>
+                  )}
                 </button>
               </div>
 
               {/* ── Temas ── */}
-              {aOpen && (
+              {aOpen && area.themes.length > 0 && (
                 <div style={{ paddingLeft: '1.25rem', borderLeft: '2px solid var(--border)', marginLeft: '0.9rem', marginTop: 2 }}>
                   {area.themes.map(theme => {
                     const tOpen = isThemeOpen(theme.id)
@@ -208,26 +193,19 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
 
                     return (
                       <div key={theme.id} style={{ marginBottom: 1 }}>
-
-                        {/* ── linha do Tema ── */}
                         <div style={{
-                          display: 'flex', alignItems: 'center',
-                          borderRadius: 6, overflow: 'hidden',
+                          display: 'flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden',
                           background: tfull ? 'rgba(59,130,246,0.08)' : tpart ? 'rgba(59,130,246,0.04)' : 'transparent',
                         }}>
-                          {/* chevron subtemas */}
                           {hasSubs ? (
                             <button
                               onClick={() => setExpandedTheme(tOpen && !q ? null : theme.id)}
                               style={{ ...rowBase, width: 26, flexShrink: 0, justifyContent: 'center' }}
                             >
-                              {tOpen
-                                ? <ChevronDown  size={12} color="var(--text-muted)" />
-                                : <ChevronRight size={12} color="var(--text-muted)" />}
+                              {tOpen ? <ChevronDown size={12} color="var(--text-muted)" /> : <ChevronRight size={12} color="var(--text-muted)" />}
                             </button>
                           ) : <span style={{ width: 26, flexShrink: 0 }} />}
 
-                          {/* checkbox + nome */}
                           <button
                             onClick={() => hasSubs ? toggleTheme(theme) : toggle(theme.id)}
                             style={{ ...rowBase, flex: 1, padding: '0.4rem 0.4rem 0.4rem 0' }}
@@ -254,8 +232,7 @@ export default function SpecialtyPicker({ selectedIds, onChange }: SpecialtyPick
                               return (
                                 <button key={st.id} onClick={() => toggle(st.id)}
                                   style={{
-                                    ...rowBase, padding: '0.3rem 0.4rem',
-                                    borderRadius: 5,
+                                    ...rowBase, padding: '0.3rem 0.4rem', borderRadius: 5,
                                     background: stOn ? 'rgba(139,92,246,0.08)' : 'transparent',
                                   }}
                                 >

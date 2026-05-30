@@ -341,7 +341,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // GET /api/questions/meta/specialty-tree — hierarquia completa para UI de seleção
-  // Retorna: Grande Área → Temas → Subtemas (3 níveis)
+  // Retorna: Grande Área → Temas → Subtemas (3 níveis), agrupando por nome para evitar duplicatas
   app.get('/meta/specialty-tree', { preHandler: [requireAuth] }, async (_request, reply) => {
     const roots = await prisma.specialty.findMany({
       where: { isGrandeArea: true },
@@ -361,21 +361,55 @@ export default async function questionRoutes(app: FastifyInstance) {
       orderBy: { name: 'asc' },
     })
 
-    const tree = roots.map(r => ({
-      id: r.id,
-      name: r.name,
-      questionCount: (r as any)._count?.questions || 0,
-      themes: r.children.map(t => ({
-        id: t.id,
-        name: t.name,
-        questionCount: (t as any)._count?.questions || 0,
-        subthemes: t.children.map(st => ({
-          id: st.id,
-          name: st.name,
-          questionCount: (st as any)._count?.questions || 0,
-        })),
-      })),
-    }))
+    // Agrupa grandes áreas com o mesmo nome (normalizado) numa única entrada
+    const areaMap = new Map<string, {
+      ids: string[]
+      name: string
+      themeMap: Map<string, { ids: string[]; name: string; subthemeMap: Map<string, { id: string; name: string }> }>
+    }>()
+
+    for (const root of roots) {
+      const key = root.name.trim().toLowerCase()
+      if (!areaMap.has(key)) {
+        areaMap.set(key, { ids: [], name: root.name.trim(), themeMap: new Map() })
+      }
+      const area = areaMap.get(key)!
+      area.ids.push(root.id)
+
+      for (const theme of root.children) {
+        const tKey = theme.name.trim().toLowerCase()
+        if (!area.themeMap.has(tKey)) {
+          area.themeMap.set(tKey, { ids: [], name: theme.name.trim(), subthemeMap: new Map() })
+        }
+        const t = area.themeMap.get(tKey)!
+        t.ids.push(theme.id)
+
+        for (const sub of theme.children) {
+          const sKey = sub.name.trim().toLowerCase()
+          if (!t.subthemeMap.has(sKey)) {
+            t.subthemeMap.set(sKey, { id: sub.id, name: sub.name.trim() })
+          }
+        }
+      }
+    }
+
+    const tree = Array.from(areaMap.values())
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+      .map(area => ({
+        // usa o primeiro id como representante; todos os ids são enviados como aliases
+        id: area.ids[0],
+        ids: area.ids,
+        name: area.name,
+        themes: Array.from(area.themeMap.values())
+          .sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+          .map(t => ({
+            id: t.ids[0],
+            ids: t.ids,
+            name: t.name,
+            subthemes: Array.from(t.subthemeMap.values())
+              .sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+          })),
+      }))
 
     return reply.send({ tree })
   })
