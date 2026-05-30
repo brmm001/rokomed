@@ -56,7 +56,7 @@ export default async function authRoutes(app: FastifyInstance) {
       html: `
         <h2>Olá, ${user.name}!</h2>
         <p>Sua conta foi criada com sucesso. Seja bem-vindo(a) ao Rokomedicina!</p>
-        <p>Para acessar sua conta, vá para a <a href="${process.env.FRONTEND_URL || 'https://rokomedicina.com.br'}/login">página de login</a> e utilize suas credenciais.</p>
+        <p>Para acessar sua conta, vá para a <a href="${process.env.FRONTEND_URL || 'https://rokomed.com.br'}/login">página de login</a> e utilize suas credenciais.</p>
         <br />
         <p>Bons estudos!</p>
       `,
@@ -150,7 +150,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const resetToken = app.jwt.sign({ sub: user.id, purpose: 'reset_password' }, { expiresIn: '1h' })
     
     // O link aponta para o Frontend, que vai ler da URL e mandar para a rota de reset
-    const resetLink = `${process.env.FRONTEND_URL || 'https://rokomedicina.com.br'}/reset-password?token=${resetToken}`
+    const resetLink = `${process.env.FRONTEND_URL || 'https://rokomed.com.br'}/reset-password?token=${resetToken}`
 
     await sendEmail({
       to: user.email,

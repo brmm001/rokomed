@@ -33,18 +33,18 @@ export default async function partnershipsRoutes(app: FastifyInstance) {
     // E-mail de confirmação para quem solicitou a parceria
     sendEmail({
       to: email,
-      subject: 'Recebemos seu interesse em parceria! - Rokomedicina',
+      subject: 'Recebemos seu interesse em parceria! - RokoMed',
       html: `
         <h2>Olá, ${name}!</h2>
-        <p>Recebemos as suas informações sobre o interesse em uma parceria do tipo <strong>${type}</strong> com o Rokomedicina.</p>
+        <p>Recebemos as suas informações sobre o interesse em uma parceria do tipo <strong>${type}</strong> com o RokoMed.</p>
         <p>Nossa equipe vai analisar seus dados e entrará em contato em breve.</p>
         <br />
-        <p>Abraços,<br/>Equipe Rokomedicina</p>
+        <p>Abraços,<br/>Equipe RokoMed</p>
       `
     }).catch(err => console.error('Erro ao enviar email para o lead de parceria', err))
 
     // Opcional: E-mail interno notificando a equipe sobre a nova lead
-    const adminEmail = process.env.EMAIL_FROM || 'suporte@rokomedicina.com.br'
+    const adminEmail = process.env.EMAIL_FROM || 'suporte@rokomed.com.br'
     sendEmail({
       to: adminEmail,
       subject: `Nova solicitação de parceria: ${name} (${type})`,
