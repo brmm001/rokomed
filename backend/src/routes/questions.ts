@@ -406,9 +406,12 @@ export default async function questionRoutes(app: FastifyInstance) {
         // Raiz qualificada → o qualifier vira tema; filhos da raiz viram subtemas desse tema
         const tKey = qualifier.toLowerCase()
         if (!area.themeMap.has(tKey)) {
-          area.themeMap.set(tKey, { ids: [root.id], name: qualifier, subthemeMap: new Map() })
+          area.themeMap.set(tKey, { ids: [], name: qualifier, subthemeMap: new Map() })
         }
         const t = area.themeMap.get(tKey)!
+        if (!t.ids.includes(root.id)) {
+          t.ids.push(root.id)
+        }
         for (const child of root.children) {
           const sKey = child.name.trim().toLowerCase()
           if (!t.subthemeMap.has(sKey)) t.subthemeMap.set(sKey, { id: child.id, name: child.name.trim() })
@@ -421,7 +424,9 @@ export default async function questionRoutes(app: FastifyInstance) {
             area.themeMap.set(tKey, { ids: [], name: theme.name.trim(), subthemeMap: new Map() })
           }
           const t = area.themeMap.get(tKey)!
-          t.ids.push(theme.id)
+          if (!t.ids.includes(theme.id)) {
+            t.ids.push(theme.id)
+          }
           for (const sub of theme.children) {
             const sKey = sub.name.trim().toLowerCase()
             if (!t.subthemeMap.has(sKey)) t.subthemeMap.set(sKey, { id: sub.id, name: sub.name.trim() })
