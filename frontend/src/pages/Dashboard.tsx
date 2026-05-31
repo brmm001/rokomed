@@ -18,6 +18,14 @@ export default function DashboardPage() {
     const paymentStatus = searchParams.get('payment')
     if (paymentStatus === 'success') {
       setPaymentNotification('success')
+      // Dispara evento de conversão do Google Ads
+      if (typeof (window as any).gtag === 'function') {
+        (window as any).gtag('event', 'conversion', {
+          'send_to': 'AW-625816226/xTf7CODz5OAZEKLltKoC',
+          'value': 1.0,
+          'currency': 'BRL'
+        });
+      }
     } else if (paymentStatus === 'pending') {
       setPaymentNotification('pending')
     } else if (paymentStatus === 'failure') {
