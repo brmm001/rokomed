@@ -22,7 +22,7 @@ export default function DashboardPage() {
       if (typeof (window as any).gtag === 'function') {
         (window as any).gtag('event', 'conversion', {
           'send_to': 'AW-625816226/q172CM7Zz5YCEKLltKoC',
-          'value': 1.0,
+          'value': 29.0,
           'currency': 'BRL'
         });
       }
