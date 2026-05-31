@@ -21,7 +21,7 @@ export default function DashboardPage() {
       // Dispara evento de conversão do Google Ads
       if (typeof (window as any).gtag === 'function') {
         (window as any).gtag('event', 'conversion', {
-          'send_to': 'AW-625816226/xTf7CODz5OAZEKLltKoC',
+          'send_to': 'AW-625816226/q172CM7Zz5YCEKLltKoC',
           'value': 1.0,
           'currency': 'BRL'
         });
