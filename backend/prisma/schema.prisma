@@ -69,6 +69,7 @@ model Specialty {
   parent       Specialty? @relation("SpecialtyHierarchy", fields: [parentId], references: [id])
   children     Specialty[] @relation("SpecialtyHierarchy")
   questions    Question[]
+  lessons      Lesson[]
 
   @@map("specialties")
 }
@@ -498,3 +499,17 @@ model VisitorClick {
   @@map("visitor_clicks")
 }
 
+model Lesson {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  videoUrl    String     // URL do vídeo (ex: Youtube, Vimeo)
+  durationMin Int?       // Duração em minutos
+  specialtyId String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  specialty   Specialty? @relation(fields: [specialtyId], references: [id], onDelete: SetNull)
+
+  @@map("lessons")
+}

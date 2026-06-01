@@ -311,5 +311,77 @@ export default async function adminRoutes(app: FastifyInstance) {
     })
     return reply.send({ data: clicks })
   })
+
+  // ── Lessons CRUD ──────────────────────────────────────────────────────────
+  const lessonSchema = z.object({
+    title:       z.string().min(2),
+    description: z.string().optional().nullable(),
+    videoUrl:    z.string().url(),
+    durationMin: z.number().optional().nullable(),
+    specialtyId: z.string().optional().nullable(),
+  })
+
+  // POST /api/admin/lessons — criar aula
+  app.post('/lessons', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const parsed  = lessonSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    const lesson = await prisma.lesson.create({
+      data: {
+        title:       parsed.data.title,
+        description: parsed.data.description || null,
+        videoUrl:    parsed.data.videoUrl,
+        durationMin: parsed.data.durationMin || null,
+        specialtyId: parsed.data.specialtyId || null,
+      }
+    })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'CREATE_LESSON', target: lesson.id },
+    })
+
+    return reply.code(201).send({ lesson })
+  })
+
+  // PUT /api/admin/lessons/:id — editar aula
+  app.put('/lessons/:id', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id }  = request.params as { id: string }
+    const parsed  = lessonSchema.partial().safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    const lesson = await prisma.lesson.update({
+      where: { id },
+      data: {
+        title:       parsed.data.title,
+        description: parsed.data.description === undefined ? undefined : parsed.data.description,
+        videoUrl:    parsed.data.videoUrl,
+        durationMin: parsed.data.durationMin === undefined ? undefined : parsed.data.durationMin,
+        specialtyId: parsed.data.specialtyId === undefined ? undefined : parsed.data.specialtyId,
+      }
+    })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'UPDATE_LESSON', target: id },
+    })
+
+    return reply.send({ lesson })
+  })
+
+  // DELETE /api/admin/lessons/:id — deletar aula
+  app.delete('/lessons/:id', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id }  = request.params as { id: string }
+
+    await prisma.lesson.delete({ where: { id } })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'DELETE_LESSON', target: id },
+    })
+
+    return reply.send({ deleted: true })
+  })
 }
+
 

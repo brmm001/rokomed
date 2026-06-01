@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   LayoutDashboard, BookOpen, User, Crown,
   LogOut, ShieldCheck, Stethoscope, Menu, X, ClipboardList,
-  Brain, BarChart3, Layers, Lock,
+  Brain, BarChart3, Layers, Lock, Video,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SupportWidget from './SupportWidget'
@@ -15,6 +15,7 @@ import '../internal-theme.css'
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/questoes',       icon: BookOpen,         label: 'Banco de Questões' },
+  { to: '/aulas',          icon: Video,            label: 'Aulas e Temas' },
   { to: '/simulados',      icon: ClipboardList,    label: 'Simulados' },
   { to: '/adaptive',       icon: Brain,            label: 'Trilha Adaptativa' },
   { to: '/flashcards',     icon: Layers,           label: 'Flashcards' },
@@ -257,7 +258,7 @@ export default function Layout() {
                 <>
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} color={isActive ? 'var(--text-primary)' : 'currentColor'} />
                   <span style={{ fontWeight: isActive ? 600 : 500, flex: 1 }}>{label}</span>
-                  {user?.plan === 'FREE' && ['/simulados', '/adaptive'].includes(to) && (
+                  {user?.plan === 'FREE' && ['/simulados', '/adaptive', '/aulas'].includes(to) && (
                     <Lock size={12} color="var(--text-muted)" style={{ opacity: 0.6 }} />
                   )}
                 </>

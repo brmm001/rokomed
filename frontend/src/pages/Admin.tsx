@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminApi } from '../lib/api'
+import { adminApi, lessonsApi } from '../lib/api'
 import toast from 'react-hot-toast'
 import {
   LayoutDashboard, BookOpen, Users, FileText,
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
   Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
+  Play, Video, Edit
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
@@ -17,6 +18,15 @@ export default function AdminPage() {
   const [replyText, setReplyText] = useState('')
   const [partnerFilter, setPartnerFilter] = useState<{ type: string; status: string }>({ type: '', status: '' })
   const [partnerNotes, setPartnerNotes] = useState<Record<string, string>>({})
+  const [showLessonModal, setShowLessonModal] = useState(false)
+  const [editingLesson, setEditingLesson] = useState<{
+    id?: string
+    title: string
+    description: string
+    videoUrl: string
+    durationMin: number
+    specialtyId: string
+  } | null>(null)
   const qc = useQueryClient()
 
   const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
@@ -40,6 +50,56 @@ export default function AdminPage() {
   const deleteQ = useMutation({
     mutationFn: (id: string) => adminApi.deleteQuestion(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-questions'] }); toast.success('Questão deletada') },
+  })
+
+  // Lessons mutations & queries
+  const { data: specialtiesData } = useQuery({
+    queryKey: ['admin-specialties-lessons'],
+    queryFn: adminApi.specialties,
+    enabled: (tab as string) === 'lessons' || (showLessonModal && (tab as string) === 'lessons')
+  })
+
+  const { data: lessonsGrouped, isLoading: lessonsLoading } = useQuery({
+    queryKey: ['admin-lessons-grouped'],
+    queryFn: lessonsApi.list,
+    enabled: (tab as string) === 'lessons'
+  })
+
+  const createLesson = useMutation({
+    mutationFn: (data: Record<string, any>) => adminApi.createLesson(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-lessons-grouped'] })
+      setShowLessonModal(false)
+      setEditingLesson(null)
+      toast.success('Aula criada com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao criar aula')
+    }
+  })
+
+  const updateLesson = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) => adminApi.updateLesson(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-lessons-grouped'] })
+      setShowLessonModal(false)
+      setEditingLesson(null)
+      toast.success('Aula atualizada com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao atualizar aula')
+    }
+  })
+
+  const deleteLesson = useMutation({
+    mutationFn: (id: string) => adminApi.deleteLesson(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-lessons-grouped'] })
+      toast.success('Aula deletada com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao deletar aula')
+    }
   })
 
   const banUser = useMutation({
@@ -77,6 +137,7 @@ export default function AdminPage() {
     { id: 'stats',        label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
     { id: 'questions',    label: 'Questões',      icon: <BookOpen size={16} /> },
     { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
+    { id: 'lessons',      label: 'Aulas',         icon: <Play size={16} /> },
     { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
     { id: 'clicks',       label: 'Cliques',       icon: <MousePointerClick size={16} /> },
     { id: 'support',      label: 'Suporte',       icon: <MessageSquare size={16} /> },
@@ -632,6 +693,201 @@ export default function AdminPage() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Lessons Tab ─────────────────────────────────────────────────────── */}
+      {tab === 'lessons' && (
+        <div className="animate-fade-in">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+                Gerencie as aulas da plataforma. Aulas são organizadas por especialidade e bloqueadas para usuários FREE.
+              </p>
+            </div>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setEditingLesson({ title: '', description: '', videoUrl: '', durationMin: 0, specialtyId: '' })
+                setShowLessonModal(true)
+              }}
+            >
+              <Plus size={16} /> Adicionar Aula
+            </button>
+          </div>
+
+          {lessonsLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} className="animate-spin" /> Carregando aulas...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {lessonsGrouped?.data?.length === 0 && (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }} className="glass">
+                  Nenhuma aula cadastrada ainda.
+                </div>
+              )}
+              {lessonsGrouped?.data?.map((group: { id: string; name: string; lessons: any[] }) => (
+                <div key={group.id} className="glass" style={{ borderRadius: 14, padding: '1.25rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: 0, marginBottom: '1rem', color: 'var(--accent-blue)', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                    {group.name}
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {group.lessons.map((lesson: { id: string; title: string; description: string; durationMin: number; videoUrl: string; specialtyId: string }) => (
+                      <div key={lesson.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{lesson.title}</div>
+                          {lesson.description && <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{lesson.description}</div>}
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            <span>Duração: {lesson.durationMin || '—'} min</span>
+                            <span>•</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '250px', whiteSpace: 'nowrap' }}>Vídeo: {lesson.videoUrl}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            className="btn btn-ghost"
+                            style={{ padding: '0.5rem 0.75rem' }}
+                            onClick={() => {
+                              setEditingLesson({
+                                id: lesson.id,
+                                title: lesson.title,
+                                description: lesson.description || '',
+                                videoUrl: lesson.videoUrl,
+                                durationMin: lesson.durationMin || 0,
+                                specialtyId: lesson.specialtyId || group.id
+                              })
+                              setShowLessonModal(true)
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            style={{ padding: '0.5rem 0.75rem' }}
+                            onClick={() => {
+                              if (confirm(`Deletar a aula "${lesson.title}"?`)) {
+                                deleteLesson.mutate(lesson.id)
+                              }
+                            }}
+                            disabled={deleteLesson.isPending}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Lesson Modal ────────────────────────────────────────────────────── */}
+      {showLessonModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div className="glass animate-fade-in" style={{
+            width: '90%',
+            maxWidth: '500px',
+            padding: '24px',
+            borderRadius: '16px',
+            position: 'relative'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', marginTop: 0, marginBottom: '1.25rem', fontWeight: 700 }}>
+              {editingLesson?.id ? 'Editar Aula' : 'Nova Aula'}
+            </h3>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const data = {
+                title: editingLesson?.title,
+                description: editingLesson?.description || null,
+                videoUrl: editingLesson?.videoUrl,
+                durationMin: editingLesson?.durationMin ? Number(editingLesson.durationMin) : null,
+                specialtyId: editingLesson?.specialtyId || null
+              }
+              if (editingLesson?.id) {
+                updateLesson.mutate({ id: editingLesson.id, data })
+              } else {
+                createLesson.mutate(data)
+              }
+            }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Título *</label>
+                <input
+                  type="text"
+                  className="input"
+                  required
+                  value={editingLesson?.title || ''}
+                  onChange={e => setEditingLesson(prev => prev ? { ...prev, title: e.target.value } : null)}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Descrição</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={editingLesson?.description || ''}
+                  onChange={e => setEditingLesson(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>URL do Vídeo (YouTube/Vimeo) *</label>
+                <input
+                  type="url"
+                  className="input"
+                  required
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={editingLesson?.videoUrl || ''}
+                  onChange={e => setEditingLesson(prev => prev ? { ...prev, videoUrl: e.target.value } : null)}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Duração (minutos)</label>
+                  <input
+                    type="number"
+                    className="input"
+                    value={editingLesson?.durationMin || ''}
+                    onChange={e => setEditingLesson(prev => prev ? { ...prev, durationMin: Number(e.target.value) } : null)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Especialidade</label>
+                  <select
+                    className="input"
+                    value={editingLesson?.specialtyId || ''}
+                    onChange={e => setEditingLesson(prev => prev ? { ...prev, specialtyId: e.target.value } : null)}
+                  >
+                    <option value="">Nenhuma</option>
+                    {specialtiesData?.data?.map((s: { id: string; name: string }) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => { setShowLessonModal(false); setEditingLesson(null) }}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={createLesson.isPending || updateLesson.isPending}>
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

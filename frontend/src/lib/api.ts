@@ -122,6 +122,15 @@ export const adminApi = {
   deletePartnershipLead: (id: string) =>
     api.delete(`/partnerships/admin/leads/${id}`).then(r => r.data),
   clicks: () => api.get('/admin/clicks').then(r => r.data),
+  createLesson: (data: Record<string, unknown>) => api.post('/admin/lessons', data).then(r => r.data),
+  updateLesson: (id: string, data: Record<string, unknown>) => api.put(`/admin/lessons/${id}`, data).then(r => r.data),
+  deleteLesson: (id: string) => api.delete(`/admin/lessons/${id}`).then(r => r.data),
+}
+
+// ── Lessons ──────────────────────────────────────────────────────────────────
+export const lessonsApi = {
+  list: () => api.get('/lessons').then(r => r.data),
+  get: (id: string) => api.get(`/lessons/${id}`).then(r => r.data),
 }
 
 // ── Parcerias (público, sem auth) ────────────────────────────────────────────
