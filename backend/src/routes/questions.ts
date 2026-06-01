@@ -215,7 +215,7 @@ export default async function questionRoutes(app: FastifyInstance) {
 
     const { selectedOpt, timeSpentSec } = parsed.data
 
-    const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true, statement: true, explanation: true } })
+    const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true, statement: true, explanation: true, options: true } })
     if (!question) return reply.code(404).send({ error: 'Questão não encontrada' })
 
     const isCorrect = question.correctOption 
@@ -248,12 +248,29 @@ export default async function questionRoutes(app: FastifyInstance) {
 
     if (!existingFlashcard && canCreateFlashcard) {
       try {
+        let correctText = ''
+        try {
+          const opts = typeof question.options === 'string' ? JSON.parse(question.options) : question.options
+          if (Array.isArray(opts)) {
+            const found = opts.find((o: any) => o.letter.toUpperCase() === question.correctOption?.toUpperCase())
+            if (found) {
+              correctText = found.text
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao processar opções para o flashcard:', e)
+        }
+
+        const backContent = correctText 
+          ? `<strong>Alternativa ${question.correctOption}:</strong> ${correctText}`
+          : `<strong>Alternativa ${question.correctOption}</strong>`
+
         await prisma.flashcard.create({
           data: {
             userId: payload.sub,
             questionId: id,
             front: question.statement,
-            back: `<strong>Alternativa Correta: ${question.correctOption}</strong><br/><br/>${question.explanation || ''}`
+            back: backContent
           }
         })
       } catch (err) {

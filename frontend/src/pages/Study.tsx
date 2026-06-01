@@ -72,6 +72,42 @@ export default function StudyPage() {
 
   useEffect(() => { if (q?.note) setNoteText(q.note) }, [q])
 
+  // Reset state when question ID changes (critical to prevent carrying over answers)
+  useEffect(() => {
+    setSelected(null)
+    setSubmitted(false)
+    setShowExpl(true)
+    setShowNote(false)
+    setNoteText('')
+    startTime.current = Date.now()
+  }, [id])
+
+  const handleNextQuestion = async () => {
+    try {
+      const specId = q?.specialty?.id
+      // Buscamos questões do mesmo tema/especialidade
+      const res = await questionsApi.list({
+        specialtyId: specId,
+        limit: 50,
+      })
+      const list = res?.data || []
+      // Filtra a questão atual
+      const others = list.filter((item: any) => item.id !== id)
+      
+      if (others.length > 0) {
+        // Seleciona uma aleatória das outras
+        const randomQ = others[Math.floor(Math.random() * others.length)]
+        navigate(`/questoes/${randomQ.id}`)
+      } else {
+        toast.success('Você concluiu todas as questões disponíveis desta especialidade!')
+        navigate('/questoes')
+      }
+    } catch (e) {
+      toast.error('Erro ao carregar próxima questão')
+      navigate('/questoes')
+    }
+  }
+
   const answerMutation = useMutation({
     mutationFn: (opt: string) => questionsApi.answer(id!, {
       selectedOpt: opt,
@@ -422,8 +458,7 @@ export default function StudyPage() {
           <button id="flag-btn" className="btn btn-ghost" style={{ color: 'var(--text-muted)' }}>
             <Flag size={16} /> Sinalizar
           </button>
-          <button className="apple-btn"
-            onClick={() => { setSelected(null); setSubmitted(false); setShowExpl(true); navigate('/questoes') }}>
+          <button className="apple-btn" onClick={handleNextQuestion}>
             Próxima questão
           </button>
         </div>
