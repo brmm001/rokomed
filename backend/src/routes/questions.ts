@@ -86,17 +86,6 @@ export default async function questionRoutes(app: FastifyInstance) {
 
     const { page, limit, specialtyId, institutionId, year, difficulty, search, bookmarked, wrongOnly } = parsed.data
 
-    // Limite diário para FREE: 10 questões
-    if (payload.plan === 'FREE') {
-      const today = new Date(); today.setHours(0, 0, 0, 0)
-      const count = await prisma.userAnswer.count({
-        where: { userId: payload.sub, createdAt: { gte: today } },
-      })
-      if (count >= 10) {
-        return reply.code(402).send({ error: 'Limite diário atingido. Faça upgrade para Pro!', upgrade: true })
-      }
-    }
-
     const where: Record<string, unknown> = { isPublished: true }
     if (institutionId) where.institutionId = institutionId
     if (year)          where.year          = year
@@ -214,6 +203,17 @@ export default async function questionRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: 'Dados inválidos' })
 
     const { selectedOpt, timeSpentSec } = parsed.data
+
+    // Limite diário para FREE: 10 questões
+    if (payload.plan === 'FREE') {
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      const count = await prisma.userAnswer.count({
+        where: { userId: payload.sub, createdAt: { gte: today } },
+      })
+      if (count >= 10) {
+        return reply.code(402).send({ error: 'Limite diário atingido. Faça upgrade para Pro!', upgrade: true })
+      }
+    }
 
     const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true, statement: true, explanation: true, options: true } })
     if (!question) return reply.code(404).send({ error: 'Questão não encontrada' })

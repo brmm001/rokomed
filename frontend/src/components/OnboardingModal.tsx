@@ -105,8 +105,8 @@ export default function OnboardingModal({ onComplete }: Props) {
   const [loading, setLoading] = useState(false)
 
   const { data: institutionsData } = useQuery({
-    queryKey: ['admin-institutions'],
-    queryFn: adminApi.institutions,
+    queryKey: ['user-institutions'],
+    queryFn: userApi.institutions,
   })
 
   const filteredSchools = MEDICAL_SCHOOLS.filter(s =>

@@ -138,4 +138,10 @@ export default async function userRoutes(app: FastifyInstance) {
 
     return reply.send({ user })
   })
+
+  // GET /api/user/institutions — lista instituições para o usuário (ex: onboarding)
+  app.get('/institutions', { preHandler: [requireAuth] }, async (_request, reply) => {
+    const institutions = await prisma.institution.findMany({ orderBy: { acronym: 'asc' } })
+    return reply.send({ data: institutions })
+  })
 }

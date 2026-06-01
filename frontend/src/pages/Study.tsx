@@ -136,11 +136,15 @@ export default function StudyPage() {
     onSuccess: () => toast.success('Anotação salva'),
   })
 
-  const handleAnswer = async (opt: string) => {
+  const handleAnswer = (opt: string) => {
     if (submitted) return
     setSelected(opt)
+  }
+
+  const handleSubmitAnswer = async () => {
+    if (!selected || submitted) return
     setSubmitted(true)
-    const res = await answerMutation.mutateAsync(opt)
+    const res = await answerMutation.mutateAsync(selected)
     if (res.isCorrect) toast.success('Resposta correta! 🎉', { duration: 3000 })
     else toast.error(`Incorreto. Gabarito: ${res.correctOption}`, { duration: 3000 })
   }
@@ -167,7 +171,9 @@ export default function StudyPage() {
   const breadcrumb = buildBreadcrumb(q.specialty)
 
   const getOptionClass = (letter: string) => {
-    if (!submitted) return 'apple-option'
+    if (!submitted) {
+      return selected === letter ? 'apple-option selected' : 'apple-option'
+    }
     if (letter === q.correctOption) return 'apple-option correct'
     if (letter === selected)        return 'apple-option wrong'
     return 'apple-option'
@@ -253,6 +259,7 @@ export default function StudyPage() {
                 fontWeight: 600, fontSize: '1rem',
                 background: submitted && letter === q.correctOption ? '#30D158'
                   : submitted && letter === selected ? '#FF453A'
+                  : !submitted && letter === selected ? 'var(--accent-blue)'
                   : 'rgba(255,255,255,0.1)',
                 color: '#fff',
                 transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -266,10 +273,32 @@ export default function StudyPage() {
           ))}
         </div>
 
+        {/* Botão de Responder */}
         {!submitted && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-            <Clock size={14} />
-            <span>Selecione uma alternativa para responder</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
+            <button
+              id="submit-answer-btn"
+              className="apple-btn"
+              disabled={selected === null || answerMutation.isPending}
+              onClick={handleSubmitAnswer}
+              style={{
+                width: '100%',
+                padding: '0.875rem',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                background: selected === null ? 'rgba(255, 255, 255, 0.05)' : 'var(--apple-accent, #fff)',
+                border: '1px solid var(--border)',
+                color: selected === null ? 'var(--text-muted)' : 'var(--apple-accent-text, #000)',
+                cursor: selected === null ? 'not-allowed' : 'pointer',
+                boxShadow: selected !== null ? '0 4px 12px rgba(255, 255, 255, 0.1)' : 'none'
+              }}
+            >
+              {answerMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : 'Responder'}
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8125rem', justifyContent: 'center' }}>
+              <Clock size={14} />
+              <span>Selecione uma alternativa e clique em Responder</span>
+            </div>
           </div>
         )}
       </div>

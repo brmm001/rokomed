@@ -84,6 +84,7 @@ export const userApi = {
   profile: () => api.get('/user/profile').then(r => r.data),
   updateProfile: (data: { name?: string; picture?: string }) =>
     api.patch('/user/profile', data).then(r => r.data),
+  institutions: () => api.get('/user/institutions').then(r => r.data),
 }
 
 // ── Admin ───────────────────────────────────────────────────────────────────
