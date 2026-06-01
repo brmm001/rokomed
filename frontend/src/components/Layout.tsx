@@ -201,21 +201,17 @@ export default function Layout() {
         transition: 'transform 0.25s ease',
       }}>
         {/* Logo */}
-        <div style={{ padding: '1.5rem 1.25rem 1rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ padding: '1.5rem 1.25rem 1.15rem', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'linear-gradient(135deg, #3B82F6, #14B8A6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            <a href="/dashboard" style={{
+              fontFamily: "'Abril Fatface', Georgia, serif",
+              fontSize: '1.65rem',
+              textDecoration: 'none',
+              color: 'var(--text-primary)',
+              letterSpacing: '0.02em',
             }}>
-              <Stethoscope size={20} color="white" />
-            </div>
-            <div>
-              <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                ResidênciaApp
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Banco de Questões</div>
-            </div>
+              Roko<span style={{ color: '#3B82F6' }}>Med</span>
+            </a>
           </div>
         </div>
 

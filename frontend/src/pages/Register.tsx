@@ -59,7 +59,7 @@ export default function RegisterPage() {
               <Stethoscope size={22} color="white" />
             </div>
             <div>
-              <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem' }}>ResidênciaApp</div>
+              <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem' }}>RokoMed</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Banco de Questões para Residência</div>
             </div>
           </div>
