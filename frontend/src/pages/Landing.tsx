@@ -29,6 +29,7 @@ export default function LandingPage() {
     if(!leadEmail.includes('@')) { alert('Por favor, insira um e-mail válido.'); return; }
     setLoadingLead(true)
     try {
+      trackClick('LEAD_CAPTURE', leadEmail)
       const api = (await import('../lib/api')).default
       await api.post('/auth/lead', { email: leadEmail })
       localStorage.setItem('rokomed_lead_email', leadEmail)
@@ -50,7 +51,43 @@ export default function LandingPage() {
       }
     }
     document.addEventListener('mouseleave', handleMouseLeave)
-    return () => document.removeEventListener('mouseleave', handleMouseLeave)
+
+    // Rastreamento de profundidade de rolagem (Scroll depth)
+    let scrolled25 = false
+    let scrolled50 = false
+    let scrolled75 = false
+    let scrolled100 = false
+
+    const handleScroll = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight
+      if (scrollHeight <= 0) return
+      
+      const scrollPercent = (scrollTop / scrollHeight) * 100
+
+      if (scrollPercent >= 25 && !scrolled25) {
+        scrolled25 = true
+        trackClick('SCROLL_DEPTH_25')
+      }
+      if (scrollPercent >= 50 && !scrolled50) {
+        scrolled50 = true
+        trackClick('SCROLL_DEPTH_50')
+      }
+      if (scrollPercent >= 75 && !scrolled75) {
+        scrolled75 = true
+        trackClick('SCROLL_DEPTH_75')
+      }
+      if (scrollPercent >= 95 && !scrolled100) {
+        scrolled100 = true
+        trackClick('SCROLL_DEPTH_100')
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      document.removeEventListener('mouseleave', handleMouseLeave)
+      window.removeEventListener('scroll', handleScroll)
+    }
   }, [hasTriggeredPopup])
 
   return (
@@ -558,7 +595,13 @@ export default function LandingPage() {
               {q: "Posso cancelar quando quiser?", a: "Sim, o cancelamento da renovação pode ser feito a qualquer momento com apenas 2 cliques direto pelo seu painel, sem precisar falar com atendentes."}
             ].map((faq, i) => (
               <div key={i} className={`lp-faq-item ${openFaq === i ? 'open' : ''}`}>
-                <button className="lp-faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                <button className="lp-faq-q" onClick={() => {
+                  const wasClosed = openFaq !== i
+                  if (wasClosed) {
+                    trackClick('FAQ_EXPAND: ' + faq.q)
+                  }
+                  setOpenFaq(openFaq === i ? null : i)
+                }}>
                   {faq.q}
                   {openFaq === i ? <Minus size={18}/> : <Plus size={18}/>}
                 </button>
@@ -664,7 +707,7 @@ export default function LandingPage() {
         </footer>
 
         {/* Floating WhatsApp Button */}
-        <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="lp-wa-btn" aria-label="WhatsApp">
+        <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="lp-wa-btn" aria-label="WhatsApp" onClick={() => trackClick('WHATSAPP_CLICK')}>
           <MessageCircle size={32} />
         </a>
 
