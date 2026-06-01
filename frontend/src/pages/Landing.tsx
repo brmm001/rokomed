@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { X, MessageCircle, Lock, Plus, Minus, ShieldCheck } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { subscriptionApi } from '../lib/api'
+import { trackClick } from '../lib/tracker'
 
 export default function LandingPage() {
   const [showExitPopup, setShowExitPopup] = useState(false)
@@ -287,8 +288,8 @@ export default function LandingPage() {
             <li><a href="/parcerias">Parcerias</a></li>
           </ul>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <Link to="/login" className="lp-nav-cta" style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)' }}>Entrar</Link>
-            <a href="#planos" className="lp-nav-cta">Assinar</a>
+            <Link to="/login" className="lp-nav-cta" style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)' }} onClick={() => trackClick('NAV_LOGIN')}>Entrar</Link>
+            <a href="#planos" className="lp-nav-cta" onClick={() => trackClick('NAV_SUBSCRIBE')}>Assinar</a>
           </div>
         </nav>
 
@@ -307,7 +308,7 @@ export default function LandingPage() {
             <div className="lp-hero-bottom">
               <p className="lp-hero-desc">Mais de 15.000 questões comentadas, simulados adaptativos e análise de desempenho por especialidade. Tudo que você precisa, sem o que você não precisa.</p>
               <div className="lp-hero-actions">
-                <Link to="/checkout" className="lp-btn-ink">Começar por R${monthlyPrice}/mês</Link>
+                <Link to="/checkout" className="lp-btn-ink" onClick={() => trackClick('BUY_HERO')}>Começar por R${monthlyPrice}/mês</Link>
                 <a href="#recursos" className="lp-btn-link">Ver recursos →</a>
               </div>
               <p className="lp-hero-note">Sem taxa de adesão · Acesso imediato · Cancele quando quiser</p>
@@ -477,7 +478,7 @@ export default function LandingPage() {
                 <li>Revisão com algoritmo SM-2</li>
                 <li>Trilha Adaptativa integrada</li>
               </ul>
-              <Link to="/register" className="lp-pc-btn lp-pc-btn-out" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontWeight: 'bold' }}>Começar Grátis →</Link>
+              <Link to="/register" className="lp-pc-btn lp-pc-btn-out" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontWeight: 'bold' }} onClick={() => trackClick('START_FREE')}>Começar Grátis →</Link>
             </div>
             <div className="lp-pc">
               <div className="lp-pc-lbl">Mensal</div>
@@ -490,7 +491,7 @@ export default function LandingPage() {
                 <li>Gabaritos comentados</li>
                 <li>Cancele quando quiser</li>
               </ul>
-              <Link to="/checkout?plan=monthly" className="lp-pc-btn lp-pc-btn-out">Começar agora →</Link>
+              <Link to="/checkout?plan=monthly" className="lp-pc-btn lp-pc-btn-out" onClick={() => trackClick('BUY_MONTHLY')}>Começar agora →</Link>
             </div>
             <div className="lp-pc lp-feat">
               <span className="lp-pflag" style={{ background: '#FFC107', color: '#000', fontWeight: 'bold', fontSize: '0.65rem', padding: '0.4rem 0.8rem', boxShadow: '0 4px 12px rgba(255, 193, 7, 0.4)' }}>Mais Vendido</span>
@@ -509,7 +510,7 @@ export default function LandingPage() {
                 <li>Filtro avançado por banca e ano</li>
                 <li style={{color:'#FFC107', fontWeight:600}}>🎁 Bônus: Planilha de Revisão Espaçada</li>
               </ul>
-              <Link to="/checkout?plan=semiannual" className="lp-pc-btn lp-pc-btn-ppr">Economizar 34% →</Link>
+              <Link to="/checkout?plan=semiannual" className="lp-pc-btn lp-pc-btn-ppr" onClick={() => trackClick('BUY_SEMIANNUAL')}>Economizar 34% →</Link>
             </div>
             <div className="lp-pc">
               <div className="lp-pc-lbl">Anual</div>
@@ -527,7 +528,7 @@ export default function LandingPage() {
                 <li>Flashcards integrados</li>
                 <li style={{color:'var(--ink)', fontWeight:600}}>🎁 Bônus: Guia 100 Temas SUS-SP</li>
               </ul>
-              <Link to="/checkout?plan=annual" className="lp-pc-btn lp-pc-btn-out">Melhor custo-benefício →</Link>
+              <Link to="/checkout?plan=annual" className="lp-pc-btn lp-pc-btn-out" onClick={() => trackClick('BUY_ANNUAL')}>Melhor custo-benefício →</Link>
             </div>
           </div>
           
@@ -570,7 +571,7 @@ export default function LandingPage() {
         <section className="lp-cta-s">
           <h2>Sua vaga na residência<br />começa <em>hoje.</em></h2>
           <div className="lp-cta-r">
-            <Link to="/checkout" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}}>Começar por R$29/mês</Link>
+            <Link to="/checkout" className="lp-btn-ink" style={{fontSize:'.78rem',padding:'1rem 2.5rem'}} onClick={() => trackClick('BUY_CTA_BOTTOM')}>Começar por R$29/mês</Link>
             <p className="lp-note">Acesso imediato · Sem compromisso</p>
             <p className="lp-note">+8.000 médicos aprovados</p>
           </div>

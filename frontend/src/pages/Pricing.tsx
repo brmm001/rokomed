@@ -3,6 +3,7 @@ import { Crown, Check, Zap, Users, Sparkles } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { subscriptionApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
+import { trackClick } from '../lib/tracker'
 
 export default function PricingPage() {
   const navigate = useNavigate()
@@ -147,6 +148,8 @@ export default function PricingPage() {
               disabled={plan.ctaDisabled}
               onClick={() => {
                 if (!plan.ctaDisabled) {
+                  const eventName = plan.id === 'FREE' ? 'START_FREE' : 'BUY_' + plan.id.toUpperCase()
+                  trackClick(eventName)
                   if (plan.id === 'FREE') {
                     navigate('/register')
                   } else {

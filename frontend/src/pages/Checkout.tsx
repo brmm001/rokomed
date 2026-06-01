@@ -5,6 +5,7 @@ import api, { subscriptionApi } from '../lib/api'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
+import { trackClick } from '../lib/tracker'
 
 type PlanType = 'monthly' | 'semiannual' | 'annual'
 
@@ -124,6 +125,7 @@ export default function CheckoutPage() {
     setLoading(true)
     
     try {
+      trackClick('CHECKOUT_SUBMIT', formData.email)
       // FIX #6: Sempre lê o token mais atualizado do store no momento do submit
       const currentToken = useAuthStore.getState().token
 

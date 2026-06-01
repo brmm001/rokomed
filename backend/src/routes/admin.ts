@@ -302,4 +302,14 @@ export default async function adminRoutes(app: FastifyInstance) {
     })
     return reply.send({ ticket })
   })
+
+  // ── Visitor Clicks ─────────────────────────────────────────────────────────
+  app.get('/clicks', { preHandler: [isAdmin] }, async (_request, reply) => {
+    const clicks = await prisma.visitorClick.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+    return reply.send({ data: clicks })
+  })
 }
+

@@ -147,6 +147,33 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.send({ success: true, userId: user.id })
   })
 
+  // POST /api/auth/click-event — Rastreia cliques de visitantes
+  app.post('/click-event', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { email, userId, buttonType, pageUrl } = request.body as {
+      email?: string
+      userId?: string
+      buttonType: string
+      pageUrl: string
+    }
+
+    if (!buttonType || !pageUrl) {
+      return reply.code(400).send({ error: 'buttonType e pageUrl são obrigatórios' })
+    }
+
+    const click = await prisma.visitorClick.create({
+      data: {
+        email: email || null,
+        userId: userId || null,
+        buttonType,
+        pageUrl,
+        ip: request.ip,
+      }
+    })
+
+    return reply.send({ success: true, clickId: click.id })
+  })
+
+
   // POST /api/auth/forgot-password (Envia o e-mail de recuperação)
   app.post('/forgot-password', async (request: FastifyRequest, reply: FastifyReply) => {
     const { email } = request.body as { email: string }

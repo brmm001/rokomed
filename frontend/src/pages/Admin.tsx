@@ -6,10 +6,10 @@ import {
   LayoutDashboard, BookOpen, Users, FileText,
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
-  Send, CheckCircle, Clock, Mail, Handshake,
+  Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
@@ -30,6 +30,11 @@ export default function AdminPage() {
     queryKey: ['admin-partnerships', partnerFilter],
     queryFn: () => adminApi.partnerships({ type: partnerFilter.type || undefined, status: partnerFilter.status || undefined }),
     enabled: tab === 'partnerships',
+  })
+  const { data: clicksData, isLoading: clicksLoading } = useQuery({
+    queryKey: ['admin-clicks'],
+    queryFn: adminApi.clicks,
+    enabled: tab === 'clicks',
   })
 
   const deleteQ = useMutation({
@@ -73,6 +78,7 @@ export default function AdminPage() {
     { id: 'questions',    label: 'Questões',      icon: <BookOpen size={16} /> },
     { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
     { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
+    { id: 'clicks',       label: 'Cliques',       icon: <MousePointerClick size={16} /> },
     { id: 'support',      label: 'Suporte',       icon: <MessageSquare size={16} /> },
     { id: 'partnerships', label: 'Parcerias',     icon: <Handshake size={16} /> },
     { id: 'logs',         label: 'Logs',          icon: <FileText size={16} /> },
@@ -552,6 +558,74 @@ export default function AdminPage() {
                           }
                         }}
                       />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Clicks Tab ──────────────────────────────────────────────────────── */}
+      {tab === 'clicks' && (
+        <div className="animate-fade-in">
+          <div style={{ marginBottom: '1rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              Cliques em botões de compra ("Comprar") ou de abertura de conta ("Cadastrar" / "Começar") realizados por visitantes e usuários.
+            </p>
+          </div>
+          {clicksLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} className="animate-spin" /> Carregando...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {clicksData?.data?.length === 0 && (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>Nenhum clique registrado ainda.</div>
+              )}
+              {clicksData?.data?.map((click: {
+                id: string;
+                email?: string;
+                userId?: string;
+                buttonType: string;
+                pageUrl: string;
+                ip?: string;
+                createdAt: string;
+              }) => {
+                const badgeColor: Record<string, string> = {
+                  START_FREE: 'badge-green',
+                  BUY_MONTHLY: 'badge-blue',
+                  BUY_SEMIANNUAL: 'badge-gold',
+                  BUY_ANNUAL: 'badge-teal',
+                  BUY_HERO: 'badge-blue',
+                  BUY_CTA_BOTTOM: 'badge-blue',
+                  REGISTER_SUBMIT: 'badge-green',
+                  CHECKOUT_SUBMIT: 'badge-gold',
+                }
+                return (
+                  <div key={click.id} className="glass" style={{ borderRadius: 12, padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className={`badge ${badgeColor[click.buttonType] || 'badge-gray'}`} style={{ fontSize: '0.7rem', fontWeight: 700 }}>
+                          {click.buttonType}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          na página <code style={{ color: 'var(--text-primary)' }}>{click.pageUrl}</code>
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', marginTop: 6, fontWeight: 500 }}>
+                        {click.email ? (
+                          <span>E-mail: <strong style={{ color: 'var(--text-primary)' }}>{click.email}</strong></span>
+                        ) : click.userId ? (
+                          <span style={{ color: 'var(--text-muted)' }}>Usuário ID: {click.userId}</span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>Visitante Anônimo</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                        IP: {click.ip || '—'} · Registrado em {new Date(click.createdAt).toLocaleString('pt-BR')}
+                      </div>
                     </div>
                   </div>
                 )

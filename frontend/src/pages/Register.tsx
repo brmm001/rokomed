@@ -4,6 +4,7 @@ import { authApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, Stethoscope, ArrowRight, Check } from 'lucide-react'
+import { trackClick } from '../lib/tracker'
 
 const benefits = [
   '10 questões gratuitas por dia',
@@ -25,6 +26,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
+      trackClick('REGISTER_SUBMIT', email)
       const { user, token } = await authApi.register({ name, email, password })
       setAuth(user, token)
       toast.success('Conta criada com sucesso!')

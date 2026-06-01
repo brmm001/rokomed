@@ -35,6 +35,8 @@ export const authApi = {
   logout: () => api.post('/auth/logout').then(r => r.data),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }).then(r => r.data),
   resetPassword: (token: string, newPassword: string) => api.post('/auth/reset-password', { token, newPassword }).then(r => r.data),
+  trackClick: (data: { email?: string; userId?: string; buttonType: string; pageUrl: string }) =>
+    api.post('/auth/click-event', data).then(r => r.data),
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────
@@ -119,6 +121,7 @@ export const adminApi = {
     api.patch(`/partnerships/admin/leads/${id}`, data).then(r => r.data),
   deletePartnershipLead: (id: string) =>
     api.delete(`/partnerships/admin/leads/${id}`).then(r => r.data),
+  clicks: () => api.get('/admin/clicks').then(r => r.data),
 }
 
 // ── Parcerias (público, sem auth) ────────────────────────────────────────────

@@ -485,3 +485,16 @@ model PartnershipLead {
 
   @@map("partnership_leads")
 }
+
+model VisitorClick {
+  id         String   @id @default(cuid())
+  email      String?
+  userId     String?
+  buttonType String   // ex: "BUY_PRO" | "BUY_GRUPO" | "REGISTER" | "START_FREE"
+  pageUrl    String   // ex: "/pricing" | "/landing"
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@map("visitor_clicks")
+}
+
