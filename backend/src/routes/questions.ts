@@ -124,23 +124,79 @@ export default async function questionRoutes(app: FastifyInstance) {
       where.id = { in: wrong.map(a => a.questionId) }
     }
 
-    const [questions, total] = await Promise.all([
-      prisma.question.findMany({
-        where,
-        skip:    (page - 1) * limit,
-        take:    limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          specialty:   { select: { id: true, name: true } },
-          institution: { select: { id: true, name: true, acronym: true } },
-          images:      { select: { id: true, url: true, caption: true, order: true }, orderBy: { order: 'asc' } },
-          bookmarks:   { where: { userId: payload.sub }, select: { id: true } },
-          notes:       { where: { userId: payload.sub }, select: { content: true } },
-          highlights:  { where: { userId: payload.sub }, select: { id: true, rangeJson: true, color: true } },
-        },
-      }),
-      prisma.question.count({ where }),
+    const whereUnanswered = {
+      ...where,
+      answers: {
+        none: {
+          userId: payload.sub
+        }
+      }
+    }
+    const whereAnswered = {
+      ...where,
+      answers: {
+        some: {
+          userId: payload.sub
+        }
+      }
+    }
+
+    const [totalUnanswered, totalAnswered] = await Promise.all([
+      prisma.question.count({ where: whereUnanswered }),
+      prisma.question.count({ where: whereAnswered }),
     ])
+    const total = totalUnanswered + totalAnswered
+
+    const offset = (page - 1) * limit
+    let questions = []
+
+    const includeBlock = {
+      specialty:   { select: { id: true, name: true } },
+      institution: { select: { id: true, name: true, acronym: true } },
+      images:      { select: { id: true, url: true, caption: true, order: true }, orderBy: { order: 'asc' } },
+      bookmarks:   { where: { userId: payload.sub }, select: { id: true } },
+      notes:       { where: { userId: payload.sub }, select: { content: true } },
+      highlights:  { where: { userId: payload.sub }, select: { id: true, rangeJson: true, color: true } },
+    }
+
+    if (offset + limit <= totalUnanswered) {
+      questions = await prisma.question.findMany({
+        where: whereUnanswered,
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: includeBlock,
+      })
+    } else if (offset >= totalUnanswered) {
+      questions = await prisma.question.findMany({
+        where: whereAnswered,
+        skip: offset - totalUnanswered,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: includeBlock,
+      })
+    } else {
+      const takeUnanswered = totalUnanswered - offset
+      const takeAnswered = limit - takeUnanswered
+
+      const [unanswered, answered] = await Promise.all([
+        prisma.question.findMany({
+          where: whereUnanswered,
+          skip: offset,
+          take: takeUnanswered,
+          orderBy: { createdAt: 'desc' },
+          include: includeBlock,
+        }),
+        prisma.question.findMany({
+          where: whereAnswered,
+          skip: 0,
+          take: takeAnswered,
+          orderBy: { createdAt: 'desc' },
+          include: includeBlock,
+        }),
+      ])
+      questions = [...unanswered, ...answered]
+    }
 
     const data = questions.map(q => parseQuestion(q as unknown as Record<string, unknown>))
     return reply.send({ data, total, page, totalPages: Math.ceil(total / limit) })
