@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, requireActiveSubscription } from '../middleware/auth'
 
 // ── Schemas ────────────────────────────────────────────────────────────────
 const listSchema = z.object({
@@ -79,7 +79,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // GET /api/questions — lista questões com filtros
-  app.get('/', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string; plan: string }
     const parsed  = listSchema.safeParse(request.query)
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
@@ -158,7 +158,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // GET /api/questions/:id — detalhe de uma questão
-  app.get('/:id', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/:id', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
 
@@ -207,15 +207,15 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // POST /api/questions/:id/answer — registra resposta
-  app.post('/:id/answer', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const payload = request.user as { sub: string }
+  app.post('/:id/answer', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string; plan: string }
     const { id }  = request.params as { id: string }
     const parsed  = answerSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: 'Dados inválidos' })
 
     const { selectedOpt, timeSpentSec } = parsed.data
 
-    const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true } })
+    const question = await prisma.question.findUnique({ where: { id }, select: { correctOption: true, statement: true, explanation: true } })
     if (!question) return reply.code(404).send({ error: 'Questão não encontrada' })
 
     const isCorrect = question.correctOption 
@@ -225,6 +225,41 @@ export default async function questionRoutes(app: FastifyInstance) {
     const answer = await prisma.userAnswer.create({
       data: { userId: payload.sub, questionId: id, selectedOpt: selectedOpt.toUpperCase(), isCorrect, timeSpentSec },
     })
+
+    // Auto-generate flashcard if it doesn't exist and limit allows
+    const existingFlashcard = await prisma.flashcard.findFirst({
+      where: { userId: payload.sub, questionId: id }
+    })
+
+    let canCreateFlashcard = true
+    if (payload.plan === 'FREE') {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const flashcardCount = await prisma.flashcard.count({
+        where: {
+          userId: payload.sub,
+          createdAt: { gte: today }
+        }
+      })
+      if (flashcardCount >= 5) {
+        canCreateFlashcard = false
+      }
+    }
+
+    if (!existingFlashcard && canCreateFlashcard) {
+      try {
+        await prisma.flashcard.create({
+          data: {
+            userId: payload.sub,
+            questionId: id,
+            front: question.statement,
+            back: `<strong>Alternativa Correta: ${question.correctOption}</strong><br/><br/>${question.explanation || ''}`
+          }
+        })
+      } catch (err) {
+        console.error('Erro ao gerar flashcard automaticamente:', err)
+      }
+    }
 
     // Atualiza Sequência Ativa (Streak) e Data do Último Estudo
     const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { streak: true, lastStudyDate: true } })
@@ -260,7 +295,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // POST /api/questions/:id/bookmark — toggle favorito
-  app.post('/:id/bookmark', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/:id/bookmark', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
 
@@ -278,7 +313,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // PUT /api/questions/:id/note — salva anotação
-  app.put('/:id/note', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.put('/:id/note', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload     = request.user as { sub: string }
     const { id }      = request.params as { id: string }
     const { content } = request.body as { content: string }
@@ -293,7 +328,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // POST /api/questions/:id/highlight — salva grifo (rangeJson serializado como string)
-  app.post('/:id/highlight', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/:id/highlight', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload              = request.user as { sub: string }
     const { id }               = request.params as { id: string }
     const { rangeJson, color } = request.body as { rangeJson: object; color?: string }
@@ -311,7 +346,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/questions/:id/highlight/:hId — remove grifo
-  app.delete('/:id/highlight/:hId', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.delete('/:id/highlight/:hId', { preHandler: [requireAuth, requireActiveSubscription] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload     = request.user as { sub: string }
     const { id, hId } = request.params as { id: string; hId: string }
 
@@ -321,7 +356,7 @@ export default async function questionRoutes(app: FastifyInstance) {
 
   // GET /api/questions/meta/filters — listas de filtros disponíveis
   // Retorna apenas grandes áreas médicas (isGrandeArea = true)
-  app.get('/meta/filters', { preHandler: [requireAuth] }, async (_request, reply) => {
+  app.get('/meta/filters', { preHandler: [requireAuth, requireActiveSubscription] }, async (_request, reply) => {
     const [specialties, institutions, years] = await Promise.all([
       prisma.specialty.findMany({
         where:   { isGrandeArea: true },
@@ -344,7 +379,7 @@ export default async function questionRoutes(app: FastifyInstance) {
   // GET /api/questions/meta/specialty-tree
   // Agrupa raízes por prefixo para eliminar duplicatas como:
   //   "Cardiologia", "Cardiologia/Emergência", "Cardiologia Pediátrica" → 1 entrada "Cardiologia"
-  app.get('/meta/specialty-tree', { preHandler: [requireAuth] }, async (_request, reply) => {
+  app.get('/meta/specialty-tree', { preHandler: [requireAuth, requireActiveSubscription] }, async (_request, reply) => {
     const roots = await prisma.specialty.findMany({
       where: { isGrandeArea: true },
       select: {

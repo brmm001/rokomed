@@ -9,7 +9,7 @@ const benefits = [
   '10 questões gratuitas por dia',
   'Acesso ao gabarito comentado',
   'Salve questões nos favoritos',
-  '1 dia de trial Pro grátis',
+  '7 dias de trial grátis',
 ]
 
 export default function RegisterPage() {

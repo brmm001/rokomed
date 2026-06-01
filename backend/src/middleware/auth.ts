@@ -40,3 +40,31 @@ export async function requirePro(request: FastifyRequest, reply: FastifyReply) {
     reply.code(402).send({ error: 'Recurso exclusivo para assinantes Pro', upgrade: true })
   }
 }
+
+/** Verifica se a assinatura está ativa (ou se o trial de 7 dias não expirou) */
+export async function requireActiveSubscription(request: FastifyRequest, reply: FastifyReply) {
+  const payload = request.user as { sub: string }
+  
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { plan: true }
+  })
+
+  // Se for PRO ou GRUPO, está liberado
+  if (user?.plan === 'PRO' || user?.plan === 'GRUPO') {
+    return
+  }
+
+  // Se for FREE, verificar se o trial expirou
+  const trialSub = await prisma.subscription.findFirst({
+    where: { userId: payload.sub, status: 'trial' },
+    orderBy: { trialEndsAt: 'desc' }
+  })
+
+  if (trialSub && trialSub.trialEndsAt && trialSub.trialEndsAt < new Date()) {
+    return reply.code(402).send({
+      error: 'Seu período de teste gratuito de 7 dias expirou. Faça upgrade para Pro!',
+      expired: true
+    })
+  }
+}

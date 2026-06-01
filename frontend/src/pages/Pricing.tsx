@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Crown, Check, Zap, Users, Sparkles } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { subscriptionApi } from '../lib/api'
+import { useAuthStore } from '../store/auth'
 
 export default function PricingPage() {
   const navigate = useNavigate()
@@ -11,23 +12,26 @@ export default function PricingPage() {
     queryFn: subscriptionApi.plans,
   })
 
+  const user = useAuthStore(s => s.user)
+  const isFreePlanCurrent = user?.plan === 'FREE' && !user?.trialExpired
+
   const plans = [
     {
       id: 'FREE',
       name: 'Gratuito',
       price: 'R$ 0',
-      period: 'para sempre',
-      description: 'Para começar seus estudos',
+      period: 'por 7 dias',
+      description: '7 dias de acesso grátis sem cartão',
       color: 'var(--text-muted)',
       features: [
         '10 questões por dia',
-        'Gabarito comentado',
-        'Favoritar questões',
-        'Filtros básicos',
+        '5 flashcards por dia',
+        'Revisão com algoritmo SM-2',
+        'Trilha Adaptativa',
       ],
-      missing: ['Questões ilimitadas', 'Tutor IA', 'Flashcards adaptativos', 'Relatórios avançados'],
-      cta: 'Plano atual',
-      ctaDisabled: true,
+      missing: ['Questões ilimitadas', 'Tutor IA', 'Flashcards ilimitados', 'Relatórios avançados'],
+      cta: isFreePlanCurrent ? 'Plano atual' : 'Começar Grátis',
+      ctaDisabled: isFreePlanCurrent || (user ? user.plan !== 'FREE' : false),
     },
     {
       id: 'monthly',
@@ -91,7 +95,7 @@ export default function PricingPage() {
           Invista na sua aprovação
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.0625rem', maxWidth: 520, margin: '0 auto' }}>
-          Cancele quando quiser. Sem fidelidade. Primeiro dia grátis para novos usuários.
+          Cancele quando quiser. Sem fidelidade. 7 dias grátis para testar.
         </p>
       </div>
 
@@ -141,7 +145,15 @@ export default function PricingPage() {
               id={`plan-cta-${plan.id.toLowerCase()}`}
               className={plan.ctaDisabled ? 'btn btn-ghost' : 'btn btn-primary'}
               disabled={plan.ctaDisabled}
-              onClick={() => !plan.ctaDisabled && navigate(`/checkout?plan=${plan.id}`)}
+              onClick={() => {
+                if (!plan.ctaDisabled) {
+                  if (plan.id === 'FREE') {
+                    navigate('/register')
+                  } else {
+                    navigate(`/checkout?plan=${plan.id}`)
+                  }
+                }
+              }}
               style={{ width: '100%', marginBottom: '1.5rem', padding: '0.875rem', fontSize: '0.9375rem',
                 ...(!plan.highlighted && !plan.ctaDisabled ? { background: `${plan.color}22`, color: plan.color, boxShadow: 'none' } : {}),
               }}

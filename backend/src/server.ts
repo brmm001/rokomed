@@ -46,6 +46,7 @@ app.register(require('./routes/adaptive').default,      { prefix: '/api/adaptive
 app.register(require('./routes/analytics').default,     { prefix: '/api/analytics' })
 app.register(require('./routes/support').default,       { prefix: '/api/support' })
 app.register(require('./routes/partnerships').default,  { prefix: '/api/partnerships' })
+app.register(require('./routes/flashcards').default,    { prefix: '/api/flashcards' })
 
 // ── Aliases sem o prefixo /api para tolerância a erros no Vercel ──────────
 app.register(require('./routes/auth').default,          { prefix: '/auth' })
@@ -58,6 +59,7 @@ app.register(require('./routes/adaptive').default,      { prefix: '/adaptive' })
 app.register(require('./routes/analytics').default,     { prefix: '/analytics' })
 app.register(require('./routes/support').default,       { prefix: '/support' })
 app.register(require('./routes/partnerships').default,  { prefix: '/partnerships' })
+app.register(require('./routes/flashcards').default,    { prefix: '/flashcards' })
 
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', async () => ({

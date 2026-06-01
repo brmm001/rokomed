@@ -37,8 +37,8 @@ export default async function authRoutes(app: FastifyInstance) {
       select: { id: true, name: true, email: true, role: true, plan: true, picture: true, xp: true, streak: true },
     })
 
-    // Cria subscription trial de 1 dia
-    const trialEnd = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    // Cria subscription trial de 7 dias
+    const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     await prisma.subscription.create({
       data: { userId: user.id, plan: 'FREE', status: 'trial', trialEndsAt: trialEnd },
     })
@@ -109,10 +109,22 @@ export default async function authRoutes(app: FastifyInstance) {
     const payload = request.user as { sub: string }
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, name: true, email: true, role: true, plan: true, picture: true, xp: true, streak: true, isBanned: true },
+      select: { id: true, name: true, email: true, role: true, plan: true, picture: true, xp: true, streak: true, isBanned: true, onboardingDone: true },
     })
     if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
-    return reply.send({ user })
+
+    const trialSub = await prisma.subscription.findFirst({
+      where: { userId: user.id, status: 'trial' },
+      orderBy: { trialEndsAt: 'desc' }
+    })
+    const trialExpired = trialSub && trialSub.trialEndsAt ? trialSub.trialEndsAt < new Date() : false
+
+    const token = app.jwt.sign({ sub: user.id, role: user.role, plan: user.plan })
+
+    return reply.send({
+      user: { ...user, trialExpired },
+      token
+    })
   })
 
   // POST /api/auth/logout (apenas instrui o frontend a apagar o token)

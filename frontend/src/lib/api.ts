@@ -171,4 +171,12 @@ export const analyticsApi = {
   readAlert: (id: string) => api.patch(`/analytics/alerts/${id}/read`).then(r => r.data),
 }
 
+// ── Flashcards ───────────────────────────────────────────────────────────────
+export const flashcardApi = {
+  list: () => api.get('/flashcards').then(r => r.data),
+  stats: () => api.get('/flashcards/stats').then(r => r.data),
+  review: (id: string, quality: 'EASY' | 'MEDIUM' | 'HARD') =>
+    api.post(`/flashcards/${id}/review`, { quality }).then(r => r.data),
+}
+
 export default api

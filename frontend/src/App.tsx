@@ -22,6 +22,7 @@ import CheckoutPage from './pages/Checkout'
 import PartnershipsPage from './pages/Partnerships'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
+import FlashcardsPage from './pages/Flashcards'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -81,6 +82,7 @@ export default function App() {
             <Route path="/simulados"      element={<SimuladoListPage />} />
             <Route path="/simulados/:id"  element={<SimuladoExamPage />} />
             <Route path="/adaptive"       element={<AdaptiveSessionPage />} />
+            <Route path="/flashcards"     element={<FlashcardsPage />} />
             <Route path="/analytics"      element={<AnalyticsPage />} />
             <Route path="/perfil"         element={<ProfilePage />} />
             <Route path="/admin"          element={<RequireAdmin><AdminPage /></RequireAdmin>} />

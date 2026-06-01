@@ -15,6 +15,7 @@ interface User {
   targetInstitutionId?: string
   targetSpecialtyId?: string
   examDate?: string
+  trialExpired?: boolean
 }
 
 interface AuthState {

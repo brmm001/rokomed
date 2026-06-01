@@ -158,7 +158,7 @@ export default function LandingPage() {
         .lp-price-hdr { padding:4rem 5vw 3rem; border-bottom:1px solid var(--rule); display:flex; align-items:flex-end; justify-content:space-between; gap:2rem; flex-wrap:wrap; }
         .lp-price-hdr h2 { font-family:var(--display); font-size:clamp(2.5rem,5vw,4rem); letter-spacing:-.02em; line-height:1; }
         .lp-price-hdr p { font-size:1rem; font-weight:300; color:var(--muted); font-style:italic; max-width:280px; }
-        .lp-pcards { display:grid; grid-template-columns:1fr 1fr 1fr; }
+        .lp-pcards { display:grid; grid-template-columns:repeat(4, 1fr); }
         .lp-pc { padding:3.5rem 3rem; border-right:1px solid var(--rule); display:flex; flex-direction:column; gap:2rem; position:relative; transition:background .2s; }
         .lp-pc:last-child { border-right:none; }
         .lp-pc:hover { background:rgba(15,12,7,.02); }
@@ -466,6 +466,19 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="lp-pcards">
+            <div className="lp-pc">
+              <div className="lp-pc-lbl">Grátis (7 Dias)</div>
+              <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">0</span><span className="lp-per">/trial</span></div>
+              <div style={{fontFamily:'var(--body)', fontWeight:300, fontStyle:'italic', fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.2rem'}}>sem cartão de crédito</div>
+              <hr className="lp-r" style={{marginTop:'0.8rem'}} />
+              <ul className="lp-pc-feats">
+                <li>10 questões por dia</li>
+                <li>5 flashcards gerados por dia</li>
+                <li>Revisão com algoritmo SM-2</li>
+                <li>Trilha Adaptativa integrada</li>
+              </ul>
+              <Link to="/register" className="lp-pc-btn lp-pc-btn-out" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontWeight: 'bold' }}>Começar Grátis →</Link>
+            </div>
             <div className="lp-pc">
               <div className="lp-pc-lbl">Mensal</div>
               <div className="lp-pc-price"><span className="lp-cur">R$</span><span className="lp-amt">{monthlyPrice}</span><span className="lp-per">/mês</span></div>
