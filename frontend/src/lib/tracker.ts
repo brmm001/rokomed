@@ -2,6 +2,9 @@ import { authApi } from './api'
 import { useAuthStore } from '../store/auth'
 
 export function trackClick(buttonType: string, email?: string) {
+  // Restringe o nosso sistema particular de rastreamento de cliques apenas à index
+  if (window.location.pathname !== '/') return
+
   try {
     const user = useAuthStore.getState().user
     authApi.trackClick({
