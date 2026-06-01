@@ -40,6 +40,13 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function RequirePro({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore(s => s.user)
+  if (!user) return <Navigate to="/login" replace />
+  if (user.plan === 'FREE') return <Navigate to="/pricing" replace />
+  return <>{children}</>
+}
+
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore(s => s.isAuthenticated)
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <>{children}</>
@@ -78,10 +85,10 @@ export default function App() {
             <Route path="/dashboard"      element={<DashboardPage />} />
             <Route path="/questoes"       element={<QuestionBankPage />} />
             <Route path="/questoes/:id"   element={<StudyPage />} />
-            <Route path="/simulados/novo" element={<SimuladoConfigPage />} />
-            <Route path="/simulados"      element={<SimuladoListPage />} />
-            <Route path="/simulados/:id"  element={<SimuladoExamPage />} />
-            <Route path="/adaptive"       element={<AdaptiveSessionPage />} />
+            <Route path="/simulados/novo" element={<RequirePro><SimuladoConfigPage /></RequirePro>} />
+            <Route path="/simulados"      element={<RequirePro><SimuladoListPage /></RequirePro>} />
+            <Route path="/simulados/:id"  element={<RequirePro><SimuladoExamPage /></RequirePro>} />
+            <Route path="/adaptive"       element={<RequirePro><AdaptiveSessionPage /></RequirePro>} />
             <Route path="/flashcards"     element={<FlashcardsPage />} />
             <Route path="/analytics"      element={<AnalyticsPage />} />
             <Route path="/perfil"         element={<ProfilePage />} />

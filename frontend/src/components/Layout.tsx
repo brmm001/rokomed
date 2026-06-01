@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   LayoutDashboard, BookOpen, User, Crown,
   LogOut, ShieldCheck, Stethoscope, Menu, X, ClipboardList,
-  Brain, BarChart3, Layers,
+  Brain, BarChart3, Layers, Lock,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SupportWidget from './SupportWidget'
@@ -256,7 +256,10 @@ export default function Layout() {
               {({ isActive }) => (
                 <>
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} color={isActive ? 'var(--text-primary)' : 'currentColor'} />
-                  <span style={{ fontWeight: isActive ? 600 : 500 }}>{label}</span>
+                  <span style={{ fontWeight: isActive ? 600 : 500, flex: 1 }}>{label}</span>
+                  {user?.plan === 'FREE' && ['/simulados', '/adaptive'].includes(to) && (
+                    <Lock size={12} color="var(--text-muted)" style={{ opacity: 0.6 }} />
+                  )}
                 </>
               )}
             </NavLink>

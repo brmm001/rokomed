@@ -153,7 +153,7 @@ export default async function questionRoutes(app: FastifyInstance) {
     const includeBlock = {
       specialty:   { select: { id: true, name: true } },
       institution: { select: { id: true, name: true, acronym: true } },
-      images:      { select: { id: true, url: true, caption: true, order: true }, orderBy: { order: 'asc' } },
+      images:      { select: { id: true, url: true, caption: true, order: true }, orderBy: { order: 'asc' as const } },
       bookmarks:   { where: { userId: payload.sub }, select: { id: true } },
       notes:       { where: { userId: payload.sub }, select: { content: true } },
       highlights:  { where: { userId: payload.sub }, select: { id: true, rangeJson: true, color: true } },

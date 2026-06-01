@@ -11,7 +11,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, requirePro } from '../middleware/auth'
 
 const createSchema = z.object({
   title:          z.string().min(1).max(100).optional(),
@@ -55,9 +55,11 @@ async function buildQuestionWhere(filters: {
 }
 
 export default async function simuladoRoutes(app: FastifyInstance) {
+  app.addHook('preHandler', requireAuth)
+  app.addHook('preHandler', requirePro)
 
   // POST /api/simulados/preview — verifica disponibilidade SEM criar simulado
-  app.post('/preview', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/preview', async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as {
       totalQuestions?: number; difficulties?: string[]
       institutionIds?: string[]; specialtyIds?: string[]; years?: number[]
@@ -75,7 +77,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // POST /api/simulados — cria simulado com seleção aleatória de questões
-  app.post('/', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const parsed  = createSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
@@ -110,7 +112,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // GET /api/simulados — lista simulados do usuário
-  app.get('/', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
 
     const exams = await prisma.mockExam.findMany({
@@ -127,7 +129,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // GET /api/simulados/:id — detalhe com questões
-  app.get('/:id', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
 
@@ -186,7 +188,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/simulados/:id/start — inicia o simulado
-  app.patch('/:id/start', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/:id/start', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
 
@@ -203,7 +205,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/simulados/:id/answer — registra resposta de uma questão
-  app.patch('/:id/answer', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/:id/answer', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
     const parsed  = answerSchema.safeParse(request.body)
@@ -240,7 +242,7 @@ export default async function simuladoRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/simulados/:id/finish — finaliza simulado e calcula score
-  app.patch('/:id/finish', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/:id/finish', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { id }  = request.params as { id: string }
 

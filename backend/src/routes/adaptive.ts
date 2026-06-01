@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, requirePro } from '../middleware/auth'
 import {
   probability3PL, estimateMAP, selectNextItem, fisherInformation,
   difficultyToB, calibrateFromData, thetaToLabel, thetaToPercentile,
@@ -21,9 +21,11 @@ const answerSchema = z.object({
 })
 
 export default async function adaptiveRoutes(app: FastifyInstance) {
+  app.addHook('preHandler', requireAuth)
+  app.addHook('preHandler', requirePro)
 
   // ── POST /api/adaptive/start ──────────────────────────────────────────
-  app.post('/start', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/start', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const parsed = startSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
@@ -97,7 +99,7 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
   })
 
   // ── POST /api/adaptive/:sessionId/answer ──────────────────────────────
-  app.post('/:sessionId/answer', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/:sessionId/answer', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { sessionId } = request.params as { sessionId: string }
     const parsed = answerSchema.safeParse(request.body)
@@ -242,7 +244,7 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
   })
 
   // ── PATCH /api/adaptive/:sessionId/finish ─────────────────────────────
-  app.patch('/:sessionId/finish', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/:sessionId/finish', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { sessionId } = request.params as { sessionId: string }
 
@@ -281,7 +283,7 @@ export default async function adaptiveRoutes(app: FastifyInstance) {
   })
 
   // ── GET /api/adaptive/history ─────────────────────────────────────────
-  app.get('/history', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/history', async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
 
     const sessions = await prisma.adaptiveSession.findMany({

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuthStore } from '../store/auth'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { analyticsApi } from '../lib/api'
@@ -17,6 +18,7 @@ type Tab = 'overview' | 'evolution' | 'specialties' | 'projection'
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const navigate = useNavigate()
+  const user = useAuthStore(s => s.user)
 
   const { data: overview, isLoading } = useQuery({ queryKey: ['analytics-overview'], queryFn: analyticsApi.overview })
   const { data: thetaHist } = useQuery({ queryKey: ['theta-history'], queryFn: analyticsApi.thetaHistory, enabled: tab === 'evolution' })
@@ -59,10 +61,93 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Content */}
-      {tab === 'overview' && <OverviewTab overview={overview} isLoading={isLoading} navigate={navigate} />}
-      {tab === 'evolution' && <EvolutionTab data={thetaHist} />}
-      {tab === 'specialties' && <SpecialtiesTab data={radar} />}
-      {tab === 'projection' && <ProjectionTab data={lcurve} />}
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          filter: user?.plan === 'FREE' ? 'blur(6px)' : 'none',
+          pointerEvents: user?.plan === 'FREE' ? 'none' : 'auto',
+          userSelect: user?.plan === 'FREE' ? 'none' : 'auto',
+          transition: 'all 0.3s ease',
+        }}>
+          {tab === 'overview' && <OverviewTab overview={overview} isLoading={isLoading} navigate={navigate} />}
+          {tab === 'evolution' && <EvolutionTab data={thetaHist} />}
+          {tab === 'specialties' && <SpecialtiesTab data={radar} />}
+          {tab === 'projection' && <ProjectionTab data={lcurve} />}
+        </div>
+
+        {user?.plan === 'FREE' && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            background: 'rgba(5, 13, 26, 0.4)',
+            borderRadius: '16px',
+            zIndex: 10,
+          }}>
+            <div style={{
+              maxWidth: '450px',
+              background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(139, 92, 246, 0.4)',
+              borderRadius: '20px',
+              padding: '2.5rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.15)',
+            }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                boxShadow: '0 6px 20px rgba(139, 92, 246, 0.3)',
+              }}>
+                <Zap size={28} color="white" />
+              </div>
+
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 850, color: '#fff', marginBottom: '0.75rem' }}>
+                Análise Inteligente Limitada
+              </h2>
+
+              <p style={{ fontSize: '0.875rem', color: '#94A3B8', lineHeight: 1.6, marginBottom: '2rem' }}>
+                Desbloqueie relatórios de evolução de habilidade (θ), regressão CUSUM, probabilidade de aprovação por simulações de Monte Carlo e gráficos de especialidades fazendo upgrade para o plano Pro.
+              </p>
+
+              <button
+                onClick={() => navigate('/pricing')}
+                style={{
+                  width: '100%',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                  color: '#FFF',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)'
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none'
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)'
+                }}
+              >
+                Liberar Gráficos no Plano PRO
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
