@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
@@ -12,10 +12,49 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const { setAuth }             = useAuthStore()
   const navigate                = useNavigate()
+  const [searchParams]          = useSearchParams()
+  const redirectUrl             = searchParams.get('redirect')
 
   useEffect(() => {
     document.title = 'Entrar — RokoMed'
+
+    // Initialize Google Sign-In button
+    const initializeGoogle = () => {
+      if (typeof window !== 'undefined' && (window as any).google) {
+        try {
+          (window as any).google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '958197775916-g2d0013h7b5a837c7.apps.googleusercontent.com',
+            callback: handleGoogleResponse,
+          });
+          (window as any).google.accounts.id.renderButton(
+            document.getElementById('google-login-btn'),
+            { theme: 'outline', size: 'large', width: '380px', text: 'signin_with' }
+          );
+        } catch (e) {
+          console.error('Google Sign-In initialization failed:', e)
+        }
+      } else {
+        setTimeout(initializeGoogle, 500)
+      }
+    }
+
+    initializeGoogle()
   }, [])
+
+  const handleGoogleResponse = async (response: any) => {
+    setLoading(true)
+    try {
+      const { token, user } = await authApi.googleLogin(response.credential)
+      setAuth(user, token)
+      toast.success(`Bem-vindo, ${user.name.split(' ')[0]}!`)
+      navigate(redirectUrl || '/dashboard')
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Erro ao autenticar com o Google'
+      toast.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,7 +63,7 @@ export default function LoginPage() {
       const { user, token } = await authApi.login({ email, password })
       setAuth(user, token)
       toast.success(`Bem-vindo de volta, ${user.name.split(' ')[0]}!`)
-      navigate('/dashboard')
+      navigate(redirectUrl || '/dashboard')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Erro ao fazer login'
       toast.error(msg)
@@ -124,13 +163,22 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Google Sign-in Seperator & Button */}
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgba(0,0,0,0.18)]"></div></div>
+            <span className="relative bg-[#FAFAFA] px-4 text-xs font-mono uppercase tracking-widest text-[#525252]">ou</span>
+          </div>
+          
+          <div className="flex justify-center w-full mb-4">
+            <div id="google-login-btn"></div>
+          </div>
+
           <p className="text-center mt-8 font-['IBM_Plex_Mono',monospace] text-[0.65rem] tracking-widest uppercase text-[#525252]">
             Ainda não tem conta?{' '}
             <Link to="/checkout" className="text-[#1D4ED8] hover:text-[#111111] transition-colors border-b border-[#1D4ED8] hover:border-[#111111] pb-[1px]">
               Ver planos
             </Link>
           </p>
-          
 
         </div>
       </div>

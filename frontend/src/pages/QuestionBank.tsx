@@ -102,7 +102,7 @@ export default function QuestionBankPage() {
       {/* Filters panel */}
       {showFilters && (
         <div className="apple-card animate-spring" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
             <div>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Especialidade</label>
               <select id="filter-specialty" className="input" value={specialty} onChange={e => { setSpecialty(e.target.value); setPage(1) }} style={{ cursor: 'pointer' }}>

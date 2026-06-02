@@ -230,4 +230,98 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'Token inválido ou expirado.' })
     }
   })
+
+  // POST /api/auth/google
+  app.post('/google', async (request: FastifyRequest, reply: FastifyReply) => {
+    const googleSchema = z.object({
+      credential: z.string(),
+    })
+
+    const result = googleSchema.safeParse(request.body)
+    if (!result.success) {
+      return reply.code(400).send({ error: 'Credencial inválida' })
+    }
+
+    const { credential } = result.data
+
+    try {
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`)
+      if (!googleRes.ok) {
+        return reply.code(400).send({ error: 'Falha ao verificar token com Google' })
+      }
+
+      const info = await googleRes.json() as {
+        email: string
+        name: string
+        picture?: string
+        email_verified: string
+      }
+
+      if (info.email_verified !== 'true') {
+        return reply.code(400).send({ error: 'E-mail do Google não verificado' })
+      }
+
+      const { email, name, picture } = info
+
+      let user = await prisma.user.findUnique({ where: { email } })
+      
+      let isNew = false
+      if (!user) {
+        isNew = true
+        user = await prisma.user.create({
+          data: {
+            name,
+            email,
+            picture: picture || null,
+            plan: 'FREE',
+            role: 'ALUNO',
+          },
+        })
+
+        // Cria subscription trial de 7 dias
+        const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        await prisma.subscription.create({
+          data: { userId: user.id, plan: 'FREE', status: 'trial', trialEndsAt: trialEnd },
+        })
+
+        // Grava IP do trial
+        const ip = request.ip
+        await prisma.trialIp.create({ data: { ip, userId: user.id } })
+
+        // Envia email de boas-vindas
+        sendEmail({
+          to: user.email,
+          subject: 'Boas-vindas ao Rokomedicina!',
+          html: `
+            <h2>Olá, ${user.name}!</h2>
+            <p>Sua conta foi criada com sucesso via Google. Seja bem-vindo(a) ao Rokomedicina!</p>
+            <br />
+            <p>Bons estudos!</p>
+          `,
+        }).catch(err => console.error('Erro ao enviar email de boas-vindas', err));
+      } else if (user.isBanned) {
+        return reply.code(403).send({ error: 'Conta suspensa' })
+      }
+
+      const token = app.jwt.sign({ sub: user.id, role: user.role, plan: user.plan })
+
+      return reply.send({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          plan: user.plan,
+          picture: user.picture,
+          xp: user.xp,
+          streak: user.streak,
+        },
+        isNew
+      })
+    } catch (err) {
+      console.error(err)
+      return reply.code(500).send({ error: 'Erro interno ao autenticar com o Google' })
+    }
+  })
 }

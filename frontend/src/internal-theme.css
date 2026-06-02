@@ -219,11 +219,11 @@
 
 .internal-system .apple-segmented-control button {
   flex: 1;
-  padding: 8px 12px;
+  padding: 8px 6px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;

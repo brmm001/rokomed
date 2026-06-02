@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
@@ -21,6 +21,47 @@ export default function RegisterPage() {
   const [loading, setLoading]   = useState(false)
   const { setAuth }             = useAuthStore()
   const navigate                = useNavigate()
+
+  useEffect(() => {
+    document.title = 'Criar Conta — RokoMed'
+
+    // Initialize Google Sign-In button
+    const initializeGoogle = () => {
+      if (typeof window !== 'undefined' && (window as any).google) {
+        try {
+          (window as any).google.accounts.id.initialize({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '958197775916-g2d0013h7b5a837c7.apps.googleusercontent.com',
+            callback: handleGoogleResponse,
+          });
+          (window as any).google.accounts.id.renderButton(
+            document.getElementById('google-register-btn'),
+            { theme: 'outline', size: 'large', width: '380px', text: 'signup_with' }
+          );
+        } catch (e) {
+          console.error('Google Sign-Up initialization failed:', e)
+        }
+      } else {
+        setTimeout(initializeGoogle, 500)
+      }
+    }
+
+    initializeGoogle()
+  }, [])
+
+  const handleGoogleResponse = async (response: any) => {
+    setLoading(true)
+    try {
+      const { token, user } = await authApi.googleLogin(response.credential)
+      setAuth(user, token)
+      toast.success(`Conta ativada com sucesso! Bem-vindo, ${user.name.split(' ')[0]}!`)
+      navigate('/dashboard')
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Erro ao criar conta com o Google'
+      toast.error(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,6 +171,16 @@ export default function RegisterPage() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div style={{ position: 'relative', margin: '1.5rem 0', textAlign: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}><div style={{ width: '100%', borderTop: '1px solid var(--border)' }}></div></div>
+            <span style={{ position: 'relative', background: 'var(--bg-surface, #121214)', padding: '0 1rem', fontSize: '0.65rem', fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)' }}>ou</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1rem' }}>
+            <div id="google-register-btn"></div>
+          </div>
 
           <p style={{ textAlign: 'center', marginTop: '1.25rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
             Já tem conta?{' '}

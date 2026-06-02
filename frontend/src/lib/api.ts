@@ -37,6 +37,7 @@ export const authApi = {
   resetPassword: (token: string, newPassword: string) => api.post('/auth/reset-password', { token, newPassword }).then(r => r.data),
   trackClick: (data: { email?: string; userId?: string; buttonType: string; pageUrl: string }) =>
     api.post('/auth/click-event', data).then(r => r.data),
+  googleLogin: (credential: string) => api.post('/auth/google', { credential }).then(r => r.data),
 }
 
 // ── Questions ───────────────────────────────────────────────────────────────
