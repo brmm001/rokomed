@@ -255,10 +255,16 @@ export default async function authRoutes(app: FastifyInstance) {
         name: string
         picture?: string
         email_verified: string
+        aud: string
       }
 
       if (info.email_verified !== 'true') {
         return reply.code(400).send({ error: 'E-mail do Google não verificado' })
+      }
+
+      const allowedClientId = process.env.GOOGLE_CLIENT_ID || '958197775916-g2d0013h7b5a837c7.apps.googleusercontent.com'
+      if (info.aud !== allowedClientId) {
+        return reply.code(400).send({ error: 'Token do Google não pertence a esta aplicação' })
       }
 
       const { email, name, picture } = info
