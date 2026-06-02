@@ -137,7 +137,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="stats-grid grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="apple-card" style={{ height: 110, opacity: 0.5 }} />
@@ -168,7 +168,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 gap-3 mb-5">
             {[
               { label: 'Clínica Médica', count: '850+' },
               { label: 'Cirurgia',       count: '620+' },
@@ -188,7 +188,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Side panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-4">
           {/* Progress */}
           <div className="apple-card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
