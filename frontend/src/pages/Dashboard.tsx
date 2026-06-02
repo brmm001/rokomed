@@ -60,7 +60,7 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className="animate-fade-in px-4 md:px-0" style={{ maxWidth: 1100, margin: '0 auto' }}>
       {paymentNotification && (
         <div 
           className="animate-in fade-in slide-in-from-top-4 duration-300"
@@ -137,7 +137,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+      <div className="stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="apple-card" style={{ height: 110, opacity: 0.5 }} />
@@ -153,7 +153,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-6">
         {/* Quick study card */}
         <div className="apple-card" style={{ background: 'var(--bg-surface)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
