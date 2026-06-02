@@ -17,6 +17,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = 'Entrar — RokoMed'
+    window.scrollTo(0, 0)
 
     // Initialize Google Sign-In button
     const initializeGoogle = () => {

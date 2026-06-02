@@ -24,6 +24,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     document.title = 'Criar Conta — RokoMed'
+    window.scrollTo(0, 0)
 
     // Initialize Google Sign-In button
     const initializeGoogle = () => {

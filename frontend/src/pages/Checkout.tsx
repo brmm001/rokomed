@@ -100,6 +100,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     document.title = 'Finalizar Compra — RokoMed'
+    window.scrollTo(0, 0)
     const token = useAuthStore.getState().token
     if (token) {
       setStep(2)
