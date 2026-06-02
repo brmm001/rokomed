@@ -189,17 +189,8 @@ export default function Layout() {
       )}
 
       {/* Sidebar */}
-      <aside style={{
-        width: 260,
-        background: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border)',
+      <aside className={`fixed top-0 bottom-0 left-0 z-50 w-[260px] flex flex-col bg-[var(--bg-surface)] border-r border-[var(--border)] transition-transform duration-200 ease-in-out md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{
         display: isFocusMode ? 'none' : 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        top: 0, left: 0, bottom: 0,
-        zIndex: 50,
-        transform: sidebarOpen ? 'translateX(0)' : undefined,
-        transition: 'transform 0.25s ease',
       }}>
         {/* Logo */}
         <div style={{ padding: '1.5rem 1.25rem 1.15rem', borderBottom: '1px solid var(--border)' }}>
@@ -305,19 +296,15 @@ export default function Layout() {
       </aside>
 
       {/* Main */}
-      <div style={{ flex: 1, marginLeft: isFocusMode ? 0 : 260, transition: 'margin-left 0.3s ease', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-200 ${isFocusMode ? 'ml-0' : 'ml-0 md:ml-[260px]'}`}>
         {/* Mobile header */}
-        <header style={{
-          display: isFocusMode ? 'none' : 'none', // Mantém controle original de mobile header
-
-          padding: '1rem',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-surface)',
-          position: 'sticky', top: 0, zIndex: 30,
-        }}>
-          <button className="btn btn-ghost" style={{ padding: '0.5rem' }} onClick={() => setSidebarOpen(p => !p)}>
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+        <header className={`items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--bg-surface)] sticky top-0 z-30 ${isFocusMode ? 'hidden' : 'flex md:hidden'}`}>
+          <div className="flex items-center gap-3">
+            <button className="p-2 text-[var(--text-primary)] hover:bg-white/5 rounded-lg transition-colors" onClick={() => setSidebarOpen(p => !p)}>
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <span className="font-semibold text-lg text-[var(--text-primary)]">Roko<span className="text-[#3B82F6]">Med</span></span>
+          </div>
         </header>
 
         <main style={{ flex: 1, padding: '2rem' }}>
