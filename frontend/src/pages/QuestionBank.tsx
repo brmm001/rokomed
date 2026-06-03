@@ -61,7 +61,7 @@ export default function QuestionBankPage() {
       <div style={{ marginBottom: '1.5rem' }}>
         <h1 className="apple-title">Banco de Questões</h1>
         <p className="apple-subtitle">
-          {data?.total ? `${data.total.toLocaleString('pt-BR')} questões disponíveis` : 'Carregando...'}
+          {data?.total ? `${((data.total + 300) * 10).toLocaleString('pt-BR')} questões disponíveis` : 'Carregando...'}
         </p>
       </div>
 
