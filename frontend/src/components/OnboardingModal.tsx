@@ -9,6 +9,53 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+function Typewriter({ text, speed = 25 }: { text: string; speed?: number }) {
+  const [displayedText, setDisplayedText] = useState('')
+  const [isTyping, setIsTyping] = useState(true)
+
+  useEffect(() => {
+    setDisplayedText('')
+    setIsTyping(true)
+    let i = 0
+    const timer = setInterval(() => {
+      setDisplayedText((prev) => prev + text.charAt(i))
+      i++
+      if (i >= text.length) {
+        clearInterval(timer)
+        setIsTyping(false)
+      }
+    }, speed)
+    return () => clearInterval(timer)
+  }, [text, speed])
+
+  return (
+    <span>
+      {displayedText}
+      {isTyping && (
+        <>
+          <style>{`
+            @keyframes typewriter-blink {
+              0%, 100% { opacity: 0; }
+              50% { opacity: 1; }
+            }
+          `}</style>
+          <span 
+            style={{
+              display: 'inline-block',
+              width: '2px',
+              height: '1em',
+              backgroundColor: 'currentColor',
+              marginLeft: '2px',
+              verticalAlign: 'middle',
+              animation: 'typewriter-blink 0.8s infinite'
+            }} 
+          />
+        </>
+      )}
+    </span>
+  )
+}
+
 // ── Lista de faculdades de medicina do Brasil ────────────────────────────────
 const MEDICAL_SCHOOLS = [
   'AFYA FACULDADE DE CIÊNCIAS MÉDICAS DA PARAÍBA',
@@ -520,8 +567,12 @@ export default function OnboardingModal({ onComplete }: Props) {
                   <GraduationCap size={22} color="var(--accent-blue)" />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>De qual faculdade você é?</h2>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Isso nos ajuda a personalizar os conteúdos para o seu perfil</p>
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+                    <Typewriter text="De qual faculdade você é?" />
+                  </h2>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <Typewriter text="Isso nos ajuda a personalizar os conteúdos para o seu perfil" speed={15} />
+                  </p>
                 </div>
               </div>
 
@@ -579,8 +630,12 @@ export default function OnboardingModal({ onComplete }: Props) {
                   <Stethoscope size={22} color="var(--accent-teal)" />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Para onde você está mirando?</h2>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Qual banca/prova e qual especialidade você quer cursar</p>
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+                    <Typewriter text="Para onde você está mirando?" />
+                  </h2>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <Typewriter text="Qual banca/prova e qual especialidade você quer cursar" speed={15} />
+                  </p>
                 </div>
               </div>
 
@@ -628,8 +683,12 @@ export default function OnboardingModal({ onComplete }: Props) {
                   <Calendar size={22} color="#FBBF24" />
                 </div>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Quando você vai prestar?</h2>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>Vamos calibrar seu cronograma de estudos automaticamente</p>
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+                    <Typewriter text="Quando você vai prestar?" />
+                  </h2>
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <Typewriter text="Vamos calibrar seu cronograma de estudos automaticamente" speed={15} />
+                  </p>
                 </div>
               </div>
 
