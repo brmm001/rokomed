@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { userApi } from '../lib/api'
@@ -28,17 +28,18 @@ export default function RoutinePage() {
   const [showAddMenu, setShowAddMenu] = useState<{ day: DayName; open: boolean } | null>(null)
 
   // Queries
-  const { data: routineData, isLoading: routineLoading } = useQuery({
+  const { data: routineData, isLoading: routineLoading } = useQuery<any>({
     queryKey: ['user-routine'],
     queryFn: userApi.routine,
-    onSuccess: (data) => {
-      if (data?.routineConfig?.weeklyHours) {
-        setWeeklyHours(data.routineConfig.weeklyHours)
-      }
-    }
   })
 
-  const { data: proficiencyData, isLoading: proficiencyLoading } = useQuery({
+  useEffect(() => {
+    if (routineData?.routineConfig?.weeklyHours) {
+      setWeeklyHours(routineData.routineConfig.weeklyHours)
+    }
+  }, [routineData])
+
+  const { data: proficiencyData, isLoading: proficiencyLoading } = useQuery<any>({
     queryKey: ['user-subjects-proficiency'],
     queryFn: () => userApi.subjectsProficiency()
   })

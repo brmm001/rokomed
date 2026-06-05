@@ -48,8 +48,8 @@ export default function GameDuelPage() {
   // Tracking answers
   const [roundResults, setRoundResults] = useState<{ user: boolean; bot: boolean }[]>([])
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const botAnswerTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<any>(null)
+  const botAnswerTimerRef = useRef<any>(null)
 
   // Fetch questions
   const { data, error, isLoading } = useQuery<{ questions: Question[] }>({

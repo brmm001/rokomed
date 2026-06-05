@@ -305,7 +305,7 @@ export default function GamePistaPage() {
                   return (
                     <button
                       key={opt.letter}
-                      disabled={isIncorrectGuess || gameState === 'gameover'}
+                      disabled={isIncorrectGuess}
                       onClick={() => handleSelectOption(opt.letter)}
                       style={{
                         textAlign: 'left', padding: '14px 16px', borderRadius: 10, border,

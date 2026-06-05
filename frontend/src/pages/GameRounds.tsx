@@ -43,7 +43,7 @@ export default function GameRoundsPage() {
   
   // Timer for overall round duration
   const [timeSpent, setTimeSpent] = useState(0)
-  const overallTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const overallTimerRef = useRef<any>(null)
   
   // Current question states
   const [selectedOpt, setSelectedOpt] = useState<string | null>(null)

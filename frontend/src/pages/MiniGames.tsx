@@ -223,7 +223,7 @@ export default function MiniGamesPage() {
             {/* Divider */}
             <div style={{ height: '1px', background: 'var(--border)', margin: '1.5rem 0' }} />
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyInterface: 'space-between', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Reseta a cada 24 horas
               </span>
@@ -266,7 +266,7 @@ export default function MiniGamesPage() {
             position: 'relative'
           }}>
             {/* Visual game graphics */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContents: 'center', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
               <div style={{
                 width: 64, height: 64, borderRadius: '50%',
                 background: 'rgba(245, 158, 11, 0.2)',
@@ -313,7 +313,7 @@ export default function MiniGamesPage() {
             {/* Divider */}
             <div style={{ height: '1px', background: 'var(--border)', margin: '1.5rem 0' }} />
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyInterface: 'space-between', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Novo caso clínico todos os dias
               </span>
