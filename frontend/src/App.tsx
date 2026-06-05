@@ -24,6 +24,11 @@ import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import FlashcardsPage from './pages/Flashcards'
 import LessonsPage from './pages/Lessons'
+import MiniGamesPage from './pages/MiniGames'
+import GameDuelPage from './pages/GameDuel'
+import GameRoundsPage from './pages/GameRounds'
+import GamePistaPage from './pages/GamePista'
+import RoutinePage from './pages/Routine'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -84,6 +89,7 @@ export default function App() {
           {/* Autenticado */}
           <Route element={<RequireAuth><Layout /></RequireAuth>}>
             <Route path="/dashboard"      element={<DashboardPage />} />
+            <Route path="/rotina"         element={<RequirePro><RoutinePage /></RequirePro>} />
             <Route path="/questoes"       element={<QuestionBankPage />} />
             <Route path="/questoes/:id"   element={<StudyPage />} />
             <Route path="/aulas"          element={<LessonsPage />} />
@@ -92,6 +98,10 @@ export default function App() {
             <Route path="/simulados/:id"  element={<RequirePro><SimuladoExamPage /></RequirePro>} />
             <Route path="/adaptive"       element={<RequirePro><AdaptiveSessionPage /></RequirePro>} />
             <Route path="/flashcards"     element={<FlashcardsPage />} />
+            <Route path="/games"          element={<RequirePro><MiniGamesPage /></RequirePro>} />
+            <Route path="/games/duel"     element={<RequirePro><GameDuelPage /></RequirePro>} />
+            <Route path="/games/rounds"    element={<RequirePro><GameRoundsPage /></RequirePro>} />
+            <Route path="/games/pista"     element={<RequirePro><GamePistaPage /></RequirePro>} />
             <Route path="/analytics"      element={<AnalyticsPage />} />
             <Route path="/perfil"         element={<ProfilePage />} />
             <Route path="/admin"          element={<RequireAdmin><AdminPage /></RequireAdmin>} />

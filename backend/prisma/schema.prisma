@@ -35,6 +35,7 @@ model User {
   onboardingDone  Boolean   @default(false)
   originInstitution String? // Faculdade de medicina de origem
   targetSpecialtyId String? // Especialidade-alvo (texto livre ou ID)
+  routineConfig     String? // JSON string contendo grade semanal de estudos
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -55,6 +56,7 @@ model User {
   alerts          UserAlert[]
   supportTickets  SupportTicket[]
   supportMessages SupportMessage[]
+  gamePlays       GamePlay[]
 
   @@map("users")
 }
@@ -70,6 +72,7 @@ model Specialty {
   children     Specialty[] @relation("SpecialtyHierarchy")
   questions    Question[]
   lessons      Lesson[]
+  priorities   InstitutionPriority[]
 
   @@map("specialties")
 }
@@ -81,6 +84,7 @@ model Institution {
   city      String?
   state     String?
   questions Question[]
+  priorities InstitutionPriority[]
 
   @@map("institutions")
 }
@@ -513,3 +517,35 @@ model Lesson {
 
   @@map("lessons")
 }
+
+model GamePlay {
+  id        String   @id @default(cuid())
+  userId    String
+  gameType  String   // "ROUNDS" | "DUEL" | "PISTA"
+  date      String   // "YYYY-MM-DD"
+  score     Int
+  isWin     Boolean  @default(false)
+  details   String?  // JSON string
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("game_plays")
+}
+
+model InstitutionPriority {
+  id            String   @id @default(cuid())
+  institutionId String
+  specialtyId   String
+  priority      String   // "MAXIMA" | "ALTA" | "MEDIA" | "BAIXA"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  specialty     Specialty   @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, specialtyId])
+  @@map("institution_priorities")
+}
+
+

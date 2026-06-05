@@ -88,6 +88,11 @@ export const userApi = {
   updateProfile: (data: { name?: string; picture?: string }) =>
     api.patch('/user/profile', data).then(r => r.data),
   institutions: () => api.get('/user/institutions').then(r => r.data),
+  routine: () => api.get('/user/routine').then(r => r.data),
+  saveRoutine: (data: { weeklyHours: number; schedule: Record<string, string[]> }) =>
+    api.post('/user/routine', data).then(r => r.data),
+  subjectsProficiency: (institutionId?: string) =>
+    api.get('/user/subjects-proficiency', { params: { institutionId } }).then(r => r.data),
 }
 
 // ── Admin ───────────────────────────────────────────────────────────────────
@@ -126,6 +131,9 @@ export const adminApi = {
   createLesson: (data: Record<string, unknown>) => api.post('/admin/lessons', data).then(r => r.data),
   updateLesson: (id: string, data: Record<string, unknown>) => api.put(`/admin/lessons/${id}`, data).then(r => r.data),
   deleteLesson: (id: string) => api.delete(`/admin/lessons/${id}`).then(r => r.data),
+  getPriorities: () => api.get('/admin/priorities').then(r => r.data),
+  savePriority: (data: { institutionId: string; specialtyId: string; priority: 'MAXIMA' | 'ALTA' | 'MEDIA' | 'BAIXA' }) =>
+    api.post('/admin/priorities', data).then(r => r.data),
 }
 
 // ── Lessons ──────────────────────────────────────────────────────────────────

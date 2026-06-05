@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   LayoutDashboard, BookOpen, User, Crown,
   LogOut, ShieldCheck, Stethoscope, Menu, X, ClipboardList,
-  Brain, BarChart3, Layers, Lock, Video,
+  Brain, BarChart3, Layers, Lock, Video, Gamepad2, Calendar,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SupportWidget from './SupportWidget'
@@ -14,11 +14,13 @@ import '../internal-theme.css'
 
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/rotina',         icon: Calendar,        label: 'Minha Rotina' },
   { to: '/questoes',       icon: BookOpen,         label: 'Banco de Questões' },
   { to: '/aulas',          icon: Video,            label: 'Aulas e Temas' },
   { to: '/simulados',      icon: ClipboardList,    label: 'Simulados' },
   { to: '/adaptive',       icon: Brain,            label: 'Trilha Adaptativa' },
   { to: '/flashcards',     icon: Layers,           label: 'Flashcards' },
+  { to: '/games',          icon: Gamepad2,         label: 'Mini Games' },
   { to: '/analytics',      icon: BarChart3,        label: 'Análise' },
   { to: '/perfil',         icon: User,             label: 'Perfil' },
 ]
@@ -249,7 +251,7 @@ export default function Layout() {
                 <>
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} color={isActive ? 'var(--text-primary)' : 'currentColor'} />
                   <span style={{ fontWeight: isActive ? 600 : 500, flex: 1 }}>{label}</span>
-                  {user?.plan === 'FREE' && ['/simulados', '/adaptive', '/aulas'].includes(to) && (
+                  {user?.plan === 'FREE' && ['/simulados', '/adaptive', '/aulas', '/games', '/rotina'].includes(to) && (
                     <Lock size={12} color="var(--text-muted)" style={{ opacity: 0.6 }} />
                   )}
                 </>

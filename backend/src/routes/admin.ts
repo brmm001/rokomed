@@ -382,6 +382,53 @@ export default async function adminRoutes(app: FastifyInstance) {
 
     return reply.send({ deleted: true })
   })
+
+  // ── Priorities CRUD (Admin) ──────────────────────────────────────────────
+  app.get('/priorities', { preHandler: [isAdmin] }, async (_request, reply) => {
+    const priorities = await prisma.institutionPriority.findMany({
+      include: {
+        institution: { select: { acronym: true, name: true } },
+        specialty: { select: { name: true } }
+      }
+    })
+    return reply.send({ data: priorities })
+  })
+
+  app.post('/priorities', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const schema = z.object({
+      institutionId: z.string(),
+      specialtyId: z.string(),
+      priority: z.enum(['MAXIMA', 'ALTA', 'MEDIA', 'BAIXA']),
+    })
+
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    const { institutionId, specialtyId, priority } = parsed.data
+
+    const record = await prisma.institutionPriority.upsert({
+      where: {
+        institutionId_specialtyId: {
+          institutionId,
+          specialtyId
+        }
+      },
+      update: { priority },
+      create: { institutionId, specialtyId, priority }
+    })
+
+    await prisma.adminLog.create({
+      data: {
+        adminId: payload.sub,
+        action: 'UPDATE_PRIORITY',
+        target: record.id,
+        details: JSON.stringify({ institutionId, specialtyId, priority })
+      }
+    })
+
+    return reply.send({ success: true, priority: record })
+  })
 }
 
 

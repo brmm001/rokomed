@@ -10,7 +10,7 @@ import {
   Play, Video, Edit
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
@@ -27,9 +27,40 @@ export default function AdminPage() {
     durationMin: number
     specialtyId: string
   } | null>(null)
+  const [selectedInstId, setSelectedInstId] = useState<string>('')
   const qc = useQueryClient()
 
   const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
+
+  const { data: instData } = useQuery({
+    queryKey: ['admin-institutions-priorities'],
+    queryFn: adminApi.institutions,
+    enabled: tab === 'priorities'
+  })
+
+  const { data: prioritiesData } = useQuery({
+    queryKey: ['admin-priorities'],
+    queryFn: adminApi.getPriorities,
+    enabled: tab === 'priorities'
+  })
+
+  const { data: specialtiesPriorityData } = useQuery({
+    queryKey: ['admin-specialties-priorities'],
+    queryFn: adminApi.specialties,
+    enabled: tab === 'priorities'
+  })
+
+  const savePriorityMutation = useMutation({
+    mutationFn: (data: { institutionId: string; specialtyId: string; priority: 'MAXIMA' | 'ALTA' | 'MEDIA' | 'BAIXA' }) =>
+      adminApi.savePriority(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-priorities'] })
+      toast.success('Prioridade atualizada!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao salvar prioridade')
+    }
+  })
   const { data: qData,   isLoading: qLoading        } = useQuery({ queryKey: ['admin-questions'], queryFn: () => adminApi.questions(), enabled: tab === 'questions' })
   const { data: uData,   isLoading: uLoading        } = useQuery({ queryKey: ['admin-users'],     queryFn: () => adminApi.users(),     enabled: tab === 'users' })
   const { data: logs,    isLoading: logsLoading     } = useQuery({ queryKey: ['admin-logs'],      queryFn: () => adminApi.logs(),      enabled: tab === 'logs' })
@@ -139,6 +170,7 @@ export default function AdminPage() {
     { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
     { id: 'lessons',      label: 'Aulas',         icon: <Play size={16} /> },
     { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
+    { id: 'priorities',   label: 'Prioridades por Banca', icon: <BookMarked size={16} /> },
     { id: 'clicks',       label: 'Cliques',       icon: <MousePointerClick size={16} /> },
     { id: 'support',      label: 'Suporte',       icon: <MessageSquare size={16} /> },
     { id: 'partnerships', label: 'Parcerias',     icon: <Handshake size={16} /> },
@@ -780,6 +812,104 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Priorities Tab ─────────────────────────────────────────────────── */}
+      {tab === 'priorities' && (
+        <div className="animate-fade-in glass" style={{ padding: '24px', borderRadius: '16px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#FFF' }}>
+            Calibração de Prioridades por Banca
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            Defina o peso de cobrança de cada grande área para cada banca/instituição. Essas prioridades influenciam o cronograma adaptativo e o cálculo de proficiência do aluno.
+          </p>
+
+          <div style={{ marginBottom: '1.5rem', maxWidth: '400px' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              Selecione a Banca / Instituição
+            </label>
+            <select
+              className="input"
+              value={selectedInstId}
+              onChange={(e) => setSelectedInstId(e.target.value)}
+            >
+              <option value="">-- Selecione uma instituição --</option>
+              {instData?.data?.map((inst: { id: string; name: string; acronym: string }) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.acronym} - {inst.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {!selectedInstId ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
+              Selecione uma instituição acima para visualizar e editar as prioridades das especialidades.
+            </div>
+          ) : (
+            <div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Grande Área</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Prioridade da Banca</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {specialtiesPriorityData?.data?.filter((s: any) => s.isGrandeArea).map((spec: { id: string; name: string }) => {
+                      const priorityObj = prioritiesData?.data?.find(
+                        (p: any) => p.institutionId === selectedInstId && p.specialtyId === spec.id
+                      )
+                      const currentPriority = priorityObj ? priorityObj.priority : 'MEDIA'
+
+                      return (
+                        <tr key={spec.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}>
+                          <td style={{ padding: '16px 8px', fontWeight: 500 }}>
+                            {spec.name}
+                          </td>
+                          <td style={{ padding: '16px 8px' }}>
+                            <select
+                              className="input"
+                              style={{ width: '220px', padding: '6px 12px' }}
+                              value={currentPriority}
+                              onChange={(e) => {
+                                savePriorityMutation.mutate({
+                                  institutionId: selectedInstId,
+                                  specialtyId: spec.id,
+                                  priority: e.target.value as any
+                                })
+                              }}
+                            >
+                              <option value="MAXIMA">MÁXIMA (Muito Cobrada)</option>
+                              <option value="ALTA">ALTA</option>
+                              <option value="MEDIA">MÉDIA</option>
+                              <option value="BAIXA">BAIXA</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '16px 8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            {savePriorityMutation.isPending && savePriorityMutation.variables?.specialtyId === spec.id ? (
+                              <span style={{ color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <RefreshCw size={12} className="animate-spin" /> Salvando...
+                              </span>
+                            ) : priorityObj ? (
+                              <span style={{ color: 'var(--accent-green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <CheckCircle size={12} /> Personalizado
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>Padrão (Média)</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

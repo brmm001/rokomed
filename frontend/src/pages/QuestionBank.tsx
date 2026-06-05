@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { questionsApi } from '../lib/api'
 import {
   Search, Filter, Bookmark, SlidersHorizontal,
-  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw
+  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle
 } from 'lucide-react'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
 
 export default function QuestionBankPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [page, setPage]             = useState(1)
   const [search, setSearch]         = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -19,7 +20,8 @@ export default function QuestionBankPage() {
   const [year, setYear]             = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [bookmarked, setBookmarked] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
+  const [wrongOnly, setWrongOnly]   = useState(searchParams.get('wrongOnly') === 'true')
+  const [showFilters, setShowFilters] = useState(searchParams.get('wrongOnly') === 'true' || false)
 
   const { data: filtersData } = useQuery({
     queryKey: ['question-filters'],
@@ -28,7 +30,7 @@ export default function QuestionBankPage() {
   })
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['questions', page, search, specialty, institution, year, difficulty, bookmarked],
+    queryKey: ['questions', page, search, specialty, institution, year, difficulty, bookmarked, wrongOnly],
     queryFn: () => questionsApi.list({
       page,
       ...(search        && { search }),
@@ -37,6 +39,7 @@ export default function QuestionBankPage() {
       ...(year          && { year: parseInt(year) }),
       ...(difficulty    && { difficulty }),
       ...(bookmarked    && { bookmarked: true }),
+      ...(wrongOnly     && { wrongOnly: true }),
     }),
     placeholderData: (prev) => prev,
   })
@@ -48,11 +51,11 @@ export default function QuestionBankPage() {
   }
 
   const clearFilters = () => {
-    setSpecialty(''); setInstitution(''); setYear(''); setDifficulty(''); setBookmarked(false)
+    setSpecialty(''); setInstitution(''); setYear(''); setDifficulty(''); setBookmarked(false); setWrongOnly(false)
     setSearch(''); setSearchInput(''); setPage(1)
   }
 
-  const activeFilters = [specialty, institution, year, difficulty, bookmarked ? 'bookmarked' : ''].filter(Boolean).length
+  const activeFilters = [specialty, institution, year, difficulty, bookmarked ? 'bookmarked' : '', wrongOnly ? 'wrongOnly' : ''].filter(Boolean).length
 
   const diffColor = { FACIL: 'badge-green', MEDIO: 'badge-gold', DIFICIL: 'badge-red' } as const
 
@@ -144,11 +147,17 @@ export default function QuestionBankPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               <input id="filter-bookmarked" type="checkbox" checked={bookmarked} onChange={e => { setBookmarked(e.target.checked); setPage(1) }} />
               <Bookmark size={14} />
               Somente favoritas
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+              <input id="filter-wrongonly" type="checkbox" checked={wrongOnly} onChange={e => { setWrongOnly(e.target.checked); setPage(1) }} />
+              <AlertTriangle size={14} style={{ color: '#EF4444' }} />
+              Apenas erros
             </label>
 
             {activeFilters > 0 && (
