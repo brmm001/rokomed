@@ -23,7 +23,8 @@ export default function DashboardPage() {
         (window as any).gtag('event', 'conversion', {
           'send_to': 'AW-625816226/q172CM7Zz5YCEKLltKoC',
           'value': 29.0,
-          'currency': 'BRL'
+          'currency': 'BRL',
+          'transaction_id': searchParams.get('payment_id') || searchParams.get('collection_id') || ''
         });
       }
     } else if (paymentStatus === 'pending') {
