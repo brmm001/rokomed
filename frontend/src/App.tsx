@@ -12,7 +12,13 @@ import PricingPage from './pages/Pricing'
 import ProfilePage from './pages/Profile'
 import AdminPage from './pages/Admin'
 import LandingPage from './pages/Landing'
+import AprovacaoLandingPage from './pages/AprovacaoLanding'
 import FreeExamPage from './pages/FreeExam'
+
+function IndexRoute() {
+  const isAprovacao = window.location.hostname.includes('aprovacao') || window.location.search.includes('v=aprovacao')
+  return isAprovacao ? <AprovacaoLandingPage /> : <LandingPage />
+}
 import SimuladoConfigPage from './pages/SimuladoConfig'
 import SimuladoExamPage from './pages/SimuladoExam'
 import SimuladoListPage from './pages/SimuladoList'
@@ -77,7 +83,8 @@ export default function App() {
         />
         <Routes>
           {/* Público */}
-          <Route path="/"         element={<LandingPage />} />
+          <Route path="/"         element={<IndexRoute />} />
+          <Route path="/aprovacao" element={<AprovacaoLandingPage />} />
           <Route path="/simulado-gratis" element={<FreeExamPage />} />
           <Route path="/login"    element={<PublicOnly><LoginPage /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><RegisterPage /></PublicOnly>} />
