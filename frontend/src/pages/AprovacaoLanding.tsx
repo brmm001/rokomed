@@ -134,8 +134,8 @@ export default function AprovacaoLandingPage() {
           --border-hover: rgba(100, 160, 255, 0.2);
           --primary: #3B7EF8;
           --primary-glow: rgba(59, 126, 248, 0.15);
-          --cyan: #00F2FE;
-          --cyan-glow: rgba(0, 242, 254, 0.2);
+          --cyan: #A5C3F7;
+          --cyan-glow: rgba(165, 195, 247, 0.15);
           --green: #10B981;
           --amber: #F59E0B;
           --text-primary: #EBF4FF;
@@ -199,7 +199,7 @@ export default function AprovacaoLandingPage() {
 
         .ap-btn-cyan:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 24px rgba(0, 242, 254, 0.4);
+          box-shadow: 0 6px 24px rgba(165, 195, 247, 0.25);
         }
 
         .ap-btn-ghost {
@@ -306,8 +306,8 @@ export default function AprovacaoLandingPage() {
           text-transform: uppercase;
           letter-spacing: 0.05em;
           color: var(--cyan);
-          background: rgba(0, 242, 254, 0.06);
-          border: 1px solid rgba(0, 242, 254, 0.15);
+          background: rgba(165, 195, 247, 0.06);
+          border: 1px solid rgba(165, 195, 247, 0.15);
           padding: 6px 14px;
           border-radius: 9999px;
           margin-bottom: 24px;
@@ -389,7 +389,7 @@ export default function AprovacaoLandingPage() {
 
         /* Infinite Marquee Ticker */
         .ap-marquee {
-          background: linear-gradient(90deg, rgba(59, 126, 248, 0.08) 0%, rgba(0, 242, 254, 0.08) 100%);
+          background: linear-gradient(90deg, rgba(59, 126, 248, 0.06) 0%, rgba(165, 195, 247, 0.06) 100%);
           border-y: 1px solid rgba(100, 160, 255, 0.1);
           overflow: hidden;
           padding: 16px 0;
@@ -746,7 +746,7 @@ export default function AprovacaoLandingPage() {
           align-items: center;
           justify-content: center;
           color: #030812;
-          box-shadow: 0 8px 24px rgba(0, 242, 254, 0.3);
+          box-shadow: 0 8px 24px rgba(165, 195, 247, 0.2);
           cursor: pointer;
           border: none;
           transition: transform 0.2s;
@@ -941,7 +941,7 @@ export default function AprovacaoLandingPage() {
 
       {/* Decorative ambient glows */}
       <div className="ap-glow" style={{ top: '-10%', left: '5%', width: '400px', height: '400px', background: 'var(--primary)' }}></div>
-      <div className="ap-glow" style={{ top: '40%', right: '-10%', width: '500px', height: '500px', background: 'rgba(0, 242, 254, 0.25)' }}></div>
+      <div className="ap-glow" style={{ top: '40%', right: '-10%', width: '500px', height: '500px', background: 'rgba(165, 195, 247, 0.15)' }}></div>
       <div className="ap-glow" style={{ bottom: '10%', left: '-10%', width: '400px', height: '400px', background: 'rgba(139, 92, 246, 0.2)' }}></div>
 
       {/* ── Navigation Header ── */}
@@ -958,7 +958,7 @@ export default function AprovacaoLandingPage() {
             <a href="#faq" className="ap-nav-link">Dúvidas</a>
           </nav>
           <a href="#planos" className="ap-btn ap-btn-primary" style={{ padding: '10px 22px', fontSize: '13px' }}>
-            Bora passar <ArrowRight size={14} />
+            Começar Agora <ArrowRight size={14} />
           </a>
         </div>
       </header>
@@ -970,16 +970,16 @@ export default function AprovacaoLandingPage() {
           <div>
             <div className="ap-badge">
               <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
-              Campanha 2026 • +12.400 médicos no método
+              RokoMed Inteligência Ativa • Preparação Focada
             </div>
             
             <h1 className="ap-title">
-              Cada questão te deixa<br />
-              <span>mais próximo da aprovação</span>
+              Domine as bancas com<br />
+              <span>estudo ativo guiado por IA</span>
             </h1>
             
             <p className="ap-subtitle">
-              Passar na residência não é sobre estudar mais horas — é sobre estudar as questões certas. O RokoMed monta sua trilha adaptativa, organiza seu cronograma e revisa com você de forma ativa até o dia da prova. Bora?
+              Chega de videoaulas intermináveis e resumos estáticos. O RokoMed analisa seu edital, cria uma trilha de estudo adaptativa e resolve suas dúvidas instantaneamente com o Dr. André, nosso tutor inteligente de IA.
             </p>
 
             {/* Email Lead Capture */}
@@ -1019,12 +1019,12 @@ export default function AprovacaoLandingPage() {
                   <path id="badge-circle" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
                 </defs>
                 <text fontSize="8.2" fontWeight="700" letterSpacing="2.5" fill="currentColor">
-                  <textPath href="#badge-circle">✦ BORA PASSAR ✦ COM O ROKOMED </textPath>
+                  <textPath href="#badge-circle">✦ ROKOMED ✦ MÁXIMO RENDIMENTO ✦ INTELIGÊNCIA ATIVA </textPath>
                 </text>
               </svg>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', color: '#030812', fontWeight: 800, fontSize: 10, textAlign: 'center', lineHeight: 1.1, boxShadow: '0 4px 12px var(--cyan-glow)' }}>
-                  Bora<br />Med
+                  Roko<br />Med
                 </div>
               </div>
             </div>
@@ -1070,10 +1070,10 @@ export default function AprovacaoLandingPage() {
         <div className="ap-marquee-track">
           {Array.from({ length: 4 }).map((_, outerIdx) => (
             <div key={outerIdx} style={{ display: 'inline-flex', gap: 48 }}>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Bora passar com o RokoMed</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> 7 dias grátis para testar</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Questões comentadas de +500 bancas</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Cronograma ativo até o dia da prova</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Estudo inteligente com o RokoMed</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> IA Tutor ativa de plantão</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> +15.000 questões comentadas</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Trilha adaptativa personalizada</span>
             </div>
           ))}
         </div>
@@ -1304,7 +1304,7 @@ export default function AprovacaoLandingPage() {
             </div>
 
             <div className="ap-card ap-card-hover">
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cyan)' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(165, 195, 247, 0.08)', border: '1px solid rgba(165, 195, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cyan)' }}>
                 <Target size={20} />
               </div>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Análise Estatística de Prova</h3>
@@ -1358,41 +1358,13 @@ export default function AprovacaoLandingPage() {
           <div className="ap-test-grid">
             <div className="ap-test-card">
               <p className="ap-test-quote">
-                "Passei meses tentando montar cronograma em planilha de Excel e me frustrava pois nunca conseguia cumprir tudo. No RokoMed foi diferente: eu apenas abria e fazia o assunto do dia. Aprovada de primeira!"
+                "O Tutor de IA (Dr. André) me tirou dúvidas complexas de fisiologia cardíaca em plena madrugada, logo após eu errar uma questão. O feedback imediato do RokoMed vale ouro."
               </p>
-              <div className="ap-test-tag">✓ Aprovada USP-SP • Clínica Médica</div>
+              <div className="ap-test-tag">✓ Aprovado ENARE • Anestesiologia</div>
               <div className="ap-test-user">
-                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, #EC4899 0%, var(--primary) 100%)' }}>M</div>
+                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, #EC4899 0%, var(--primary) 100%)' }}>H</div>
                 <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dra. Marina Bittencourt</h4>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovada em 2024</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="ap-test-card">
-              <p className="ap-test-quote">
-                "A Análise de Prova do RokoMed fez total diferença. Conseguia focar cirurgia no edital da UNIFESP de forma cirúrgica e inteligente, indo direto nas tendências e no caderno de erros."
-              </p>
-              <div className="ap-test-tag">✓ Aprovado UNIFESP • Cirurgia Geral</div>
-              <div className="ap-test-user">
-                <div className="ap-test-avatar">B</div>
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dr. Bruno Alencar</h4>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovado em 2024</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="ap-test-card">
-              <p className="ap-test-quote">
-                "Como conciliava plantões de final de semana com os estudos, precisava de objetividade. O app no celular facilitou demais o estudo no intervalo. O método realmente funciona."
-              </p>
-              <div className="ap-test-tag">✓ Aprovado PSU-MG • Pediatria</div>
-              <div className="ap-test-user">
-                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--amber) 0%, #EC4899 100%)' }}>R</div>
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dr. Rafael Machado</h4>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dr. Henrique Vasconcellos</h4>
                   <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovado em 2025</p>
                 </div>
               </div>
@@ -1400,14 +1372,42 @@ export default function AprovacaoLandingPage() {
 
             <div className="ap-test-card">
               <p className="ap-test-quote">
-                "O caderno de erros inteligente e o Dr. André me salvaram. O algoritmo forçava a repetição dos assuntos complexos na hora certa de acordo com a curva de esquecimento."
+                "Achei que o banco adaptativo era só marketing, mas o algoritmo do RokoMed começou a me mandar exatamente os pontos fracos de neonatologia que eu errava nas provas antigas. Incrível."
               </p>
-              <div className="ap-test-tag">✓ Aprovada SUS-BA • GO</div>
+              <div className="ap-test-tag">✓ Aprovada USP-SP • Pediatria</div>
               <div className="ap-test-user">
-                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--green) 0%, var(--cyan) 100%)' }}>C</div>
+                <div className="ap-test-avatar">L</div>
                 <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dra. Camila Soares</h4>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovada em 2025</p>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dra. Letícia Albuquerque</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovada em 2024</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="ap-test-card">
+              <p className="ap-test-quote">
+                "Conciliar o último ano do internato com estudo para residência exige precisão. O RokoMed me deu as 20 questões mais quentes do dia para fazer no hospital."
+              </p>
+              <div className="ap-test-tag">✓ Aprovado UNICAMP • Ortopedia</div>
+              <div className="ap-test-user">
+                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--amber) 0%, #EC4899 100%)' }}>R</div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dr. Rodrigo Fontes</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovado em 2025</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="ap-test-card">
+              <p className="ap-test-quote">
+                "O caderno de erros inteligente do RokoMed limpa as nossas falhas. Em vez de rever o edital inteiro, eu revisava apenas onde havia tropeçado. Foco cirúrgico no que cai."
+              </p>
+              <div className="ap-test-tag">✓ Aprovada SUS-SP • Ginecologia e Obstetrícia</div>
+              <div className="ap-test-user">
+                <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--green) 0%, var(--cyan) 100%)' }}>B</div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>Dra. Beatriz Nogueira</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Aprovada em 2024</p>
                 </div>
               </div>
             </div>
