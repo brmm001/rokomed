@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/auth'
@@ -65,10 +66,23 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <>{children}</>
 }
 
+function FacebookPixelTracker() {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'PageView')
+    }
+  }, [location.pathname, location.search])
+
+  return null
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <FacebookPixelTracker />
         <Toaster
           position="top-right"
           toastOptions={{

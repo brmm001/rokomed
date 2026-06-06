@@ -27,6 +27,12 @@ export default function DashboardPage() {
           'transaction_id': searchParams.get('payment_id') || searchParams.get('collection_id') || ''
         });
       }
+      if (typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'Purchase', {
+          value: 29.0,
+          currency: 'BRL'
+        });
+      }
     } else if (paymentStatus === 'pending') {
       setPaymentNotification('pending')
     } else if (paymentStatus === 'failure') {

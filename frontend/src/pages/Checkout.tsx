@@ -113,6 +113,9 @@ export default function CheckoutPage() {
         'currency': 'BRL'
       });
     }
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'InitiateCheckout');
+    }
 
     // Google Sign-In button initializer
     const initializeGoogle = () => {
