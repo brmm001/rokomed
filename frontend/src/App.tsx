@@ -29,6 +29,7 @@ import GameDuelPage from './pages/GameDuel'
 import GameRoundsPage from './pages/GameRounds'
 import GamePistaPage from './pages/GamePista'
 import RoutinePage from './pages/Routine'
+import DrAndrePage from './pages/DrAndre'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
@@ -103,6 +104,7 @@ export default function App() {
             <Route path="/games/rounds"    element={<RequirePro><GameRoundsPage /></RequirePro>} />
             <Route path="/games/pista"     element={<RequirePro><GamePistaPage /></RequirePro>} />
             <Route path="/analytics"      element={<AnalyticsPage />} />
+            <Route path="/tutor"          element={<DrAndrePage />} />
             <Route path="/perfil"         element={<ProfilePage />} />
             <Route path="/admin"          element={<RequireAdmin><AdminPage /></RequireAdmin>} />
           </Route>

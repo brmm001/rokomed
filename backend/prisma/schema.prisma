@@ -36,10 +36,13 @@ model User {
   originInstitution String? // Faculdade de medicina de origem
   targetSpecialtyId String? // Especialidade-alvo (texto livre ou ID)
   routineConfig     String? // JSON string contendo grade semanal de estudos
+  aiCreditsUsed     Int       @default(0)
+  lastCreditsReset  DateTime  @default(now())
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   answers         UserAnswer[]
+  aiMessages      AiMessage[]
   bookmarks       UserBookmark[]
   notes           UserNote[]
   highlights      UserHighlight[]
@@ -546,6 +549,18 @@ model InstitutionPriority {
 
   @@unique([institutionId, specialtyId])
   @@map("institution_priorities")
+}
+
+model AiMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
 }
 
 

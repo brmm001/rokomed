@@ -201,4 +201,11 @@ export const flashcardApi = {
     api.post(`/flashcards/${id}/review`, { quality }).then(r => r.data),
 }
 
+// ── AI Tutor (Dr. André) ──────────────────────────────────────────────────────
+export const aiApi = {
+  getHistory: () => api.get('/ai/history').then(r => r.data),
+  ask: (content: string) => api.post('/ai/ask', { content }).then(r => r.data),
+  clear: () => api.post('/ai/clear').then(r => r.data),
+}
+
 export default api

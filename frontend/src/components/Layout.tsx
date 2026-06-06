@@ -14,6 +14,7 @@ import '../internal-theme.css'
 
 const navItems = [
   { to: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/tutor',          icon: Brain,            label: 'Dr. André (IA)' },
   { to: '/rotina',         icon: Calendar,        label: 'Minha Rotina' },
   { to: '/questoes',       icon: BookOpen,         label: 'Banco de Questões' },
   { to: '/aulas',          icon: Video,            label: 'Aulas e Temas' },
