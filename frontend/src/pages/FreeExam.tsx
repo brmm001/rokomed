@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import api from '../lib/api'
 
 type FreeQuestion = {
   id: string
@@ -21,11 +22,9 @@ export default function FreeExamPage() {
   const [showResult, setShowResult] = useState(false)
 
   useEffect(() => {
-    import('../lib/api').then(({ default: api }) => {
-      api.get('/questions/public-sample')
-        .then(r => { setQuestions(r.data.data || []); setLoading(false) })
-        .catch(e => { console.error(e); setLoading(false) })
-    })
+    api.get('/questions/public-sample')
+      .then(r => { setQuestions(r.data.data || []); setLoading(false) })
+      .catch(e => { console.error(e); setLoading(false) })
   }, [])
 
   const handleSelectOption = (letter: string) => {

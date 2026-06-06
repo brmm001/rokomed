@@ -25,7 +25,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { subscriptionApi } from '../lib/api'
+import api, { subscriptionApi } from '../lib/api'
 import { trackClick } from '../lib/tracker'
 
 export default function AprovacaoLandingPage() {
@@ -64,7 +64,6 @@ export default function AprovacaoLandingPage() {
     setLoadingLead(true)
     try {
       trackClick('APROVACAO_LEAD_CAPTURE', leadEmail)
-      const api = (await import('../lib/api')).default
       await api.post('/auth/lead', { email: leadEmail })
       localStorage.setItem('rokomed_lead_email', leadEmail)
       window.location.href = '/simulado-gratis'
@@ -990,6 +989,7 @@ export default function AprovacaoLandingPage() {
                 value={leadEmail}
                 onChange={e => setLeadEmail(e.target.value)}
                 className="ap-lead-input"
+                aria-label="Seu melhor e-mail profissional"
               />
               <button
                 onClick={handleLeadCapture}
@@ -1457,7 +1457,7 @@ export default function AprovacaoLandingPage() {
 
           <div>
             <div className="ap-video-mock">
-              <button className="ap-play-btn">
+              <button className="ap-play-btn" aria-label="Reproduzir vídeo demonstrativo do RokoMed">
                 <Play size={24} style={{ fill: '#030812' }} />
               </button>
             </div>
@@ -1480,8 +1480,8 @@ export default function AprovacaoLandingPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Banca Pretendida</label>
-                <select value={targetInst} onChange={e => { setTargetInst(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
+                <label htmlFor="target-institution-select" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Banca Pretendida</label>
+                <select id="target-institution-select" value={targetInst} onChange={e => { setTargetInst(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
                   <option value="FMUSP">USP (FMUSP)</option>
                   <option value="ENARE">ENARE (Exame Nacional)</option>
                   <option value="UNICAMP">UNICAMP</option>
@@ -1489,8 +1489,8 @@ export default function AprovacaoLandingPage() {
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Especialidade</label>
-                <select value={targetSpec} onChange={e => { setTargetSpec(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
+                <label htmlFor="target-specialty-select" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Especialidade</label>
+                <select id="target-specialty-select" value={targetSpec} onChange={e => { setTargetSpec(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
                   <option value="Cirurgia Geral">Cirurgia Geral</option>
                   <option value="Pediatria">Pediatria</option>
                   <option value="Clínica Médica">Clínica Médica</option>
@@ -1685,6 +1685,12 @@ export default function AprovacaoLandingPage() {
       {/* ── Footer ── */}
       <footer className="ap-footer">
         <div className="ap-container">
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            <Link to="/blog" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px' }}>Blog</Link>
+            <Link to="/glossario" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px' }}>Glossário</Link>
+            <a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px' }}>Termos de uso</a>
+            <a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px' }}>Privacidade</a>
+          </div>
           <p>© {new Date().getFullYear()} RokoMed. Todos os direitos reservados.</p>
           <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>Plataforma adaptativa feita por médicos, para médicos.</p>
         </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { X, MessageCircle } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { subscriptionApi } from '../lib/api'
+import api, { subscriptionApi } from '../lib/api'
 import { trackClick } from '../lib/tracker'
 
 export default function LandingPage() {
@@ -33,7 +33,6 @@ export default function LandingPage() {
     setLoadingLead(true)
     try {
       trackClick('LEAD_CAPTURE', leadEmail)
-      const api = (await import('../lib/api')).default
       await api.post('/auth/lead', { email: leadEmail })
       localStorage.setItem('rokomed_lead_email', leadEmail)
       window.location.href = '/simulado-gratis'
@@ -2250,6 +2249,8 @@ export default function LandingPage() {
                 <span style={{ fontWeight: 400, marginLeft: '16px', fontSize: '12px' }}>© 2026 RokoMed. Todos os direitos reservados.</span>
               </div>
               <div className="footer-links">
+                <Link to="/blog">Blog</Link>
+                <Link to="/glossario">Glossário</Link>
                 <a href="#">Termos de uso</a>
                 <a href="#">Privacidade</a>
                 <a href="#">Contato</a>
@@ -2267,7 +2268,7 @@ export default function LandingPage() {
         {showExitPopup && (
           <div className="lp-popup-overlay" onClick={() => setShowExitPopup(false)}>
             <div className="lp-popup" onClick={e => e.stopPropagation()}>
-              <button className="lp-popup-close" onClick={() => setShowExitPopup(false)}>
+              <button className="lp-popup-close" onClick={() => setShowExitPopup(false)} aria-label="Fechar">
                 <X size={24} />
               </button>
               <div className="lp-popup-title">Espere!</div>
@@ -2283,6 +2284,7 @@ export default function LandingPage() {
                 value={leadEmail}
                 onChange={e => setLeadEmail(e.target.value)}
                 className="lp-popup-input"
+                aria-label="Seu endereço de e-mail para receber o simulado grátis"
               />
               <button 
                 type="button"
