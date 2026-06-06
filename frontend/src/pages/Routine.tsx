@@ -28,9 +28,10 @@ export default function RoutinePage() {
   const [showAddMenu, setShowAddMenu] = useState<{ day: DayName; open: boolean } | null>(null)
 
   // Queries
-  const { data: routineData, isLoading: routineLoading } = useQuery<any>({
+  const { data: routineData, isLoading: routineLoading, isError: routineError } = useQuery<any>({
     queryKey: ['user-routine'],
-    queryFn: userApi.routine,
+    queryFn: () => userApi.routine(),
+    retry: 1,
   })
 
   useEffect(() => {
@@ -39,9 +40,10 @@ export default function RoutinePage() {
     }
   }, [routineData])
 
-  const { data: proficiencyData, isLoading: proficiencyLoading } = useQuery<any>({
+  const { data: proficiencyData, isLoading: proficiencyLoading, isError: proficiencyError } = useQuery<any>({
     queryKey: ['user-subjects-proficiency'],
-    queryFn: () => userApi.subjectsProficiency()
+    queryFn: () => userApi.subjectsProficiency(),
+    retry: 1,
   })
 
   // Mutation
@@ -59,9 +61,20 @@ export default function RoutinePage() {
 
   if (routineLoading || proficiencyLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)' }}>
-        <TrendingUp size={24} className="animate-spin" style={{ marginRight: '8px' }} />
-        Carregando seu plano de estudos...
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ width: '36px', height: '36px', border: '3px solid rgba(59,130,246,0.15)', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span>Carregando seu plano de estudos...</span>
+      </div>
+    )
+  }
+
+  if (routineError || proficiencyError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '12px' }}>
+        <AlertTriangle size={32} color="#EF4444" />
+        <p style={{ color: '#F87171', fontWeight: 600 }}>Erro ao carregar dados da rotina.</p>
+        <button onClick={() => window.location.reload()} className="btn btn-ghost" style={{ fontSize: '0.85rem' }}>Tentar novamente</button>
       </div>
     )
   }
