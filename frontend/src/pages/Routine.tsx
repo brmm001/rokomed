@@ -413,7 +413,7 @@ export default function RoutinePage() {
         </div>
 
         {/* Right Side Column: Subjects priorities & Caderno de Erros */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '1rem', maxHeight: 'calc(100vh - 2rem)', overflowY: 'auto' }}>
           
           {/* Caderno de Erros CTA */}
           <div className="glass" style={{
@@ -467,7 +467,7 @@ export default function RoutinePage() {
               Calibração de prioridade da banca com sua proficiência atual.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '480px', overflowY: 'auto', paddingRight: '4px' }}>
               {proficiencyLoading ? (
                 // Skeleton enquanto carrega
                 <>
