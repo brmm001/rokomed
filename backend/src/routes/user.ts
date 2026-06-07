@@ -149,15 +149,34 @@ export default async function userRoutes(app: FastifyInstance) {
   // GET /api/user/routine — dados de rotina
   app.get('/routine', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        examDate: true,
-        targetSpecialtyId: true,
-        targetInstitutionId: true,
-        routineConfig: true,
+
+    // Busca campos base do usuário (sempre existem)
+    let user: any = null
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          examDate: true,
+          targetSpecialtyId: true,
+          targetInstitutionId: true,
+          routineConfig: true,
+        }
+      })
+    } catch {
+      // Fallback: tenta sem routineConfig (campo pode não existir no Turso ainda)
+      try {
+        user = await (prisma.user as any).findUnique({
+          where: { id: payload.sub },
+          select: {
+            examDate: true,
+            targetSpecialtyId: true,
+            targetInstitutionId: true,
+          }
+        })
+      } catch (err2: any) {
+        return reply.code(500).send({ error: 'Erro ao buscar dados do usuário' })
       }
-    })
+    }
 
     if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
 
@@ -173,13 +192,13 @@ export default async function userRoutes(app: FastifyInstance) {
       try { routineConfigParsed = JSON.parse(user.routineConfig) } catch {}
     }
 
-    // Busca contagem de erros no Caderno de Erros (respostas incorretas distintas)
-    const wrongCount = await prisma.userAnswer.count({
-      where: {
-        userId: payload.sub,
-        isCorrect: false
-      }
-    })
+    // Busca contagem de erros — com fallback caso a tabela ou coluna não exista
+    let wrongCount = 0
+    try {
+      wrongCount = await prisma.userAnswer.count({
+        where: { userId: payload.sub, isCorrect: false }
+      })
+    } catch { wrongCount = 0 }
 
     return reply.send({
       examDate: user.examDate,
@@ -218,61 +237,76 @@ export default async function userRoutes(app: FastifyInstance) {
     const payload = request.user as { sub: string }
     const { institutionId } = request.query as { institutionId?: string }
 
-    // Busca o usuário para ver a banca alvo se nenhuma for passada por parâmetro
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: { targetInstitutionId: true }
-    })
+    // Busca o usuário para ver a banca alvo
+    let user: any = null
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { targetInstitutionId: true }
+      })
+    } catch { user = null }
 
     const activeInstitutionId = institutionId || user?.targetInstitutionId || ''
 
-    // Busca todas as especialidades raízes ou grandes áreas
-    const specialties = await prisma.specialty.findMany({
-      where: { isGrandeArea: true },
-      select: { id: true, name: true }
-    })
+    // Busca especialidades grandes áreas — com fallback se coluna isGrandeArea não existir
+    let specialties: { id: string; name: string }[] = []
+    try {
+      specialties = await prisma.specialty.findMany({
+        where: { isGrandeArea: true },
+        select: { id: true, name: true }
+      })
+    } catch {
+      // Coluna isGrandeArea pode não existir: retorna todas as especialidades sem parent
+      try {
+        specialties = await prisma.specialty.findMany({
+          where: { parentId: null },
+          select: { id: true, name: true }
+        })
+      } catch { specialties = [] }
+    }
 
-    // Busca prioridades manuais da banca ativa
-    const priorities = activeInstitutionId ? await prisma.institutionPriority.findMany({
-      where: { institutionId: activeInstitutionId },
-      select: { specialtyId: true, priority: true }
-    }) : []
+    // Busca prioridades manuais da banca ativa — com fallback se tabela não existir
+    let priorities: { specialtyId: string; priority: string }[] = []
+    if (activeInstitutionId) {
+      try {
+        priorities = await prisma.institutionPriority.findMany({
+          where: { institutionId: activeInstitutionId },
+          select: { specialtyId: true, priority: true }
+        })
+      } catch { priorities = [] }
+    }
 
     // Calcula proficiência para cada grande área
     const results = []
     for (const spec of specialties) {
-      // Pega todos os IDs de especialidades filhas/temas para somar as respostas
       const allIds = [spec.id]
       let toExpand = [spec.id]
       while (toExpand.length > 0) {
-        const children = await prisma.specialty.findMany({
-          where: { parentId: { in: toExpand } },
-          select: { id: true }
-        })
-        const childIds = children.map(c => c.id)
-        allIds.push(...childIds)
-        toExpand = childIds
+        try {
+          const children = await prisma.specialty.findMany({
+            where: { parentId: { in: toExpand } },
+            select: { id: true }
+          })
+          const childIds = children.map((c: any) => c.id)
+          allIds.push(...childIds)
+          toExpand = childIds
+        } catch { toExpand = [] }
       }
 
-      // Conta respostas do usuário
-      const [totalAnswered, correctAnswered] = await Promise.all([
-        prisma.userAnswer.count({
-          where: {
-            userId: payload.sub,
-            question: { specialtyId: { in: allIds } }
-          }
-        }),
-        prisma.userAnswer.count({
-          where: {
-            userId: payload.sub,
-            isCorrect: true,
-            question: { specialtyId: { in: allIds } }
-          }
-        })
-      ])
+      let totalAnswered = 0, correctAnswered = 0
+      try {
+        ;[totalAnswered, correctAnswered] = await Promise.all([
+          prisma.userAnswer.count({
+            where: { userId: payload.sub, question: { specialtyId: { in: allIds } } }
+          }),
+          prisma.userAnswer.count({
+            where: { userId: payload.sub, isCorrect: true, question: { specialtyId: { in: allIds } } }
+          })
+        ])
+      } catch { totalAnswered = 0; correctAnswered = 0 }
 
       const accuracy = totalAnswered > 0 ? Math.round((correctAnswered / totalAnswered) * 100) : null
-      
+
       let level = 'NÃO ESTUDADO'
       if (accuracy !== null) {
         if (accuracy < 50) level = 'INICIANTE'
@@ -280,17 +314,10 @@ export default async function userRoutes(app: FastifyInstance) {
         else level = 'AVANÇADO'
       }
 
-      // Procura prioridade configurada pelo admin
-      const priorityRecord = priorities.find(p => p.specialtyId === spec.id)
-      const priority = priorityRecord ? priorityRecord.priority : 'MEDIA' // Padrão média
+      const priorityRecord = priorities.find((p: any) => p.specialtyId === spec.id)
+      const priority = priorityRecord ? priorityRecord.priority : 'MEDIA'
 
-      results.push({
-        id: spec.id,
-        name: spec.name,
-        accuracy,
-        level,
-        priority
-      })
+      results.push({ id: spec.id, name: spec.name, accuracy, level, priority })
     }
 
     return reply.send({ activeInstitutionId, data: results })
