@@ -59,7 +59,7 @@ export default function RoutinePage() {
     }
   })
 
-  if (routineLoading || proficiencyLoading) {
+  if (routineLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '12px' }}>
         <div style={{ width: '36px', height: '36px', border: '3px solid rgba(59,130,246,0.15)', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -69,7 +69,7 @@ export default function RoutinePage() {
     )
   }
 
-  if (routineError || proficiencyError) {
+  if (routineError) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: 'var(--text-muted)', flexDirection: 'column', gap: '12px' }}>
         <AlertTriangle size={32} color="#EF4444" />
@@ -468,82 +468,102 @@ export default function RoutinePage() {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {subjects.map((sub: any) => {
-                const priorityStyle = getPriorityBadgeStyles(sub.priority)
-                const levelStyle = getProficiencyStyles(sub.level)
-
-                return (
-                  <div key={sub.id} style={{
-                    padding: '1rem',
-                    borderRadius: '14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#FFF' }}>{sub.name}</span>
-                      <span style={{
-                        fontSize: '0.65rem',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        background: priorityStyle.bg,
-                        color: priorityStyle.text,
-                        border: priorityStyle.border,
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {sub.priority}
-                      </span>
+              {proficiencyLoading ? (
+                // Skeleton enquanto carrega
+                <>
+                  {[1,2,3,4].map(i => (
+                    <div key={i} style={{
+                      padding: '1rem', borderRadius: '14px',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                    }}>
+                      <div style={{ height: '14px', width: '60%', background: 'rgba(255,255,255,0.06)', borderRadius: '6px', marginBottom: '10px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      <div style={{ height: '10px', width: '40%', background: 'rgba(255,255,255,0.04)', borderRadius: '4px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      <style>{`@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:.9} }`}</style>
                     </div>
+                  ))}
+                </>
+              ) : proficiencyError ? (
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>
+                  <AlertTriangle size={18} color="#EF4444" style={{ marginBottom: '6px' }} />
+                  <p>Erro ao carregar assuntos.</p>
+                </div>
+              ) : subjects.length === 0 ? (
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>
+                  Nenhum assunto encontrado.
+                </div>
+              ) : (
+                subjects.map((sub: any) => {
+                  const priorityStyle = getPriorityBadgeStyles(sub.priority)
+                  const levelStyle = getProficiencyStyles(sub.level)
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <span>Nível:</span>
+                  return (
+                    <div key={sub.id} style={{
+                      padding: '1rem',
+                      borderRadius: '14px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#FFF' }}>{sub.name}</span>
                         <span style={{
-                          color: levelStyle.text,
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
+                          fontSize: '0.65rem',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: priorityStyle.bg,
+                          color: priorityStyle.text,
+                          border: priorityStyle.border,
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap'
                         }}>
-                          {levelStyle.label}
+                          {sub.priority}
                         </span>
                       </div>
-                      
-                      <span>
-                        {sub.accuracy !== null ? `${sub.accuracy}% de acerto` : 'Sem respostas'}
-                      </span>
-                    </div>
 
-                    {/* Small Quick-Schedule Select Trigger */}
-                    <div style={{ marginTop: '10px', display: 'flex', gap: '6px' }}>
-                      <select
-                        defaultValue=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleAddTopic(e.target.value as DayName, sub.id)
-                            e.target.value = ''
-                          }
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '4px 8px',
-                          fontSize: '0.75rem',
-                          borderRadius: '6px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          color: 'var(--text-primary)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value="">+ Agendar na semana...</option>
-                        {DAYS_OF_WEEK.map(d => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span>Nível:</span>
+                          <span style={{ color: levelStyle.text, fontWeight: 700, fontSize: '0.75rem' }}>
+                            {levelStyle.label}
+                          </span>
+                        </div>
+                        <span>
+                          {sub.accuracy !== null ? `${sub.accuracy}% de acerto` : 'Sem respostas'}
+                        </span>
+                      </div>
 
-                  </div>
-                )
-              })}
+                      <div style={{ marginTop: '10px', display: 'flex', gap: '6px' }}>
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleAddTopic(e.target.value as DayName, sub.id)
+                              e.target.value = ''
+                            }
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '4px 8px',
+                            fontSize: '0.75rem',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">+ Agendar na semana...</option>
+                          {DAYS_OF_WEEK.map(d => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
+
           </div>
 
         </div>

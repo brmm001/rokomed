@@ -233,11 +233,12 @@ export default async function userRoutes(app: FastifyInstance) {
   })
 
   // GET /api/user/subjects-proficiency — proficiência e prioridades do usuário
+  // OTIMIZADO: apenas 3 queries ao banco + agregação em memória
   app.get('/subjects-proficiency', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const payload = request.user as { sub: string }
     const { institutionId } = request.query as { institutionId?: string }
 
-    // Busca o usuário para ver a banca alvo
+    // Query 1: dados do usuário
     let user: any = null
     try {
       user = await prisma.user.findUnique({
@@ -248,24 +249,47 @@ export default async function userRoutes(app: FastifyInstance) {
 
     const activeInstitutionId = institutionId || user?.targetInstitutionId || ''
 
-    // Busca especialidades grandes áreas — com fallback se coluna isGrandeArea não existir
-    let specialties: { id: string; name: string }[] = []
+    // Query 2: toda a árvore de especialidades em 1 query
+    let allSpecialties: { id: string; name: string; parentId: string | null; isGrandeArea: boolean }[] = []
     try {
-      specialties = await prisma.specialty.findMany({
-        where: { isGrandeArea: true },
-        select: { id: true, name: true }
+      allSpecialties = await (prisma.specialty as any).findMany({
+        select: { id: true, name: true, parentId: true, isGrandeArea: true }
       })
     } catch {
-      // Coluna isGrandeArea pode não existir: retorna todas as especialidades sem parent
       try {
-        specialties = await prisma.specialty.findMany({
-          where: { parentId: null },
-          select: { id: true, name: true }
-        })
-      } catch { specialties = [] }
+        allSpecialties = await prisma.specialty.findMany({
+          select: { id: true, name: true, parentId: true }
+        }) as any[]
+      } catch { allSpecialties = [] }
     }
 
-    // Busca prioridades manuais da banca ativa — com fallback se tabela não existir
+    // Grandes áreas = isGrandeArea true ou parentId null como fallback
+    const grandeAreas = allSpecialties.filter(s => (s as any).isGrandeArea || s.parentId === null)
+
+    // Mapa de filhos em memória
+    const childrenMap = new Map<string, string[]>()
+    for (const s of allSpecialties) {
+      if (s.parentId) {
+        const arr = childrenMap.get(s.parentId) || []
+        arr.push(s.id)
+        childrenMap.set(s.parentId, arr)
+      }
+    }
+
+    function expandTree(rootId: string): string[] {
+      const ids = [rootId]
+      const queue = [rootId]
+      while (queue.length > 0) {
+        const cur = queue.shift()!
+        for (const child of childrenMap.get(cur) || []) {
+          ids.push(child)
+          queue.push(child)
+        }
+      }
+      return ids
+    }
+
+    // Query 3: prioridades da banca
     let priorities: { specialtyId: string; priority: string }[] = []
     if (activeInstitutionId) {
       try {
@@ -276,49 +300,41 @@ export default async function userRoutes(app: FastifyInstance) {
       } catch { priorities = [] }
     }
 
-    // Calcula proficiência para cada grande área
-    const results = []
-    for (const spec of specialties) {
-      const allIds = [spec.id]
-      let toExpand = [spec.id]
-      while (toExpand.length > 0) {
-        try {
-          const children = await prisma.specialty.findMany({
-            where: { parentId: { in: toExpand } },
-            select: { id: true }
-          })
-          const childIds = children.map((c: any) => c.id)
-          allIds.push(...childIds)
-          toExpand = childIds
-        } catch { toExpand = [] }
+    // Query 4: todas as respostas do usuário com specialtyId (1 query, processa em memória)
+    let answerMap = new Map<string, { total: number; correct: number }>()
+    try {
+      const answers = await prisma.userAnswer.findMany({
+        where: { userId: payload.sub },
+        select: { isCorrect: true, question: { select: { specialtyId: true } } }
+      })
+      for (const a of answers) {
+        const sid = (a.question as any)?.specialtyId
+        if (!sid) continue
+        const entry = answerMap.get(sid) || { total: 0, correct: 0 }
+        entry.total++
+        if (a.isCorrect) entry.correct++
+        answerMap.set(sid, entry)
       }
+    } catch { answerMap = new Map() }
 
-      let totalAnswered = 0, correctAnswered = 0
-      try {
-        ;[totalAnswered, correctAnswered] = await Promise.all([
-          prisma.userAnswer.count({
-            where: { userId: payload.sub, question: { specialtyId: { in: allIds } } }
-          }),
-          prisma.userAnswer.count({
-            where: { userId: payload.sub, isCorrect: true, question: { specialtyId: { in: allIds } } }
-          })
-        ])
-      } catch { totalAnswered = 0; correctAnswered = 0 }
-
-      const accuracy = totalAnswered > 0 ? Math.round((correctAnswered / totalAnswered) * 100) : null
-
+    // Agrega em memória — sem queries extras
+    const results = grandeAreas.map(spec => {
+      const ids = expandTree(spec.id)
+      let total = 0, correct = 0
+      for (const id of ids) {
+        const e = answerMap.get(id)
+        if (e) { total += e.total; correct += e.correct }
+      }
+      const accuracy = total > 0 ? Math.round((correct / total) * 100) : null
       let level = 'NÃO ESTUDADO'
       if (accuracy !== null) {
         if (accuracy < 50) level = 'INICIANTE'
         else if (accuracy < 80) level = 'INTERMEDIÁRIO'
         else level = 'AVANÇADO'
       }
-
-      const priorityRecord = priorities.find((p: any) => p.specialtyId === spec.id)
-      const priority = priorityRecord ? priorityRecord.priority : 'MEDIA'
-
-      results.push({ id: spec.id, name: spec.name, accuracy, level, priority })
-    }
+      const pr = priorities.find(p => p.specialtyId === spec.id)
+      return { id: spec.id, name: spec.name, accuracy, level, priority: pr?.priority || 'MEDIA' }
+    })
 
     return reply.send({ activeInstitutionId, data: results })
   })
