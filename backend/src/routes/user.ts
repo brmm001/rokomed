@@ -223,27 +223,42 @@ export default async function userRoutes(app: FastifyInstance) {
 
     const routineConfig = JSON.stringify(parsed.data)
 
+    // Auto-migration: verifica se a coluna existe e cria se necessário
     try {
-      // Tenta via Prisma (funciona quando campo existe e Prisma o reconhece)
-      await prisma.user.update({
-        where: { id: payload.sub },
-        data: { routineConfig },
-        select: { id: true },  // não seleciona routineConfig para evitar bugs com libsql
-      })
-    } catch (err: any) {
-      // Fallback: raw SQL direto — funciona mesmo se Prisma não mapear o campo
-      try {
-        await prisma.$executeRawUnsafe(
-          `UPDATE users SET routineConfig = ? WHERE id = ?`,
-          routineConfig,
-          payload.sub
-        )
-      } catch (err2: any) {
-        return reply.code(500).send({ error: 'Erro ao salvar cronograma: ' + (err2.message || err.message) })
+      const columns = await prisma.$queryRawUnsafe<{ name: string }[]>(
+        `PRAGMA table_info(users)`
+      )
+      const hasColumn = columns.some((c: any) => c.name === 'routineConfig')
+      if (!hasColumn) {
+        await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN routineConfig TEXT`)
+        app.log.info('[routine] Coluna routineConfig criada automaticamente no banco')
       }
+    } catch (pragmaErr) {
+      app.log.warn('[routine] Não foi possível verificar/criar coluna:', pragmaErr)
     }
 
-    return reply.send({ success: true, routineConfig: parsed.data })
+    // Salva usando raw SQL — mais confiável com Turso/libsql
+    try {
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET routineConfig = ? WHERE id = ?`,
+        routineConfig,
+        payload.sub
+      )
+      return reply.send({ success: true, routineConfig: parsed.data })
+    } catch (sqlErr: any) {
+      // Fallback: tenta via ORM
+      try {
+        await prisma.user.update({
+          where: { id: payload.sub },
+          data: { routineConfig },
+          select: { id: true },
+        })
+        return reply.send({ success: true, routineConfig: parsed.data })
+      } catch (ormErr: any) {
+        app.log.error('[routine] Falha ao salvar:', { sqlErr: sqlErr.message, ormErr: ormErr.message })
+        return reply.code(500).send({ error: 'Erro ao salvar cronograma. Contate o suporte.' })
+      }
+    }
   })
 
   // GET /api/user/subjects-proficiency — proficiência e prioridades do usuário
