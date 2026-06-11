@@ -234,7 +234,7 @@ export default async function userRoutes(app: FastifyInstance) {
         app.log.info('[routine] Coluna routineConfig criada automaticamente no banco')
       }
     } catch (pragmaErr) {
-      app.log.warn('[routine] Não foi possível verificar/criar coluna:', pragmaErr)
+      app.log.warn(pragmaErr as any, '[routine] Não foi possível verificar/criar coluna')
     }
 
     // Salva usando raw SQL — mais confiável com Turso/libsql
@@ -255,7 +255,7 @@ export default async function userRoutes(app: FastifyInstance) {
         })
         return reply.send({ success: true, routineConfig: parsed.data })
       } catch (ormErr: any) {
-        app.log.error('[routine] Falha ao salvar:', { sqlErr: sqlErr.message, ormErr: ormErr.message })
+        app.log.error({ sqlErr: sqlErr.message, ormErr: ormErr.message }, '[routine] Falha ao salvar')
         return reply.code(500).send({ error: 'Erro ao salvar cronograma. Contate o suporte.' })
       }
     }
