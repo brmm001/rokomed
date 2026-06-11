@@ -20,11 +20,17 @@ export default function FreeExamPage() {
   const [loading, setLoading] = useState(true)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [showResult, setShowResult] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     api.get('/questions/public-sample')
       .then(r => { setQuestions(r.data.data || []); setLoading(false) })
-      .catch(e => { console.error(e); setLoading(false) })
+      .catch(e => {
+        console.error(e)
+        const msg = e.response?.data?.error || e.message || 'Erro desconhecido'
+        setError(msg)
+        setLoading(false)
+      })
   }, [])
 
   const handleSelectOption = (letter: string) => {
@@ -39,6 +45,7 @@ export default function FreeExamPage() {
   }
 
   if (loading) return <div style={{padding:'5rem', textAlign:'center', fontFamily:'var(--mono)', background:'var(--paper)', minHeight:'100vh'}}>Carregando simulado...</div>
+  if (error) return <div style={{padding:'5rem', textAlign:'center', fontFamily:'var(--mono)', background:'var(--paper)', minHeight:'100vh', color:'#D32F2F'}}>Erro ao carregar: {error}</div>
   if (questions.length === 0) return <div style={{padding:'5rem', textAlign:'center', fontFamily:'var(--mono)', background:'var(--paper)', minHeight:'100vh'}}>Nenhuma questão disponível.</div>
 
   if (showResult) {
