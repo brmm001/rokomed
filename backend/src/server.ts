@@ -16,7 +16,7 @@ app.register(cors, {
       return cb(null, true)
     }
     // Permitir os domínios de produção
-    const allowed = ['https://www.rokomed.com.br', 'https://rokomed.com.br']
+    const allowed = ['https://www.rokomed.com.br', 'https://rokomed.com.br', 'https://aprovacao.rokomed.com.br']
     if (process.env.FRONTEND_URL) allowed.push(process.env.FRONTEND_URL)
     
     if (allowed.includes(origin)) {
