@@ -6,11 +6,35 @@ import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
 import { trackClick } from '../lib/tracker'
 
+type PlanType = 'monthly' | 'semiannual' | 'annual'
 
+const PLAN_DETAILS: Record<PlanType, { title: string; price: string; total?: string; description: string; features: string[] }> = {
+  monthly: {
+    title: 'RokoMed — Plano Mensal',
+    price: 'R$ 29,00',
+    description: 'Acesso completo com renovação automática. Cancele quando quiser.',
+    features: ['Acesso a todo o banco de questões', 'Simulados por especialidade', 'Gabaritos comentados']
+  },
+  semiannual: {
+    title: 'RokoMed — Plano Semestral',
+    price: '6x de R$ 16,16',
+    total: 'Total à vista: R$ 97,00',
+    description: 'Nosso plano mais vendido. Sem renovação automática.',
+    features: ['Tudo do plano Mensal', 'Simulados personalizados por IA', 'Suporte prioritário']
+  },
+  annual: {
+    title: 'RokoMed — Plano Anual',
+    price: '12x de R$ 12,25',
+    total: 'Total à vista: R$ 147,00',
+    description: 'O melhor custo-benefício. Sem renovação automática.',
+    features: ['Tudo do plano Semestral', 'Flashcards integrados', 'Planilha de evolução exportável']
+  }
+}
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const plan = (searchParams.get('plan') as string) || 'monthly'
+  const plan = (searchParams.get('plan') as PlanType) || 'monthly'
+  const selectedPlan = PLAN_DETAILS[plan] || PLAN_DETAILS.monthly
 
   const [step, setStep] = useState<1 | 2>(1)
   const [formData, setFormData] = useState({
@@ -142,9 +166,9 @@ export default function CheckoutPage() {
 
 
   return (
-    <div className="min-h-screen bg-[#050D1A] text-[#C8DCF5] font-sans flex flex-col selection:bg-[#3B7EF8] selection:text-white">
-      {/* SINGLE COLUMN: Checkout Form */}
-      <div className="flex-1 flex flex-col min-h-screen relative">
+    <div className="min-h-screen bg-[#050D1A] text-[#C8DCF5] font-sans flex flex-col md:flex-row selection:bg-[#3B7EF8] selection:text-white">
+      {/* MAIN COLUMN: Checkout Form */}
+      <div className="flex-1 flex flex-col min-h-screen relative border-r border-[rgba(100,160,255,0.1)]">
         {/* Header */}
         <header className="p-6 border-b border-[rgba(100,160,255,0.1)] flex items-center justify-between bg-[#050D1A]/80 backdrop-blur-md sticky top-0 z-50">
           <Link to="/" className="font-extrabold text-xl text-[#EBF4FF] no-underline tracking-tight">
@@ -306,6 +330,51 @@ export default function CheckoutPage() {
               <p className="font-mono text-[0.6rem] text-[#3A5470] tracking-widest uppercase">
                 Pagamento processado por Mercado Pago
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT COLUMN: Order Summary — hidden on mobile, visible on desktop */}
+      <div className="hidden md:flex w-[420px] lg:w-[480px] bg-[#0C1A2E] text-white p-10 lg:p-14 flex-col justify-center relative shrink-0">
+        <div className="absolute inset-0 bg-radial-gradient from-[rgba(59,126,248,0.05)] to-transparent pointer-events-none z-0" />
+
+        <div className="mb-10 relative z-10">
+          <h2 className="font-mono text-[0.7rem] uppercase tracking-widest text-[#7B9DBF] mb-6">Resumo do Pedido</h2>
+
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="font-extrabold text-2xl text-[#EBF4FF] tracking-tight">{selectedPlan.title}</h3>
+            <button
+              className="font-mono text-[0.65rem] text-[#3B7EF8] hover:text-white transition-all duration-200 uppercase tracking-widest border border-[#3B7EF8] hover:border-white px-3 py-1 rounded ml-3 shrink-0"
+              onClick={() => navigate('/#planos')}
+            >
+              Trocar
+            </button>
+          </div>
+          <p className="text-[#7B9DBF] font-medium mb-8">{selectedPlan.description}</p>
+
+          <div className="space-y-4 mb-8 pt-6 border-t border-[rgba(100,160,255,0.1)]">
+            {selectedPlan.features.map((feature, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0" />
+                <span className="text-[#EBF4FF] font-light text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-auto pt-8 border-t border-[rgba(100,160,255,0.1)] relative z-10">
+          <div className="flex justify-between items-end">
+            <span className="font-mono text-[0.7rem] uppercase tracking-widest text-[#7B9DBF]">A pagar hoje</span>
+            <div className="text-right">
+              {selectedPlan.total && (
+                <div className="font-mono text-[0.65rem] text-[#7B9DBF] uppercase tracking-widest mb-1">
+                  {selectedPlan.total}
+                </div>
+              )}
+              <div className="font-extrabold text-4xl text-[#EBF4FF] tracking-tight">
+                {selectedPlan.price}
+              </div>
             </div>
           </div>
         </div>
