@@ -1,50 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, ShieldCheck, Mail, Lock, User, CreditCard } from 'lucide-react'
-import api, { authApi, subscriptionApi } from '../lib/api'
-import { useQuery } from '@tanstack/react-query'
+import api, { authApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import toast from 'react-hot-toast'
 import { trackClick } from '../lib/tracker'
 
-type PlanType = 'monthly' | 'semiannual' | 'annual'
-
-type PlanDetail = {
-  title: string;
-  price: string;
-  total?: string;
-  description: string;
-  features: string[];
-}
-
-const PLAN_DETAILS: Record<PlanType, PlanDetail> = {
-  monthly: {
-    title: 'Plano Mensal',
-    price: 'R$ 29,00',
-    description: 'Acesso completo com renovação automática. Cancele quando quiser.',
-    features: ['Acesso a todo o banco de questões', 'Simulados por especialidade', 'Gabaritos comentados']
-  },
-  semiannual: {
-    title: 'Plano Semestral',
-    price: '6x de R$ 16,16',
-    total: 'Total à vista: R$ 97,00',
-    description: 'Nosso plano mais vendido. Sem renovação automática.',
-    features: ['Tudo do plano Mensal', 'Simulados personalizados por IA', 'Suporte prioritário']
-  },
-  annual: {
-    title: 'Plano Anual',
-    price: '12x de R$ 12,25',
-    total: 'Total à vista: R$ 147,00',
-    description: 'O melhor custo-benefício. Sem renovação automática.',
-    features: ['Tudo do plano Semestral', 'Flashcards integrados', 'Planilha de evolução exportável']
-  }
-}
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const initialPlan = (searchParams.get('plan') as PlanType) || 'monthly'
-  const [plan, setPlan] = useState<PlanType>(initialPlan)
+  const plan = (searchParams.get('plan') as string) || 'monthly'
 
   const [step, setStep] = useState<1 | 2>(1)
   const [formData, setFormData] = useState({
@@ -56,11 +22,6 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore(state => state.setAuth)
 
-  // Centralized pricing API query
-  const { data: plansData } = useQuery({
-    queryKey: ['plans'],
-    queryFn: subscriptionApi.plans,
-  })
 
 
 
@@ -178,20 +139,12 @@ export default function CheckoutPage() {
     }
   }
 
-  const plansConfig = plansData || {}
-  const selectedPlan = plansConfig[plan] || PLAN_DETAILS[plan]
 
-  // Preço base
-  const baseAmount = selectedPlan.amount || (plan === 'annual' ? 147 : plan === 'semiannual' ? 97 : 29)
-
-  const formatMoney = (val: number) => {
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
 
   return (
-    <div className="min-h-screen bg-[#050D1A] text-[#C8DCF5] font-sans flex flex-col md:flex-row selection:bg-[#3B7EF8] selection:text-white">
-      {/* LEFT COLUMN: Checkout Form */}
-      <div className="flex-1 flex flex-col min-h-screen relative border-r border-[rgba(100,160,255,0.1)]">
+    <div className="min-h-screen bg-[#050D1A] text-[#C8DCF5] font-sans flex flex-col selection:bg-[#3B7EF8] selection:text-white">
+      {/* SINGLE COLUMN: Checkout Form */}
+      <div className="flex-1 flex flex-col min-h-screen relative">
         {/* Header */}
         <header className="p-6 border-b border-[rgba(100,160,255,0.1)] flex items-center justify-between bg-[#050D1A]/80 backdrop-blur-md sticky top-0 z-50">
           <Link to="/" className="font-extrabold text-xl text-[#EBF4FF] no-underline tracking-tight">
@@ -204,7 +157,7 @@ export default function CheckoutPage() {
 
         {/* Form Container */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative z-10">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-lg">
             
             {/* Progress indicators */}
             <div className="flex items-center gap-3 mb-10">
@@ -356,56 +309,6 @@ export default function CheckoutPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* RIGHT COLUMN: Order Summary */}
-      <div className="w-full md:w-[450px] lg:w-[500px] bg-[#0C1A2E] text-white p-6 md:p-12 flex flex-col justify-center relative">
-        <div className="absolute inset-0 bg-radial-gradient from-[rgba(59,126,248,0.05)] to-transparent pointer-events-none z-0"></div>
-        
-        <div className="mb-10 relative z-10">
-          <h2 className="font-mono text-[0.7rem] uppercase tracking-widest text-[#7B9DBF] mb-6">Resumo do Pedido</h2>
-          
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-extrabold text-3xl text-[#EBF4FF] tracking-tight">{selectedPlan.title}</h3>
-            <button 
-              className="font-mono text-[0.65rem] text-[#3B7EF8] hover:text-white transition-all duration-200 uppercase tracking-widest border border-[#3B7EF8] hover:border-white px-3 py-1 rounded"
-              onClick={() => {
-                navigate('/#planos')
-              }}
-            >
-              Trocar
-            </button>
-          </div>
-          <p className="text-[#7B9DBF] font-medium mb-8">
-            {selectedPlan.description}
-          </p>
-
-          <div className="space-y-4 mb-8 pt-6 border-t border-[rgba(100,160,255,0.1)]">
-            {selectedPlan.features.map((feature: string, i: number) => (
-              <div key={i} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#22C55E] shrink-0" />
-                <span className="text-[#EBF4FF] font-light text-sm">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-auto pt-8 border-t border-[rgba(100,160,255,0.1)] relative z-10">
-          <div className="flex justify-between items-end mb-2">
-            <span className="font-mono text-[0.7rem] uppercase tracking-widest text-[#7B9DBF]">A pagar hoje</span>
-            <div className="text-right">
-              {selectedPlan.total && (
-                <div className="font-mono text-[0.65rem] text-[#7B9DBF] uppercase tracking-widest mb-1">
-                  {selectedPlan.total}
-                </div>
-              )}
-              <div className="font-extrabold text-4xl text-[#EBF4FF] tracking-tight">
-                {selectedPlan.price}
-              </div>
-            </div>
-          </div>
-        </div>
-        
       </div>
     </div>
   )
