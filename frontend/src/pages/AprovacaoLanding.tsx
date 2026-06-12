@@ -20,7 +20,6 @@ import {
   Target,
   Flame,
   Clock,
-  Sparkle,
   ArrowUpRight,
   ShieldCheck
 } from 'lucide-react'
@@ -33,11 +32,8 @@ export default function AprovacaoLandingPage() {
   const [leadEmail, setLeadEmail] = useState('')
   const [loadingLead, setLoadingLead] = useState(false)
   const [activeAgendaTab, setActiveAgendaTab] = useState<'cronograma' | 'assuntos' | 'caderno'>('cronograma')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // Interactive calculator state
-  const [targetInst, setTargetInst] = useState('FMUSP')
-  const [targetSpec, setTargetSpec] = useState('Cirurgia Geral')
-  const [showWidgetResult, setShowWidgetResult] = useState(true)
 
   const { data: plansData } = useQuery({
     queryKey: ['plans'],
@@ -93,16 +89,6 @@ export default function AprovacaoLandingPage() {
     }
   ]
 
-  // Widget calculations based on input
-  const getWidgetRecommendation = () => {
-    return {
-      questionsNeeded: targetInst === 'FMUSP' ? 3200 : targetInst === 'ENARE' ? 1800 : targetInst === 'UNICAMP' ? 2600 : 2200,
-      focusArea: targetSpec === 'Cirurgia Geral' ? 'Cirurgia Geral e Trauma' : targetSpec === 'Pediatria' ? 'Neonatologia e Pediatria Geral' : 'Clínica Médica e Cardiologia',
-      advice: `A banca do ${targetInst} historicamente prioriza raciocínio clínico integrado em ${targetSpec}. Recomendamos agendar pelo menos 4 horas semanais deste assunto no cronograma da sua rotina adaptativa.`
-    }
-  }
-
-  const widgetResult = getWidgetRecommendation()
 
   return (
     <div className="ap-root">
@@ -936,6 +922,185 @@ export default function AprovacaoLandingPage() {
             margin: 0 auto;
           }
         }
+
+        /* ── Mobile (≤ 768px) ── */
+        @media (max-width: 768px) {
+          .ap-container {
+            padding: 0 16px;
+          }
+
+          /* Nav */
+          .ap-nav-links {
+            display: none;
+          }
+          .ap-nav-cta-desktop {
+            display: none;
+          }
+          .ap-hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 6px;
+          }
+          .ap-hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.2s;
+          }
+          .ap-mobile-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: rgba(3, 8, 18, 0.97);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px 24px;
+            z-index: 99;
+          }
+          .ap-mobile-menu a, .ap-mobile-menu button {
+            display: block;
+            padding: 14px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border);
+            background: none;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+          }
+          .ap-mobile-menu a:last-child, .ap-mobile-menu button:last-child {
+            border-bottom: none;
+          }
+          .ap-mobile-cta {
+            margin-top: 16px;
+            display: block;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #1D4ED8 100%);
+            color: white !important;
+            padding: 14px 24px !important;
+            border-radius: 9999px;
+            font-family: 'Sora', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+          }
+
+          /* Hero */
+          .ap-hero-sec {
+            padding: 90px 0 60px;
+          }
+          .ap-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          .ap-hero-visual {
+            display: none;
+          }
+          .ap-lead-box {
+            flex-direction: column;
+            border-radius: 14px;
+            padding: 12px;
+            gap: 10px;
+          }
+          .ap-lead-input {
+            width: 100%;
+            padding: 14px 16px;
+          }
+          .ap-lead-box .ap-btn {
+            width: 100%;
+            border-radius: 10px !important;
+            padding: 14px 20px !important;
+            font-size: 14px !important;
+          }
+
+          /* Sections */
+          .ap-sched-sec {
+            padding: 60px 0;
+          }
+          .ap-sched-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+          }
+          .ap-journey-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          .ap-step-grid {
+            grid-template-columns: 1fr;
+          }
+          .ap-pricing-grid {
+            grid-template-columns: 1fr;
+          }
+          .ap-test-grid {
+            grid-template-columns: 1fr;
+          }
+          .ap-features-grid {
+            grid-template-columns: 1fr;
+          }
+
+          /* Calculator section inline grid */
+          .ap-calc-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+          }
+          .ap-calc-inner-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          /* Section headers */
+          .ap-sec-header {
+            margin-bottom: 36px;
+          }
+          section {
+            padding: 60px 0 !important;
+          }
+
+          /* Mock screen */
+          .ap-mock-screen {
+            min-height: 300px;
+          }
+
+          /* Table comparison */
+          .ap-compare-wrap {
+            overflow-x: auto;
+          }
+          .ap-compare-table {
+            min-width: 560px;
+          }
+
+          /* Journey video */
+          .ap-video-mock {
+            min-height: 200px;
+          }
+
+          /* Price card popular badge */
+          .ap-price-card.popular {
+            margin-top: 12px;
+          }
+        }
+
+        @media (min-width: 769px) {
+          .ap-hamburger {
+            display: none;
+          }
+          .ap-mobile-menu {
+            display: none !important;
+          }
+        }
       `}</style>
 
       {/* Decorative ambient glows */}
@@ -956,10 +1121,29 @@ export default function AprovacaoLandingPage() {
             <a href="#planos" className="ap-nav-link">Planos</a>
             <a href="#faq" className="ap-nav-link">Dúvidas</a>
           </nav>
-          <a href="#planos" className="ap-btn ap-btn-primary" style={{ padding: '10px 22px', fontSize: '13px' }}>
+          <a href="#planos" className="ap-btn ap-btn-primary ap-nav-cta-desktop" style={{ padding: '10px 22px', fontSize: '13px' }}>
             Começar Agora <ArrowRight size={14} />
           </a>
+          {/* Hamburger button for mobile */}
+          <button
+            className="ap-hamburger"
+            aria-label="Abrir menu"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+          >
+            <span /><span /><span />
+          </button>
         </div>
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="ap-mobile-menu">
+            <a href="#metodologia" onClick={() => setMobileMenuOpen(false)}>Metodologia</a>
+            <a href="#agenda" onClick={() => setMobileMenuOpen(false)}>Agenda</a>
+            <a href="#depoimentos" onClick={() => setMobileMenuOpen(false)}>Depoimentos</a>
+            <a href="#planos" onClick={() => setMobileMenuOpen(false)}>Planos</a>
+            <a href="#faq" onClick={() => setMobileMenuOpen(false)}>Dúvidas</a>
+            <a href="#planos" className="ap-mobile-cta" onClick={() => setMobileMenuOpen(false)}>Começar Agora →</a>
+          </div>
+        )}
       </header>
 
       {/* ── Hero Section ── */}
@@ -1468,62 +1652,6 @@ export default function AprovacaoLandingPage() {
         </div>
       </section>
 
-      {/* ── Interactive Calculator Section ── */}
-      <section style={{ padding: '100px 0', background: '#050E1A' }}>
-        <div className="ap-container" style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 48, alignItems: 'center' }}>
-          <div>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Sora' }}>Simulador RokoMed</span>
-            <h2 className="ap-sec-title" style={{ marginTop: 8 }}>Planeje sua meta de estudos</h2>
-            <p className="ap-sec-desc">
-              Escolha a instituição que deseja prestar e a especialidade para estimar a carga de estudos necessária até a data da prova.
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
-              <div>
-                <label htmlFor="target-institution-select" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Banca Pretendida</label>
-                <select id="target-institution-select" value={targetInst} onChange={e => { setTargetInst(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
-                  <option value="FMUSP">USP (FMUSP)</option>
-                  <option value="ENARE">ENARE (Exame Nacional)</option>
-                  <option value="UNICAMP">UNICAMP</option>
-                  <option value="UNIFESP">UNIFESP</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="target-specialty-select" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 6 }}>Especialidade</label>
-                <select id="target-specialty-select" value={targetSpec} onChange={e => { setTargetSpec(e.target.value); }} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, color: 'white', outline: 'none' }}>
-                  <option value="Cirurgia Geral">Cirurgia Geral</option>
-                  <option value="Pediatria">Pediatria</option>
-                  <option value="Clínica Médica">Clínica Médica</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="ap-card" style={{ minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: 16, marginBottom: 16 }}>
-              <div>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Carga Estimada</span>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: 'white', fontFamily: 'Outfit', marginTop: 4 }}>
-                  {widgetResult.questionsNeeded} <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500 }}>questões</span>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Foco Crítico</span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cyan)', marginTop: 6 }}>{widgetResult.focusArea}</div>
-              </div>
-            </div>
-
-            <div style={{ background: 'rgba(59, 126, 248, 0.05)', border: '1px solid rgba(59, 126, 248, 0.15)', borderRadius: 12, padding: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '11px', fontWeight: 700, color: 'var(--primary)', marginBottom: 6, fontFamily: 'Sora' }}>
-                <Sparkle size={12} /> DICA DO DR. ANDRÉ (TUTOR IA)
-              </div>
-              <p style={{ fontSize: '12px', color: '#B2CBE5', lineHeight: 1.5 }}>
-                {widgetResult.advice}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── Table Comparison ── */}
       <section style={{ padding: '100px 0' }}>
@@ -1534,8 +1662,8 @@ export default function AprovacaoLandingPage() {
             <p className="ap-sec-desc">Mapeamos as diferenças fundamentais entre o nosso método e o modelo passivo de cursinhos tradicionais.</p>
           </div>
 
-          <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '16px', background: 'rgba(255,255,255,0.01)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+          <div className="ap-compare-wrap" style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '16px', background: 'rgba(255,255,255,0.01)' }}>
+            <table className="ap-compare-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '18px 24px', fontWeight: 700, color: 'white' }}>Recurso</th>

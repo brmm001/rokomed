@@ -1600,6 +1600,7 @@ export default function LandingPage() {
                 <a href="#como-funciona" className="nav-link">Como funciona</a>
                 <a href="#planos" className="nav-link">Planos</a>
                 <a href="#faq" className="nav-link">FAQ</a>
+                <Link to="/blog" className="nav-link" onClick={() => trackClick('NAV_BLOG')}>Blog</Link>
                 <Link to="/login" className="nav-link" onClick={() => trackClick('NAV_LOGIN')}>Entrar</Link>
                 <Link to="/register" className="btn btn-primary nav-cta" style={{ padding: '8px 18px', fontSize: '13px' }} onClick={() => trackClick('NAV_SUBSCRIBE')}>
                   Começar Grátis
