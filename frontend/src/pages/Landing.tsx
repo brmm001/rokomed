@@ -1553,7 +1553,7 @@ export default function LandingPage() {
           .landing-page-root .demo-grid { grid-template-columns: 1fr; }
           .landing-page-root .steps-grid { grid-template-columns: repeat(2, 1fr); }
           .landing-page-root .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-          .landing-page-root .plan-card.featured { transform: none; order: -1; }
+          .landing-page-root .plan-card.featured { transform: none; }
           .landing-page-root .plan-card.featured:hover { transform: translateY(-2px); }
           .landing-page-root .why-grid { grid-template-columns: repeat(2, 1fr); }
           .landing-page-root .trust-inner { gap: 16px; }
@@ -1569,8 +1569,12 @@ export default function LandingPage() {
           .landing-page-root .hero-actions { flex-direction: column; align-items: stretch; }
           .landing-page-root .hero-actions .btn { justify-content: center; }
           .landing-page-root .steps-grid { grid-template-columns: 1fr; }
-          .landing-page-root .pricing-grid { grid-template-columns: 1fr; }
-          .landing-page-root .plan-card.featured { transform: none; }
+          .landing-page-root .pricing-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+          .landing-page-root .plan-card.free     { order: 1; }
+          .landing-page-root .plan-card.monthly   { order: 2; }
+          .landing-page-root .plan-card.semiannual { order: 3; }
+          .landing-page-root .plan-card.featured  { order: 4; transform: none; }
+          .landing-page-root .plan-card.featured:hover { transform: translateY(-2px); }
           .landing-page-root .why-grid { grid-template-columns: 1fr; }
           .landing-page-root .nav-links { display: none; }
           .landing-page-root .nav-mobile-btn { display: flex; }
@@ -2054,7 +2058,7 @@ export default function LandingPage() {
 
             <div className="pricing-grid">
               {/* Gratuito */}
-              <div className="plan-card">
+              <div className="plan-card free">
                 <div className="plan-name">Gratuito</div>
                 <div className="plan-price">
                   <span className="plan-price-cur">R$</span>
@@ -2076,7 +2080,7 @@ export default function LandingPage() {
               </div>
 
               {/* Mensal */}
-              <div className="plan-card">
+              <div className="plan-card monthly">
                 <div className="plan-name">Mensal</div>
                 <div className="plan-price">
                   <span className="plan-price-cur">R$</span>
@@ -2097,7 +2101,7 @@ export default function LandingPage() {
               </div>
 
               {/* Semestral */}
-              <div className="plan-card">
+              <div className="plan-card semiannual">
                 <div className="plan-name">Semestral</div>
                 <div className="plan-price">
                   <span className="plan-price-cur">R$</span>
