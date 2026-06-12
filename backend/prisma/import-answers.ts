@@ -191,7 +191,12 @@ async function main() {
       continue
     }
 
-    const code = buildCode(raw.instituicao, raw.ano, raw.numero_questao_original)
+    let mappedInstitution = raw.instituicao
+    if (mappedInstitution.includes('UNICAMP')) {
+      mappedInstitution = 'UNICAMP'
+    }
+    const num = raw.numero_questao_original !== undefined ? raw.numero_questao_original : (raw as any).numero_questao
+    const code = buildCode(mappedInstitution, raw.ano, num)
 
     try {
       // Verifica se a questão existe
