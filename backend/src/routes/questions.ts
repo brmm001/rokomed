@@ -90,7 +90,14 @@ export default async function questionRoutes(app: FastifyInstance) {
     if (institutionId) where.institutionId = institutionId
     if (year)          where.year          = year
     if (difficulty)    where.difficulty    = difficulty
-    if (search)        where.statement     = { contains: search }
+    if (search) {
+      where.OR = [
+        { statement: { contains: search } },
+        { institution: { name: { contains: search } } },
+        { institution: { acronym: { contains: search } } },
+        { specialty: { name: { contains: search } } },
+      ]
+    }
 
     // Quando filtrar por especialidade, expande recursivamente para incluir temas e subtemas filhos
     if (specialtyId) {
