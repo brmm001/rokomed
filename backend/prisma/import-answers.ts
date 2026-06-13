@@ -3,6 +3,8 @@
  * Importa gabarito, comentários, linha de raciocínio e especialidades
  * do arquivo gabarito_importar.jsonl para o banco de dados.
  *
+ * Suporta tanto o formato antigo quanto o novo do JSONL.
+ *
  * Uso: npm run import:answers
  */
 
@@ -23,18 +25,28 @@ function toSlug(name: string): string {
     .slice(0, 120)
 }
 
-function mapDifficulty(raw: string): string {
+function mapDifficulty(raw: string | null | undefined): string {
+  if (!raw) return 'MEDIO'
   const map: Record<string, string> = {
     'Fácil':     'FACIL',
     'facil':     'FACIL',
+    'Fácil ':    'FACIL',
+    'easy':      'FACIL',
     'Média':     'MEDIO',
     'Media':     'MEDIO',
+    'média':     'MEDIO',
+    'media':     'MEDIO',
+    'medium':    'MEDIO',
+    'moderada':  'MEDIO',
     'Difícil':   'DIFICIL',
     'Dificil':   'DIFICIL',
+    'difícil':   'DIFICIL',
+    'dificil':   'DIFICIL',
+    'hard':      'DIFICIL',
     'Decoreba':  'FACIL',
     'decoreba':  'FACIL',
   }
-  return map[raw] ?? 'MEDIO'
+  return map[raw.trim()] ?? 'MEDIO'
 }
 
 function buildCode(instituicao: string, ano: number, numero: number): string {
@@ -43,15 +55,30 @@ function buildCode(instituicao: string, ano: number, numero: number): string {
 
 /** Monta HTML rico para o campo `explanation` */
 function buildExplanation(raw: GabaritoItem): string {
-  const alternativas = Object.entries(raw.raciocinio_por_alternativa ?? {})
-    .map(([letra, texto]) => `
-      <div class="alt-item">
-        <span class="alt-letra ${letra === raw.resposta_correta ? 'correta' : 'incorreta'}">${letra}</span>
-        <span class="alt-texto">${texto}</span>
-      </div>`)
-    .join('')
+  let alts = ''
+  const correctOption = raw.gabarito || raw.resposta_correta || raw.alternativas?.find(a => a.correta === true)?.letra || ''
 
-  const gatilhos = (raw.gatilhos ?? [])
+  if (raw.alternativas && Array.isArray(raw.alternativas)) {
+    alts = raw.alternativas
+      .map(alt => `
+        <div class="alt-item">
+          <span class="alt-letra ${alt.correta ? 'correta' : 'incorreta'}">${alt.letra}</span>
+          <span class="alt-texto">${alt.texto ?? ''}</span>
+          ${alt.comentario ? `<p class="alt-comentario">${alt.comentario}</p>` : ''}
+        </div>`)
+      .join('')
+  } else if (raw.raciocinio_por_alternativa) {
+    alts = Object.entries(raw.raciocinio_por_alternativa)
+      .map(([letra, texto]) => `
+        <div class="alt-item">
+          <span class="alt-letra ${letra === correctOption ? 'correta' : 'incorreta'}">${letra}</span>
+          <span class="alt-texto">${texto}</span>
+        </div>`)
+      .join('')
+  }
+
+  const gatilhosList = raw.gatilhos_clinicos || raw.palavras_chave || raw.gatilhos || []
+  const gatilhos = gatilhosList
     .map(g => `<span class="gatilho">${g}</span>`)
     .join(' ')
 
@@ -64,20 +91,34 @@ function buildExplanation(raw: GabaritoItem): string {
     <p>${raw.comentario_geral ?? ''}</p>
   </div>
 
+  ${alts ? `
   <div class="raciocinio-alternativas">
     <h4>🔍 Análise das Alternativas</h4>
-    ${alternativas}
-  </div>
+    ${alts}
+  </div>` : ''}
 
+  ${raw.conteudo_completo ? `
   <div class="conteudo-completo">
     <h4>📚 Conteúdo Completo</h4>
-    <p>${raw.conteudo_completo ?? ''}</p>
-  </div>
+    <p>${raw.conteudo_completo}</p>
+  </div>` : ''}
 
-  ${raw.pegadinha ? `
+  ${raw.linha_de_raciocinio_completa ? `
+  <div class="linha-raciocinio">
+    <h4>💡 Linha de Raciocínio</h4>
+    <p>${raw.linha_de_raciocinio_completa}</p>
+  </div>` : ''}
+
+  ${raw.como_matar_a_questao_rapido ? `
+  <div class="dica-rapida">
+    <h4>⚡ Como matar rápido</h4>
+    <p>${raw.como_matar_a_questao_rapido}</p>
+  </div>` : ''}
+
+  ${(raw.pegadinha || raw.pegadinha_principal) ? `
   <div class="pegadinha">
     <h4>⚠️ Pegadinha</h4>
-    <p>${raw.pegadinha}</p>
+    <p>${raw.pegadinha || raw.pegadinha_principal}</p>
   </div>` : ''}
 
   ${raw.subtema_2 ? `
@@ -89,31 +130,53 @@ function buildExplanation(raw: GabaritoItem): string {
 }
 
 /** reasoningLine salvo como JSON para o frontend renderizar como lista */
-function buildReasoningLine(items: string[]): string {
-  return JSON.stringify(items ?? [])
+function buildReasoningLine(raw: GabaritoItem): string {
+  const items = raw.linha_de_raciocinio || 
+                (raw.linha_de_raciocinio_completa ? [raw.linha_de_raciocinio_completa] : [])
+  return JSON.stringify(items)
 }
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────
 
+interface Alternativa {
+  letra: string
+  texto?: string
+  correta?: boolean
+  comentario?: string
+  linha_raciocinio?: string
+  por_que_esta_certa?: string | null
+  por_que_esta_errada?: string | null
+  pegadinha?: string | null
+}
+
 interface GabaritoItem {
-  id:                       string
-  instituicao:              string
-  ano:                      number
-  area:                     string
-  numero_questao_original:  number
-  grande_tema:              string
-  tema:                     string
-  subtema:                  string
-  subtema_2?:               string
-  dificuldade:              string
-  resposta_correta:         string
-  gatilhos?:                string[]
-  comentario_geral?:        string
+  id:                         string
+  instituicao:                string
+  ano:                        number
+  numero_questao:             number
+  numero_questao_original?:   number
+  especialidade?:             string
+  area?:                      string
+  grande_tema?:               string
+  tema?:                      string
+  subtema?:                   string
+  subtema_2?:                 string
+  micro_subtema?:             string
+  dificuldade?:               string
+  gabarito?:                  string
+  resposta_correta?:          string
+  alternativas?:              Alternativa[]
+  comentario_geral?:          string
   raciocinio_por_alternativa?: Record<string, string>
-  linha_de_raciocinio?:     string[]
-  conteudo_completo?:       string
-  pegadinha?:               string
-  tags?:                    string[]
+  linha_de_raciocinio_completa?: string
+  linha_de_raciocinio?:       string[]
+  como_matar_a_questao_rapido?: string
+  gatilhos?:                  string[]
+  gatilhos_clinicos?:         string[]
+  palavras_chave?:            string[]
+  pegadinha?:                 string
+  pegadinha_principal?:       string
+  conteudo_completo?:         string
 }
 
 // ─── Cache de especialidades ────────────────────────────────────────────────
@@ -141,14 +204,19 @@ async function getOrCreateSpecialty(
 
 /** Cria hierarquia de níveis: área → grande_tema → tema → subtema */
 async function resolveSpecialtyId(raw: GabaritoItem): Promise<string> {
+  const area       = raw.especialidade || raw.area || 'Outros'
+  const grandeTema = raw.grande_tema || ''
+  const tema       = raw.tema || ''
+  const subtema    = raw.subtema || raw.micro_subtema || ''
+
   // Level 1: Grande Área (ex: Clínica Médica)
-  const level1Id = await getOrCreateSpecialty(raw.area || 'Outros', undefined, true)
+  const level1Id = await getOrCreateSpecialty(area, undefined, true)
   // Level 2: Grande Tema (ex: Pneumologia)
-  const level2Id = raw.grande_tema ? await getOrCreateSpecialty(raw.grande_tema, level1Id) : level1Id
+  const level2Id = grandeTema ? await getOrCreateSpecialty(grandeTema, level1Id) : level1Id
   // Level 3: Tema (ex: Tuberculose pulmonar)
-  const level3Id = raw.tema ? await getOrCreateSpecialty(raw.tema, level2Id) : level2Id
+  const level3Id = tema ? await getOrCreateSpecialty(tema, level2Id) : level2Id
   // Level 4: Subtema (ex: Investigação de tosse crônica)
-  const level4Id = raw.subtema ? await getOrCreateSpecialty(raw.subtema, level3Id) : level3Id
+  const level4Id = subtema ? await getOrCreateSpecialty(subtema, level3Id) : level3Id
 
   return level4Id
 }
@@ -195,28 +263,36 @@ async function main() {
     if (mappedInstitution.includes('UNICAMP')) {
       mappedInstitution = 'UNICAMP'
     }
-    const num = raw.numero_questao_original !== undefined ? raw.numero_questao_original : (raw as any).numero_questao
+    const num = raw.numero_questao_original !== undefined ? raw.numero_questao_original : raw.numero_questao
     const code = buildCode(mappedInstitution, raw.ano, num)
 
     try {
       // Verifica se a questão existe
       const existing = await prisma.question.findUnique({ where: { code } })
       if (!existing) {
-        console.warn(`  ⚠️  Questão não encontrada: ${code}`)
+        console.warn(`  ⚠️  Questão não encontrada no BD: ${code}`)
         notFound++
         continue
       }
 
-      // Resolve hierarquia de especialidades (3 níveis)
+      const correct = raw.gabarito || raw.resposta_correta || raw.alternativas?.find(a => a.correta === true)?.letra
+
+      if (!correct) {
+        console.warn(`  ⚠️  Questão sem gabarito definido: ${code}`)
+        errors++
+        continue
+      }
+
+      // Resolve hierarquia de especialidades
       const specialtyId = await resolveSpecialtyId(raw)
 
       // Atualiza a questão com gabarito completo
       await prisma.question.update({
         where: { code },
         data:  {
-          correctOption: raw.resposta_correta,
+          correctOption: correct,
           explanation:   buildExplanation(raw),
-          reasoningLine: buildReasoningLine(raw.linha_de_raciocinio ?? []),
+          reasoningLine: buildReasoningLine(raw),
           difficulty:    mapDifficulty(raw.dificuldade),
           specialtyId,
           isPublished:   true,
