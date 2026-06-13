@@ -2,6 +2,39 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { requireRole } from '../middleware/auth'
+import { randomUUID } from 'crypto'
+
+// ── Institution map (mesma do script de import) ───────────────────────────────
+const INSTITUTION_MAP: Record<string, { name: string; city?: string; state?: string }> = {
+  UNICAMP:    { name: 'Universidade Estadual de Campinas',              city: 'Campinas',               state: 'SP' },
+  USP:        { name: 'Universidade de São Paulo',                      city: 'São Paulo',              state: 'SP' },
+  UNIFESP:    { name: 'Universidade Federal de São Paulo',              city: 'São Paulo',              state: 'SP' },
+  AMRIGS:     { name: 'Associação Médica do Rio Grande do Sul',         city: 'Porto Alegre',           state: 'RS' },
+  ENARE:      { name: 'Exame Nacional de Residência',                                                   state: 'BR' },
+  UERJ:       { name: 'Universidade Estadual do Rio de Janeiro',        city: 'Rio de Janeiro',         state: 'RJ' },
+  UFRJ:       { name: 'Universidade Federal do Rio de Janeiro',         city: 'Rio de Janeiro',         state: 'RJ' },
+  UFMG:       { name: 'Universidade Federal de Minas Gerais',           city: 'Belo Horizonte',         state: 'MG' },
+  FMUSP:      { name: 'Faculdade de Medicina da USP',                   city: 'São Paulo',              state: 'SP' },
+  HCFMUSP:    { name: 'Hospital das Clínicas FMUSP',                   city: 'São Paulo',              state: 'SP' },
+  'SUS-SP':   { name: 'SUS-SP',                                         city: 'São Paulo',              state: 'SP' },
+  SANTA_CASA: { name: 'Santa Casa de São Paulo',                        city: 'São Paulo',              state: 'SP' },
+  UFPR:       { name: 'Universidade Federal do Paraná',                 city: 'Curitiba',               state: 'PR' },
+  UNESP:      { name: 'Universidade Estadual Paulista',                 city: 'São Paulo',              state: 'SP' },
+  FAMERP:     { name: 'Faculdade de Medicina de São José do Rio Preto', city: 'São José do Rio Preto',  state: 'SP' },
+  PUCRS:      { name: 'Pontifícia Universidade Católica do Rio Grande do Sul', city: 'Porto Alegre',   state: 'RS' },
+  UFSC:       { name: 'Universidade Federal de Santa Catarina',         city: 'Florianópolis',          state: 'SC' },
+  UFRGS:      { name: 'Universidade Federal do Rio Grande do Sul',      city: 'Porto Alegre',           state: 'RS' },
+  CESUPA:     { name: 'Centro Universitário do Estado do Pará',         city: 'Belém',                  state: 'PA' },
+  FMABC:      { name: 'Faculdade de Medicina do ABC',                   city: 'Santo André',            state: 'SP' },
+  CMC:        { name: 'Colégio Médico de Córdoba',                                                      state: 'BR' },
+}
+
+function mapDificuldade(raw: string): 'FACIL' | 'MEDIO' | 'DIFICIL' {
+  const lower = raw.toLowerCase()
+  if (lower.includes('fácil') || lower.includes('facil')) return 'FACIL'
+  if (lower.includes('difícil') || lower.includes('dificil')) return 'DIFICIL'
+  return 'MEDIO'
+}
 
 const questionSchema = z.object({
   year:          z.number().optional(),
@@ -93,6 +126,184 @@ export default async function adminRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ deleted: true })
+  })
+
+  // ── Import de Questões (JSONL) ────────────────────────────────────────────
+
+  // POST /api/admin/questions/import — upload de arquivo .jsonl de questões
+  app.post('/questions/import', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+
+    let fileContent = ''
+    try {
+      const data = await request.file()
+      if (!data) return reply.code(400).send({ error: 'Nenhum arquivo enviado' })
+      const chunks: Buffer[] = []
+      for await (const chunk of data.file) chunks.push(chunk)
+      fileContent = Buffer.concat(chunks).toString('utf-8')
+    } catch {
+      return reply.code(400).send({ error: 'Erro ao ler o arquivo' })
+    }
+
+    const lines = fileContent.split(/\r?\n/).filter(l => l.trim())
+    let imported = 0, skipped = 0, errors = 0
+    const errorMessages: string[] = []
+
+    // Cache de instituições
+    const instCache = new Map<string, string>()
+    const existingInsts = await prisma.institution.findMany({ select: { id: true, acronym: true } })
+    existingInsts.forEach(i => instCache.set(i.acronym, i.id))
+
+    for (let i = 0; i < lines.length; i++) {
+      try {
+        const raw = JSON.parse(lines[i])
+        const { instituicao, ano, numero_questao, enunciado_completo, alternativas } = raw
+
+        if (!instituicao || !numero_questao || !enunciado_completo || !alternativas) {
+          errors++
+          errorMessages.push(`Linha ${i + 1}: campos obrigatórios ausentes`)
+          continue
+        }
+
+        // Garantir instituição
+        if (!instCache.has(instituicao)) {
+          const mapped = INSTITUTION_MAP[instituicao]
+          const inst = await prisma.institution.create({
+            data: {
+              id: randomUUID(),
+              name: mapped?.name ?? instituicao,
+              acronym: instituicao,
+              city: mapped?.city,
+              state: mapped?.state,
+            },
+          })
+          instCache.set(instituicao, inst.id)
+        }
+
+        const code = `${instituicao}-${ano}-${numero_questao}`
+        const institutionId = instCache.get(instituicao)!
+        const statement = `<p>${enunciado_completo}</p>`
+        const options = JSON.stringify(
+          Object.entries(alternativas as Record<string, string>).map(([letter, text]) => ({ letter, text }))
+        )
+
+        // Upsert por code
+        const existing = await prisma.question.findFirst({ where: { code } })
+        if (existing) {
+          await prisma.question.update({
+            where: { id: existing.id },
+            data: { statement, options, institutionId, year: ano ?? null },
+          })
+          skipped++
+        } else {
+          await prisma.question.create({
+            data: {
+              id: randomUUID(),
+              code,
+              year: ano ?? null,
+              statement,
+              options,
+              difficulty: 'MEDIO',
+              isPublished: false,
+              flagCount: 0,
+              institutionId,
+            },
+          })
+          imported++
+        }
+      } catch (err: any) {
+        errors++
+        errorMessages.push(`Linha ${i + 1}: ${err?.message ?? 'Erro desconhecido'}`)
+      }
+    }
+
+    await prisma.adminLog.create({
+      data: {
+        adminId: payload.sub,
+        action: 'IMPORT_QUESTIONS',
+        details: JSON.stringify({ imported, skipped, errors }),
+      },
+    })
+
+    return reply.send({ imported, skipped, errors, total: lines.length, errorMessages: errorMessages.slice(0, 20) })
+  })
+
+  // POST /api/admin/questions/import-answers — upload de gabarito .jsonl
+  app.post('/questions/import-answers', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+
+    let fileContent = ''
+    try {
+      const data = await request.file()
+      if (!data) return reply.code(400).send({ error: 'Nenhum arquivo enviado' })
+      const chunks: Buffer[] = []
+      for await (const chunk of data.file) chunks.push(chunk)
+      fileContent = Buffer.concat(chunks).toString('utf-8')
+    } catch {
+      return reply.code(400).send({ error: 'Erro ao ler o arquivo' })
+    }
+
+    const lines = fileContent.split(/\r?\n/).filter(l => l.trim())
+    let imported = 0, skipped = 0, errors = 0
+    const errorMessages: string[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+      try {
+        const raw = JSON.parse(lines[i])
+        const { instituicao, ano, numero_questao_original, resposta_correta, dificuldade,
+                comentario_geral, raciocinio_por_alternativa, conteudo_completo } = raw
+
+        if (!instituicao || !numero_questao_original || !resposta_correta) {
+          errors++
+          errorMessages.push(`Linha ${i + 1}: campos obrigatórios ausentes`)
+          continue
+        }
+
+        const code = `${instituicao}-${ano}-${numero_questao_original}`
+        const question = await prisma.question.findFirst({ where: { code } })
+
+        if (!question) {
+          skipped++
+          errorMessages.push(`Linha ${i + 1}: questão ${code} não encontrada no banco`)
+          continue
+        }
+
+        // Montar explanation completo
+        let explanation = ''
+        if (comentario_geral) explanation += `## Comentário Geral\n${comentario_geral}\n\n`
+        if (raciocinio_por_alternativa && typeof raciocinio_por_alternativa === 'object') {
+          explanation += `## Raciocínio por Alternativa\n`
+          for (const [letra, texto] of Object.entries(raciocinio_por_alternativa)) {
+            explanation += `**${letra}:** ${texto}\n\n`
+          }
+        }
+        if (conteudo_completo) explanation += `## Conteúdo Completo\n${conteudo_completo}`
+
+        await prisma.question.update({
+          where: { id: question.id },
+          data: {
+            correctOption: resposta_correta,
+            explanation: explanation.trim() || null,
+            difficulty: dificuldade ? mapDificuldade(dificuldade) : undefined,
+            isPublished: true,
+          },
+        })
+        imported++
+      } catch (err: any) {
+        errors++
+        errorMessages.push(`Linha ${i + 1}: ${err?.message ?? 'Erro desconhecido'}`)
+      }
+    }
+
+    await prisma.adminLog.create({
+      data: {
+        adminId: payload.sub,
+        action: 'IMPORT_ANSWERS',
+        details: JSON.stringify({ imported, skipped, errors }),
+      },
+    })
+
+    return reply.send({ imported, skipped, errors, total: lines.length, errorMessages: errorMessages.slice(0, 20) })
   })
 
   // ── Usuários ──────────────────────────────────────────────────────────────

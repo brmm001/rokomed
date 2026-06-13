@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi, lessonsApi } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -7,10 +7,18 @@ import {
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
   Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
-  Play, Video, Edit
+  Play, Edit, Upload, FileUp, Database, CheckSquare, XCircle, AlertCircle
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities' | 'import'
+
+interface ImportResult {
+  imported: number
+  skipped: number
+  errors: number
+  total: number
+  errorMessages: string[]
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>('stats')
@@ -28,6 +36,17 @@ export default function AdminPage() {
     specialtyId: string
   } | null>(null)
   const [selectedInstId, setSelectedInstId] = useState<string>('')
+
+  // Import state
+  const [qFile, setQFile] = useState<File | null>(null)
+  const [aFile, setAFile] = useState<File | null>(null)
+  const [qDragging, setQDragging] = useState(false)
+  const [aDragging, setADragging] = useState(false)
+  const [qResult, setQResult] = useState<ImportResult | null>(null)
+  const [aResult, setAResult] = useState<ImportResult | null>(null)
+  const qFileRef = useRef<HTMLInputElement>(null)
+  const aFileRef = useRef<HTMLInputElement>(null)
+
   const qc = useQueryClient()
 
   const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
@@ -164,11 +183,33 @@ export default function AdminPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-partnerships'] }); toast.success('Lead removido') },
   })
 
+  const importQMutation = useMutation({
+    mutationFn: (file: File) => adminApi.importQuestions(file),
+    onSuccess: (data: ImportResult) => {
+      setQResult(data)
+      toast.success(`${data.imported} questões importadas!`)
+      qc.invalidateQueries({ queryKey: ['admin-questions'] })
+      qc.invalidateQueries({ queryKey: ['admin-stats'] })
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Erro no import de questões'),
+  })
+
+  const importAMutation = useMutation({
+    mutationFn: (file: File) => adminApi.importAnswers(file),
+    onSuccess: (data: ImportResult) => {
+      setAResult(data)
+      toast.success(`${data.imported} gabaritos aplicados!`)
+      qc.invalidateQueries({ queryKey: ['admin-questions'] })
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Erro no import de gabarito'),
+  })
+
   const tabs = [
     { id: 'stats',        label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
     { id: 'questions',    label: 'Questões',      icon: <BookOpen size={16} /> },
     { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
     { id: 'lessons',      label: 'Aulas',         icon: <Play size={16} /> },
+    { id: 'import',       label: 'Importar',      icon: <Upload size={16} /> },
     { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
     { id: 'priorities',   label: 'Prioridades por Banca', icon: <BookMarked size={16} /> },
     { id: 'clicks',       label: 'Cliques',       icon: <MousePointerClick size={16} /> },
@@ -912,6 +953,203 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Import Tab ──────────────────────────────────────────────────────── */}
+      {tab === 'import' && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.25rem' }}>Importação de Questões</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+              Faça upload de arquivos <code style={{ color: 'var(--accent-teal)' }}>.jsonl</code> para importar questões e gabaritos em lote.
+              A importação é idempotente — questões duplicadas (mesmo código) serão atualizadas, não duplicadas.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem' }}>
+
+            {/* ── Upload de Questões ── */}
+            <div className="glass" style={{ borderRadius: 16, padding: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Database size={20} color="var(--accent-blue)" />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>Questões</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>questoes_importar.jsonl</div>
+                </div>
+              </div>
+
+              {/* Drop zone questões */}
+              <div
+                id="drop-zone-questions"
+                onDragOver={e => { e.preventDefault(); setQDragging(true) }}
+                onDragLeave={() => setQDragging(false)}
+                onDrop={e => {
+                  e.preventDefault(); setQDragging(false)
+                  const f = e.dataTransfer.files[0]
+                  if (f) { setQFile(f); setQResult(null) }
+                }}
+                onClick={() => qFileRef.current?.click()}
+                style={{
+                  border: `2px dashed ${qDragging ? 'var(--accent-blue)' : qFile ? 'var(--accent-green)' : 'var(--border)'}`,
+                  borderRadius: 12, padding: '2rem 1rem', textAlign: 'center', cursor: 'pointer',
+                  background: qDragging ? 'rgba(59,130,246,0.06)' : qFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                  transition: 'all 0.2s', marginBottom: '1rem',
+                }}
+              >
+                <input ref={qFileRef} type="file" accept=".jsonl,.json" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) { setQFile(f); setQResult(null) } }} />
+                {qFile ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <CheckSquare size={28} color="var(--accent-green)" />
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{qFile.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{(qFile.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <FileUp size={28} color="var(--text-muted)" />
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Arraste ou clique para selecionar</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', opacity: 0.7 }}>Formato: .jsonl</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Resultado questões */}
+              {qResult && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {[
+                    { label: 'Importadas', value: qResult.imported, color: 'var(--accent-green)', icon: <CheckCircle size={14} /> },
+                    { label: 'Atualizadas', value: qResult.skipped, color: 'var(--accent-gold)', icon: <AlertCircle size={14} /> },
+                    { label: 'Erros', value: qResult.errors, color: 'var(--accent-red)', icon: <XCircle size={14} /> },
+                  ].map(({ label, value, color, icon }) => (
+                    <div key={label} className="glass" style={{ borderRadius: 10, padding: '0.75rem', textAlign: 'center' }}>
+                      <div style={{ color, fontSize: '1.4rem', fontWeight: 700 }}>{value}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 2 }}>
+                        <span style={{ color }}>{icon}</span>{label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {qResult?.errorMessages && qResult.errorMessages.length > 0 && (
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.75rem', marginBottom: '1rem', maxHeight: 120, overflowY: 'auto' }}>
+                  {qResult.errorMessages.map((msg, i) => (
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#FCA5A5', marginBottom: 2 }}>{msg}</div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                id="btn-import-questions"
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+                disabled={!qFile || importQMutation.isPending}
+                onClick={() => qFile && importQMutation.mutate(qFile)}
+              >
+                {importQMutation.isPending
+                  ? <><RefreshCw size={15} className="animate-spin" /> Importando...</>
+                  : <><Upload size={15} /> Importar Questões</>}
+              </button>
+            </div>
+
+            {/* ── Upload de Gabarito ── */}
+            <div className="glass" style={{ borderRadius: 16, padding: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(234,179,8,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckSquare size={20} color="var(--accent-gold)" />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>Gabarito</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>gabarito_importar.jsonl</div>
+                </div>
+              </div>
+
+              {/* Drop zone gabarito */}
+              <div
+                id="drop-zone-answers"
+                onDragOver={e => { e.preventDefault(); setADragging(true) }}
+                onDragLeave={() => setADragging(false)}
+                onDrop={e => {
+                  e.preventDefault(); setADragging(false)
+                  const f = e.dataTransfer.files[0]
+                  if (f) { setAFile(f); setAResult(null) }
+                }}
+                onClick={() => aFileRef.current?.click()}
+                style={{
+                  border: `2px dashed ${aDragging ? 'var(--accent-gold)' : aFile ? 'var(--accent-green)' : 'var(--border)'}`,
+                  borderRadius: 12, padding: '2rem 1rem', textAlign: 'center', cursor: 'pointer',
+                  background: aDragging ? 'rgba(234,179,8,0.06)' : aFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                  transition: 'all 0.2s', marginBottom: '1rem',
+                }}
+              >
+                <input ref={aFileRef} type="file" accept=".jsonl,.json" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) { setAFile(f); setAResult(null) } }} />
+                {aFile ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <CheckSquare size={28} color="var(--accent-green)" />
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{aFile.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{(aFile.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                    <FileUp size={28} color="var(--text-muted)" />
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Arraste ou clique para selecionar</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', opacity: 0.7 }}>Formato: .jsonl</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Resultado gabarito */}
+              {aResult && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {[
+                    { label: 'Aplicados', value: aResult.imported, color: 'var(--accent-green)', icon: <CheckCircle size={14} /> },
+                    { label: 'Não encontrados', value: aResult.skipped, color: 'var(--accent-gold)', icon: <AlertCircle size={14} /> },
+                    { label: 'Erros', value: aResult.errors, color: 'var(--accent-red)', icon: <XCircle size={14} /> },
+                  ].map(({ label, value, color, icon }) => (
+                    <div key={label} className="glass" style={{ borderRadius: 10, padding: '0.75rem', textAlign: 'center' }}>
+                      <div style={{ color, fontSize: '1.4rem', fontWeight: 700 }}>{value}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 2 }}>
+                        <span style={{ color }}>{icon}</span>{label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {aResult?.errorMessages && aResult.errorMessages.length > 0 && (
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.75rem', marginBottom: '1rem', maxHeight: 120, overflowY: 'auto' }}>
+                  {aResult.errorMessages.map((msg, i) => (
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#FCA5A5', marginBottom: 2 }}>{msg}</div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                id="btn-import-answers"
+                className="btn btn-primary"
+                style={{ width: '100%', background: 'linear-gradient(135deg, #B45309, #D97706)' }}
+                disabled={!aFile || importAMutation.isPending}
+                onClick={() => aFile && importAMutation.mutate(aFile)}
+              >
+                {importAMutation.isPending
+                  ? <><RefreshCw size={15} className="animate-spin" /> Aplicando gabarito...</>
+                  : <><CheckSquare size={15} /> Importar Gabarito</>}
+              </button>
+            </div>
+          </div>
+
+          {/* Instruções */}
+          <div className="glass" style={{ borderRadius: 14, padding: '1.25rem', borderLeft: '3px solid var(--accent-blue)' }}>
+            <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--accent-blue)' }}>📋 Instruções de uso</h3>
+            <ol style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.8 }}>
+              <li>Primeiro importe o arquivo de <strong>questões</strong> (<code>questoes_importar.jsonl</code>). As questões ficam salvas como <em>rascunho</em>.</li>
+              <li>Em seguida, importe o arquivo de <strong>gabarito</strong> (<code>gabarito_importar.jsonl</code>) para atribuir as respostas corretas e publicar automaticamente.</li>
+              <li>Questões duplicadas (mesmo código BANCA-ANO-NÚMERO) são <strong>atualizadas</strong>, não duplicadas.</li>
+              <li>Questões do gabarito que não encontrarem correspondência nas questões serão listadas em <em>Não encontrados</em>.</li>
+            </ol>
+          </div>
         </div>
       )}
 

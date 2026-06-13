@@ -33,7 +33,7 @@ app.register(jwt, {
   sign: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
 })
 
-app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } })
+app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } })
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.register(require('./routes/auth').default,          { prefix: '/api/auth' })

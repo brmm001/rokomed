@@ -134,6 +134,22 @@ export const adminApi = {
   getPriorities: () => api.get('/admin/priorities').then(r => r.data),
   savePriority: (data: { institutionId: string; specialtyId: string; priority: 'MAXIMA' | 'ALTA' | 'MEDIA' | 'BAIXA' }) =>
     api.post('/admin/priorities', data).then(r => r.data),
+  importQuestions: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/admin/questions/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000, // 5 min para arquivos grandes
+    }).then(r => r.data)
+  },
+  importAnswers: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/admin/questions/import-answers', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
+    }).then(r => r.data)
+  },
 }
 
 // ── Lessons ──────────────────────────────────────────────────────────────────
