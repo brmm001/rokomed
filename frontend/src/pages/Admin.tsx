@@ -7,10 +7,11 @@ import {
   Plus, Trash2, ShieldOff, ShieldCheck, RefreshCw,
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
   Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
-  Play, Edit, Upload, FileUp, Database, CheckSquare, XCircle, AlertCircle
+  Play, Edit, Upload, FileUp, Database, CheckSquare, XCircle, AlertCircle,
+  FolderTree
 } from 'lucide-react'
 
-type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities' | 'import'
+type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities' | 'import' | 'specialties'
 
 interface ImportResult {
   imported: number
@@ -36,6 +37,19 @@ export default function AdminPage() {
     specialtyId: string
   } | null>(null)
   const [selectedInstId, setSelectedInstId] = useState<string>('')
+
+  // Specialties state
+  const [showSpecialtyModal, setShowSpecialtyModal] = useState(false)
+  const [editingSpecialty, setEditingSpecialty] = useState<{
+    id?: string
+    name: string
+    slug: string
+    description: string
+    parentId: string
+    isGrandeArea: boolean
+  } | null>(null)
+  const [specialtySearch, setSpecialtySearch] = useState('')
+  const [specialtyTypeFilter, setSpecialtyTypeFilter] = useState<'all' | 'grande' | 'sub'>('all')
 
   // Import state
   const [qFile, setQFile] = useState<File | null>(null)
@@ -152,6 +166,56 @@ export default function AdminPage() {
     }
   })
 
+  // Specialties queries & mutations
+  const { data: specialtiesListData, isLoading: specialtiesLoading } = useQuery({
+    queryKey: ['admin-specialties-list'],
+    queryFn: adminApi.specialties,
+    enabled: tab === 'specialties' || showSpecialtyModal
+  })
+
+  const createSpecialty = useMutation({
+    mutationFn: (data: Record<string, any>) => adminApi.createSpecialty(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-specialties-list'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-lessons'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-priorities'] })
+      setShowSpecialtyModal(false)
+      setEditingSpecialty(null)
+      toast.success('Tema criado com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao criar tema')
+    }
+  })
+
+  const updateSpecialty = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, any> }) => adminApi.updateSpecialty(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-specialties-list'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-lessons'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-priorities'] })
+      setShowSpecialtyModal(false)
+      setEditingSpecialty(null)
+      toast.success('Tema atualizado com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao atualizar tema')
+    }
+  })
+
+  const deleteSpecialty = useMutation({
+    mutationFn: (id: string) => adminApi.deleteSpecialty(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-specialties-list'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-lessons'] })
+      qc.invalidateQueries({ queryKey: ['admin-specialties-priorities'] })
+      toast.success('Tema deletado com sucesso!')
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.error || 'Erro ao deletar tema')
+    }
+  })
+
   const banUser = useMutation({
     mutationFn: ({ id, banned }: { id: string; banned: boolean }) => adminApi.banUser(id, banned),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); toast.success('Usuário atualizado') },
@@ -208,6 +272,7 @@ export default function AdminPage() {
     { id: 'stats',        label: 'Visão geral',  icon: <LayoutDashboard size={16} /> },
     { id: 'questions',    label: 'Questões',      icon: <BookOpen size={16} /> },
     { id: 'users',        label: 'Usuários',      icon: <Users size={16} /> },
+    { id: 'specialties',  label: 'Temas',         icon: <FolderTree size={16} /> },
     { id: 'lessons',      label: 'Aulas',         icon: <Play size={16} /> },
     { id: 'import',       label: 'Importar',      icon: <Upload size={16} /> },
     { id: 'leads',        label: 'Leads',         icon: <ShoppingCart size={16} /> },
@@ -858,6 +923,148 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* ── Specialties (Temas) Tab ────────────────────────────────────────── */}
+      {tab === 'specialties' && (
+        <div className="animate-fade-in">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flex: 1, minWidth: '300px' }}>
+              <input
+                type="text"
+                className="input"
+                placeholder="Buscar temas..."
+                value={specialtySearch}
+                onChange={e => setSpecialtySearch(e.target.value)}
+                style={{ maxWidth: '300px', fontSize: '0.875rem' }}
+              />
+              <select
+                className="input"
+                value={specialtyTypeFilter}
+                onChange={e => setSpecialtyTypeFilter(e.target.value as any)}
+                style={{ maxWidth: '200px', fontSize: '0.875rem' }}
+              >
+                <option value="all">Todos os tipos</option>
+                <option value="grande">Grandes Áreas</option>
+                <option value="sub">Sub-especialidades</option>
+              </select>
+            </div>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setEditingSpecialty({ name: '', slug: '', description: '', parentId: '', isGrandeArea: false })
+                setShowSpecialtyModal(true)
+              }}
+            >
+              <Plus size={16} /> Adicionar Tema
+            </button>
+          </div>
+
+          {specialtiesLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} className="animate-spin" /> Carregando temas...
+            </div>
+          ) : (
+            <div className="glass" style={{ padding: '24px', borderRadius: '16px' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Nome</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Slug</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Tipo</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Grande Área Pai</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600 }}>Descrição</th>
+                      <th style={{ padding: '12px 8px', fontWeight: 600, textAlign: 'right' }}>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const rawData = specialtiesListData?.data || []
+                      const filtered = rawData.filter((s: any) => {
+                        const matchesSearch = s.name.toLowerCase().includes(specialtySearch.toLowerCase()) ||
+                          s.slug.toLowerCase().includes(specialtySearch.toLowerCase())
+                        const matchesType = specialtyTypeFilter === 'all' ? true :
+                          specialtyTypeFilter === 'grande' ? s.isGrandeArea : !s.isGrandeArea
+                        return matchesSearch && matchesType
+                      })
+
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                              Nenhum tema encontrado.
+                            </td>
+                          </tr>
+                        )
+                      }
+
+                      return filtered.map((spec: { id: string; name: string; slug: string; description?: string; parentId?: string; isGrandeArea: boolean }) => {
+                        const parentName = spec.parentId ? rawData.find((p: any) => p.id === spec.parentId)?.name : '—'
+                        return (
+                          <tr key={spec.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-primary)' }}>
+                            <td style={{ padding: '16px 8px', fontWeight: 500 }}>
+                              {spec.name}
+                            </td>
+                            <td style={{ padding: '16px 8px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--accent-teal)' }}>
+                              {spec.slug}
+                            </td>
+                            <td style={{ padding: '16px 8px' }}>
+                              {spec.isGrandeArea ? (
+                                <span className="badge badge-blue" style={{ fontSize: '0.7rem' }}>Grande Área</span>
+                              ) : (
+                                <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>Sub-especialidade</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '16px 8px', color: spec.parentId ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                              {parentName}
+                            </td>
+                            <td style={{ padding: '16px 8px', color: 'var(--text-secondary)', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {spec.description || '—'}
+                            </td>
+                            <td style={{ padding: '16px 8px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button
+                                  className="btn btn-ghost"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                                  onClick={() => {
+                                    setEditingSpecialty({
+                                      id: spec.id,
+                                      name: spec.name,
+                                      slug: spec.slug,
+                                      description: spec.description || '',
+                                      parentId: spec.parentId || '',
+                                      isGrandeArea: spec.isGrandeArea
+                                    })
+                                    setShowSpecialtyModal(true)
+                                  }}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  className="btn btn-danger"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
+                                  onClick={() => {
+                                    if (confirm(`Deletar o tema "${spec.name}"? Atenção: isso poderá afetar questões e aulas vinculadas.`)) {
+                                      deleteSpecialty.mutate(spec.id)
+                                    }
+                                  }}
+                                  disabled={deleteSpecialty.isPending}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Priorities Tab ─────────────────────────────────────────────────── */}
       {tab === 'priorities' && (
         <div className="animate-fade-in glass" style={{ padding: '24px', borderRadius: '16px' }}>
@@ -1251,6 +1458,134 @@ export default function AdminPage() {
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button type="button" className="btn btn-ghost" onClick={() => { setShowLessonModal(false); setEditingLesson(null) }}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={createLesson.isPending || updateLesson.isPending}>
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Specialty Modal ────────────────────────────────────────────────── */}
+      {showSpecialtyModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div className="glass animate-fade-in" style={{
+            width: '90%',
+            maxWidth: '500px',
+            padding: '24px',
+            borderRadius: '16px',
+            position: 'relative'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', marginTop: 0, marginBottom: '1.25rem', fontWeight: 700 }}>
+              {editingSpecialty?.id ? 'Editar Tema' : 'Novo Tema'}
+            </h3>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const data = {
+                name: editingSpecialty?.name,
+                slug: editingSpecialty?.slug,
+                description: editingSpecialty?.description || null,
+                parentId: (!editingSpecialty?.isGrandeArea && editingSpecialty?.parentId) ? editingSpecialty.parentId : null,
+                isGrandeArea: !!editingSpecialty?.isGrandeArea
+              }
+              if (editingSpecialty?.id) {
+                updateSpecialty.mutate({ id: editingSpecialty.id, data })
+              } else {
+                createSpecialty.mutate(data)
+              }
+            }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Nome *</label>
+                <input
+                  type="text"
+                  className="input"
+                  required
+                  value={editingSpecialty?.name || ''}
+                  onChange={e => {
+                    const nameVal = e.target.value
+                    setEditingSpecialty(prev => {
+                      if (!prev) return null
+                      const newSlug = prev.id ? prev.slug : nameVal
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim()
+                      return { ...prev, name: nameVal, slug: newSlug }
+                    })
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Slug *</label>
+                <input
+                  type="text"
+                  className="input"
+                  required
+                  value={editingSpecialty?.slug || ''}
+                  onChange={e => setEditingSpecialty(prev => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') } : null)}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Descrição</label>
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={editingSpecialty?.description || ''}
+                  onChange={e => setEditingSpecialty(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="checkbox"
+                  id="chk-is-grande-area"
+                  checked={editingSpecialty?.isGrandeArea || false}
+                  onChange={e => {
+                    const checked = e.target.checked
+                    setEditingSpecialty(prev => prev ? { ...prev, isGrandeArea: checked, parentId: checked ? '' : prev.parentId } : null)
+                  }}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <label htmlFor="chk-is-grande-area" style={{ fontSize: '0.875rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 500 }}>
+                  Este tema é uma Grande Área? (Ex: Clínica Médica)
+                </label>
+              </div>
+
+              {!editingSpecialty?.isGrandeArea && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Grande Área Pai *</label>
+                  <select
+                    className="input"
+                    required={!editingSpecialty?.isGrandeArea}
+                    value={editingSpecialty?.parentId || ''}
+                    onChange={e => setEditingSpecialty(prev => prev ? { ...prev, parentId: e.target.value } : null)}
+                  >
+                    <option value="">-- Selecione a Grande Área --</option>
+                    {specialtiesListData?.data?.filter((s: any) => s.isGrandeArea && s.id !== editingSpecialty?.id).map((s: { id: string; name: string }) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => { setShowSpecialtyModal(false); setEditingSpecialty(null) }}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={createSpecialty.isPending || updateSpecialty.isPending}>
                   Salvar
                 </button>
               </div>

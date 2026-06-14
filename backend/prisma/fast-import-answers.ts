@@ -16,7 +16,7 @@ import * as readline from 'readline'
 import * as dotenv from 'dotenv'
 import { randomUUID } from 'crypto'
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
+dotenv.config({ path: path.resolve(__dirname, '../.env.turso') })
 
 const client = createClient({
   url: process.env.DATABASE_URL!,
@@ -47,7 +47,11 @@ function mapDifficulty(raw: string | null | undefined): string {
 }
 
 function buildCode(inst: string, ano: number, num: number): string {
-  return `${inst}-${ano}-${num}`
+  let normalizedInst = inst.trim()
+  if (normalizedInst.startsWith('UNICAMP')) {
+    normalizedInst = 'UNICAMP'
+  }
+  return `${normalizedInst}-${ano}-${num}`
 }
 
 // Garante que um valor seja string ou null para o libSQL (nunca undefined)
@@ -182,7 +186,7 @@ const BATCH_SIZE = 30
 async function main() {
   const filePath = process.argv[2]
     ? path.resolve(process.argv[2])
-    : path.resolve(__dirname, '../../novo_gabarito.jsonl')
+    : path.resolve(__dirname, '../../gabarito_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Arquivo não encontrado: ${filePath}`)
@@ -208,7 +212,7 @@ async function main() {
   const items: GabaritoItem[] = []
   let lineNum = 0
   for await (const line of rl) {
-    const t = line.trim()
+    const t = line.replace(/^\uFEFF/, '').trim()
     if (!t) continue
     lineNum++
     try {
@@ -236,7 +240,10 @@ async function main() {
 
   for (const raw of items) {
     const num  = raw.numero_questao_original ?? raw.numero_questao ?? 0
-    const code = buildCode(raw.instituicao, raw.ano, num)
+    let code = raw.id
+    if (!existingCodes.has(code)) {
+      code = buildCode(raw.instituicao, Number(raw.ano), num)
+    }
 
     if (!existingCodes.has(code)) {
       notFound++

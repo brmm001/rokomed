@@ -407,9 +407,53 @@ export default async function adminRoutes(app: FastifyInstance) {
 
   // POST /api/admin/specialties
   app.post('/specialties', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { name, slug, description, parentId } = request.body as { name: string; slug: string; description?: string; parentId?: string }
-    const specialty = await prisma.specialty.create({ data: { name, slug, description, parentId } })
+    const { name, slug, description, parentId, isGrandeArea } = request.body as { name: string; slug: string; description?: string; parentId?: string; isGrandeArea?: boolean }
+    const specialty = await prisma.specialty.create({ data: { name, slug, description, parentId, isGrandeArea: !!isGrandeArea } })
     return reply.code(201).send({ specialty })
+  })
+
+  // PUT /api/admin/specialties/:id
+  app.put('/specialties/:id', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+    const { name, slug, description, parentId, isGrandeArea } = request.body as {
+      name?: string
+      slug?: string
+      description?: string | null
+      parentId?: string | null
+      isGrandeArea?: boolean
+    }
+
+    const specialty = await prisma.specialty.update({
+      where: { id },
+      data: {
+        name,
+        slug,
+        description: description === undefined ? undefined : description,
+        parentId: parentId === undefined ? undefined : parentId,
+        isGrandeArea: isGrandeArea === undefined ? undefined : isGrandeArea,
+      },
+    })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'UPDATE_SPECIALTY', target: id },
+    })
+
+    return reply.send({ specialty })
+  })
+
+  // DELETE /api/admin/specialties/:id
+  app.delete('/specialties/:id', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id } = request.params as { id: string }
+
+    await prisma.specialty.delete({ where: { id } })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'DELETE_SPECIALTY', target: id },
+    })
+
+    return reply.send({ deleted: true })
   })
 
   // GET /api/admin/institutions

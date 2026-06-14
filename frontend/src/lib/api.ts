@@ -113,6 +113,12 @@ export const adminApi = {
   logs: (page?: number) =>
     api.get('/admin/logs', { params: { page } }).then(r => r.data),
   specialties: () => api.get('/admin/specialties').then(r => r.data),
+  createSpecialty: (data: Record<string, unknown>) =>
+    api.post('/admin/specialties', data).then(r => r.data),
+  updateSpecialty: (id: string, data: Record<string, unknown>) =>
+    api.put(`/admin/specialties/${id}`, data).then(r => r.data),
+  deleteSpecialty: (id: string) =>
+    api.delete(`/admin/specialties/${id}`).then(r => r.data),
   institutions: () => api.get('/admin/institutions').then(r => r.data),
   abandonedCheckouts: () => api.get('/admin/abandoned-checkouts').then(r => r.data),
   supportTickets: () => api.get('/admin/support/tickets').then(r => r.data),
