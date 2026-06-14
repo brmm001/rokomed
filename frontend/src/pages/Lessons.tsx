@@ -4,28 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { lessonsApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import {
-  Play, Lock, Clock, BookOpen, Sparkles, X,
+  Play, Lock, Clock, BookOpen, Sparkles,
   ChevronRight, ShieldCheck
 } from 'lucide-react'
 
-// Helper to extract embedded URL from common YouTube & Vimeo video URLs
-function getEmbedUrl(url: string) {
-  if (!url) return ''
-  
-  // YouTube watch URLs or short URLs
-  let match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
-  if (match && match[1]) {
-    return `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`
-  }
-  
-  // Vimeo URLs
-  match = url.match(/(?:vimeo\.com\/)\b(\d+)\b/)
-  if (match && match[1]) {
-    return `https://player.vimeo.com/video/${match[1]}?autoplay=1`
-  }
-  
-  return url
-}
 
 export default function LessonsPage() {
   const user = useAuthStore(s => s.user)
@@ -37,15 +19,22 @@ export default function LessonsPage() {
     queryFn: lessonsApi.list
   })
 
-  // Local state for modals
-  const [selectedVideo, setSelectedVideo] = useState<{ title: string; videoUrl: string } | null>(null)
+  // Local state for upgrade modal
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
-  const handleLessonClick = (lesson: { locked: boolean; title: string; videoUrl: string | null }) => {
+  const handleLessonClick = (lesson: { locked: boolean; title: string; videoUrl: string | null; description?: string; durationMin?: number }, groupName?: string) => {
     if (lesson.locked || !isPro || !lesson.videoUrl) {
       setShowUpgradeModal(true)
     } else {
-      setSelectedVideo({ title: lesson.title, videoUrl: lesson.videoUrl })
+      navigate('/aulas/player', {
+        state: {
+          title: lesson.title,
+          videoUrl: lesson.videoUrl,
+          description: lesson.description,
+          durationMin: lesson.durationMin,
+          groupName,
+        },
+      })
     }
   }
 
@@ -120,6 +109,7 @@ export default function LessonsPage() {
           )}
 
           {lessonsGroup?.data?.map((group: { id: string; name: string; lessons: any[] }) => (
+
             <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ChevronRight size={18} color="var(--accent-blue)" /> {group.name}
@@ -144,7 +134,7 @@ export default function LessonsPage() {
                       overflow: 'hidden',
                       opacity: lesson.locked ? 0.85 : 1
                     }}
-                    onClick={() => handleLessonClick(lesson)}
+                    onClick={() => handleLessonClick(lesson, group.name)}
                   >
                     
                     {/* Locked overlay theme */}
@@ -217,61 +207,6 @@ export default function LessonsPage() {
         </div>
       )}
 
-      {/* ── Video Player Modal ────────────────────────────────────────────────── */}
-      {selectedVideo && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(10px)',
-            padding: '20px'
-          }}
-          onClick={() => setSelectedVideo(null)}
-        >
-          <div 
-            className="glass animate-fade-in" 
-            style={{
-              width: '100%',
-              maxWidth: '850px',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85%' }}>
-                {selectedVideo.title}
-              </h3>
-              <button 
-                onClick={() => setSelectedVideo(null)} 
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4 }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            {/* Aspect Ratio Video Container */}
-            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
-              <iframe
-                src={getEmbedUrl(selectedVideo.videoUrl)}
-                title={selectedVideo.title}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Premium Upgrade Modal ─────────────────────────────────────────────── */}
       {showUpgradeModal && (

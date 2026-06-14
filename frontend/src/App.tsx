@@ -28,6 +28,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPassword'))
 const FlashcardsPage = lazy(() => import('./pages/Flashcards'))
 const LessonsPage = lazy(() => import('./pages/Lessons'))
+const LessonPlayerPage = lazy(() => import('./pages/LessonPlayer'))
 const MiniGamesPage = lazy(() => import('./pages/MiniGames'))
 const GameDuelPage = lazy(() => import('./pages/GameDuel'))
 const GameRoundsPage = lazy(() => import('./pages/GameRounds'))
@@ -142,6 +143,7 @@ export default function App() {
               <Route path="/rotina"         element={<RequirePro><RoutinePage /></RequirePro>} />
               <Route path="/questoes"       element={<QuestionBankPage />} />
               <Route path="/questoes/:id"   element={<StudyPage />} />
+              <Route path="/aulas/player"  element={<LessonPlayerPage />} />
               <Route path="/aulas"          element={<LessonsPage />} />
               <Route path="/simulados/novo" element={<RequirePro><SimuladoConfigPage /></RequirePro>} />
               <Route path="/simulados"      element={<RequirePro><SimuladoListPage /></RequirePro>} />

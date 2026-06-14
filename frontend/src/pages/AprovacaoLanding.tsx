@@ -1254,10 +1254,11 @@ export default function AprovacaoLandingPage() {
         <div className="ap-marquee-track">
           {Array.from({ length: 4 }).map((_, outerIdx) => (
             <div key={outerIdx} style={{ display: 'inline-flex', gap: 48 }}>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Estudo inteligente com o RokoMed</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> IA Tutor ativa de plantão</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> +15.000 questões comentadas</span>
-              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Trilha adaptativa personalizada</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Clínica Médica — Síndrome Coronariana Aguda</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Infectologia — Sepse e Choque Séptico</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Cirurgia — Abdome Agudo</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Pediatria — Reanimação Neonatal</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> GO — Pré-eclâmpsia e Eclâmpsia</span>
             </div>
           ))}
         </div>
@@ -1356,23 +1357,24 @@ export default function AprovacaoLandingPage() {
                     <span style={{ fontSize: '11px', color: 'var(--cyan)', fontWeight: 600 }}>Incidência USP</span>
                   </div>
 
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>1. Trauma Abdominal (Cirurgia)</span>
-                      <span style={{ fontSize: '11px', color: '#EF4444', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>Altíssima relevância</span>
-                    </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+                    {[
+                      { label: 'Síndrome Coronariana Aguda', area: 'Clínica', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Altíssima relevância' },
+                      { label: 'Sepse e Choque Séptico', area: 'Clínica / Infectologia', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Altíssima relevância' },
+                      { label: 'Pré-eclâmpsia e Eclâmpsia', area: 'GO', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Alta relevância' },
+                      { label: 'Abdome Agudo / Apendicite', area: 'Cirurgia', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', tag: 'Média relevância' },
+                      { label: 'Reanimação Neonatal', area: 'Pediatria', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', tag: 'Média relevância' },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                        <div>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'white', display: 'block' }}>{item.label}</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.area}</span>
+                        </div>
+                        <span style={{ fontSize: '10px', color: item.color, background: item.bg, padding: '2px 7px', borderRadius: 4, fontWeight: 700, whiteSpace: 'nowrap', marginLeft: 8 }}>{item.tag}</span>
+                      </div>
+                    ))}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>2. Distúrbios Ácido-Básicos</span>
-                      <span style={{ fontSize: '11px', color: '#F59E0B', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>Média relevância</span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>3. Pré-Eclâmpsia (Ginecologia)</span>
-                      <span style={{ fontSize: '11px', color: '#EF4444', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>Alta relevância</span>
-                    </div>
-
-                    <div style={{ marginTop: 'auto', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                    <div style={{ marginTop: 'auto', padding: 10, background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: '11px', color: 'var(--text-secondary)' }}>
                       💡 Filtrado para priorizar temas com peso {`>=`} 3 no último edital.
                     </div>
                   </div>
