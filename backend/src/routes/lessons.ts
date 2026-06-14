@@ -61,4 +61,113 @@ export default async function lessonRoutes(app: FastifyInstance) {
 
     return reply.send({ lesson })
   })
+
+  // GET /api/lessons/:id/comments — listar comentários da aula
+  app.get('/:id/comments', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id: lessonId } = request.params as { id: string }
+    const comments = await prisma.lessonComment.findMany({
+      where: {
+        lessonId,
+        parentId: null
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            picture: true,
+            role: true
+          }
+        },
+        replies: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                picture: true,
+                role: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+    return reply.send({ data: comments })
+  })
+
+  // POST /api/lessons/:id/comments — criar comentário ou resposta
+  app.post('/:id/comments', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id: lessonId } = request.params as { id: string }
+    const { text, parentId } = request.body as { text: string; parentId?: string }
+
+    if (!text || text.trim().length === 0) {
+      return reply.code(400).send({ error: 'O texto do comentário é obrigatório' })
+    }
+
+    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } })
+    if (!lesson) {
+      return reply.code(404).send({ error: 'Aula não encontrada' })
+    }
+
+    if (parentId) {
+      const parent = await prisma.lessonComment.findUnique({ where: { id: parentId } })
+      if (!parent) {
+        return reply.code(404).send({ error: 'Comentário original não encontrado' })
+      }
+    }
+
+    const payload = request.user as { sub: string; role: string }
+    const isAdminReply = ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(payload.role)
+
+    const comment = await prisma.lessonComment.create({
+      data: {
+        lessonId,
+        userId: payload.sub,
+        text: text.trim(),
+        parentId: parentId || null,
+        isAdminReply
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            picture: true,
+            role: true
+          }
+        }
+      }
+    })
+
+    return reply.code(201).send({ comment })
+  })
+
+  // DELETE /api/lessons/comments/:commentId — deletar comentário
+  app.delete('/comments/:commentId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { commentId } = request.params as { commentId: string }
+
+    const comment = await prisma.lessonComment.findUnique({ where: { id: commentId } })
+    if (!comment) {
+      return reply.code(404).send({ error: 'Comentário não encontrado' })
+    }
+
+    const payload = request.user as { sub: string; role: string }
+    const isOwner = comment.userId === payload.sub
+    const isAdmin = ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(payload.role)
+
+    if (!isOwner && !isAdmin) {
+      return reply.code(403).send({ error: 'Acesso negado: você não tem permissão para deletar este comentário' })
+    }
+
+    await prisma.lessonComment.delete({ where: { id: commentId } })
+    return reply.send({ success: true })
+  })
 }
+

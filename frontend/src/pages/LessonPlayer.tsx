@@ -1,7 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Clock, Maximize2, MessageCircle, ThumbsUp, BadgeCheck, ChevronDown, ChevronUp } from 'lucide-react'
-import { getCommentsForLesson, type CommentThread } from '../data/lessonComments'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, BookOpen, Clock, Maximize2, MessageCircle, ThumbsUp, BadgeCheck, ChevronDown, ChevronUp, Trash2, Send } from 'lucide-react'
+import { getCommentsForLesson } from '../data/lessonComments'
+import { lessonsApi } from '../lib/api'
+import { useAuthStore } from '../store/auth'
+
+// ── Types ────────────────────────────────────────────────────────────────────────
+interface UnifiedComment {
+  id: string
+  text: string
+  createdAt: string | Date
+  isAdminReply: boolean
+  user: {
+    id?: string
+    name: string
+    picture?: string
+    role: string
+    initials?: string
+    color?: string
+  }
+  parentId?: string | null
+  replies?: UnifiedComment[]
+}
 
 // ── URL Helper ──────────────────────────────────────────────────────────────────
 function getEmbedUrl(url: string) {
@@ -11,6 +32,45 @@ function getEmbedUrl(url: string) {
   match = url.match(/(?:vimeo\.com\/)\b(\d+)\b/)
   if (match?.[1]) return `https://player.vimeo.com/video/${match[1]}?autoplay=1&dnt=1`
   return url
+}
+
+// ── Initials & Colors Helpers ──────────────────────────────────────────────────
+function getInitials(name: string) {
+  if (!name) return 'U'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+  return parts[0].slice(0, 2).toUpperCase()
+}
+
+function getRandomColor(name: string) {
+  const colors = ['#3B7EF8', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6', '#EF4444', '#14B8A6']
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
+function formatCommentDate(dateInput: string | Date) {
+  if (typeof dateInput === 'string' && !dateInput.includes('T')) {
+    return dateInput
+  }
+  const date = new Date(dateInput)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return 'Agora mesmo'
+  if (diffMins < 60) return `Há ${diffMins} min`
+  if (diffHours < 24) return `Há ${diffHours} h`
+  if (diffDays === 1) return 'Ontem'
+  if (diffDays < 7) return `Há ${diffDays} dias`
+  return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
 }
 
 // ── Markdown-ish Text Renderer ──────────────────────────────────────────────────
@@ -44,9 +104,23 @@ function RichText({ text }: { text: string }) {
 }
 
 // ── Comment Card ────────────────────────────────────────────────────────────────
-function CommentCard({ thread, index }: { thread: CommentThread; index: number }) {
-  const [replyOpen, setReplyOpen] = useState(index === 0)
+interface CommentCardProps {
+  comment: UnifiedComment
+  currentUser: any
+  onReplySubmit: (parentId: string, text: string) => void
+  onDelete: (commentId: string) => void
+  defaultOpen: boolean
+}
+
+function CommentCard({ comment, currentUser, onReplySubmit, onDelete, defaultOpen }: CommentCardProps) {
+  const [replyOpen, setReplyOpen] = useState(defaultOpen)
   const [liked, setLiked] = useState(false)
+
+  const isDbComment = !!comment.user.id
+  const canDelete = isDbComment && (currentUser?.id === comment.user.id || ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(currentUser?.role || ''))
+  const isCommentAdmin = ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(comment.user.role) || comment.isAdminReply
+
+  const totalReplies = comment.replies?.length || 0
 
   return (
     <div style={{
@@ -61,23 +135,52 @@ function CommentCard({ thread, index }: { thread: CommentThread; index: number }
           {/* Avatar */}
           <div style={{
             width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-            background: `${thread.student.color}22`,
-            border: `2px solid ${thread.student.color}40`,
+            background: isCommentAdmin ? 'linear-gradient(135deg, #1e40af, #3B7EF8)' : `${comment.user.color || '#3B7EF8'}22`,
+            border: `2px solid ${isCommentAdmin ? '#3B7EF8' : (comment.user.color || '#3B7EF8')}40`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75rem', fontWeight: 800, color: thread.student.color,
+            fontSize: '0.75rem', fontWeight: 800, color: isCommentAdmin ? '#fff' : (comment.user.color || '#3B7EF8'),
             letterSpacing: '-0.02em',
           }}>
-            {thread.student.initials}
+            {comment.user.initials}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.375rem', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#EBF4FF' }}>{thread.student.name}</span>
-              <span style={{ fontSize: '0.75rem', color: '#4F6D8C' }}>{thread.time}</span>
+              <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#EBF4FF' }}>{comment.user.name}</span>
+              
+              {isCommentAdmin && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontSize: '0.7rem', fontWeight: 700,
+                  color: '#3B7EF8', background: 'rgba(59,126,248,0.12)',
+                  border: '1px solid rgba(59,126,248,0.25)',
+                  padding: '2px 8px', borderRadius: 20,
+                }}>
+                  <BadgeCheck size={11} /> Professor · RokoMed
+                </span>
+              )}
+
+              <span style={{ fontSize: '0.75rem', color: '#4F6D8C' }}>{formatCommentDate(comment.createdAt)}</span>
+
+              {canDelete && (
+                <button
+                  onClick={() => onDelete(comment.id)}
+                  style={{
+                    marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#EF4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 3,
+                    padding: 4, borderRadius: 4, transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#F87171'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#EF4444'}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#C8DCF5', lineHeight: 1.6 }}>
-              {thread.question}
-            </p>
+            
+            <div style={{ margin: 0, fontSize: '0.9rem', color: '#C8DCF5', lineHeight: 1.6 }}>
+              <RichText text={comment.text} />
+            </div>
 
             {/* Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: '0.75rem' }}>
@@ -92,7 +195,7 @@ function CommentCard({ thread, index }: { thread: CommentThread; index: number }
                 }}
               >
                 <ThumbsUp size={14} fill={liked ? '#3B7EF8' : 'none'} />
-                {thread.likes + (liked ? 1 : 0)}
+                {liked ? 1 : 0}
               </button>
               <button
                 onClick={() => setReplyOpen(o => !o)}
@@ -104,7 +207,7 @@ function CommentCard({ thread, index }: { thread: CommentThread; index: number }
                 }}
               >
                 <MessageCircle size={14} />
-                {replyOpen ? 'Ocultar resposta' : 'Ver resposta do Professor'}
+                {replyOpen ? 'Ocultar respostas' : totalReplies > 0 ? `Ver respostas (${totalReplies})` : 'Responder'}
                 {replyOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
             </div>
@@ -112,43 +215,124 @@ function CommentCard({ thread, index }: { thread: CommentThread; index: number }
         </div>
       </div>
 
-      {/* Dr. André Reply */}
-      {replyOpen && (
+      {/* Replies List */}
+      {replyOpen && comment.replies && comment.replies.length > 0 && (
         <div style={{
           borderTop: '1px solid rgba(100,160,255,0.08)',
-          background: 'rgba(59,126,248,0.04)',
-          padding: '1.25rem 1.5rem',
+          background: 'rgba(59,126,248,0.02)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          padding: '1.25rem 1.5rem 1.25rem 2.5rem',
         }}>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            {/* Admin avatar */}
-            <div style={{
-              width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, #1e40af, #3B7EF8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.75rem', fontWeight: 900, color: '#fff',
-              letterSpacing: '-0.02em',
-              boxShadow: '0 0 12px rgba(59,126,248,0.3)',
-            }}>
-              DR
-            </div>
+          {comment.replies.map((reply) => {
+            const isReplyDbComment = !!reply.user.id
+            const canDeleteReply = isReplyDbComment && (currentUser?.id === reply.user.id || ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(currentUser?.role || ''))
+            const isReplyAdmin = ['ADMIN', 'SUPERADMIN', 'PROFESSOR'].includes(reply.user.role) || reply.isAdminReply
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#EBF4FF' }}>Dr. André</span>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontSize: '0.7rem', fontWeight: 700,
-                  color: '#3B7EF8', background: 'rgba(59,126,248,0.12)',
-                  border: '1px solid rgba(59,126,248,0.25)',
-                  padding: '2px 8px', borderRadius: 20,
+            return (
+              <div key={reply.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                  background: isReplyAdmin ? 'linear-gradient(135deg, #1e40af, #3B7EF8)' : `${reply.user.color || '#3B7EF8'}22`,
+                  border: `2px solid ${isReplyAdmin ? '#3B7EF8' : (reply.user.color || '#3B7EF8')}40`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', fontWeight: 800, color: isReplyAdmin ? '#fff' : (reply.user.color || '#3B7EF8'),
                 }}>
-                  <BadgeCheck size={11} /> Professor · RokoMed
-                </span>
-              </div>
+                  {reply.user.initials}
+                </div>
 
-              <RichText text={thread.reply} />
-            </div>
-          </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.8125rem', color: '#EBF4FF' }}>{reply.user.name}</span>
+                    {isReplyAdmin && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                        fontSize: '0.65rem', fontWeight: 700,
+                        color: '#3B7EF8', background: 'rgba(59,126,248,0.12)',
+                        border: '1px solid rgba(59,126,248,0.25)',
+                        padding: '1px 6px', borderRadius: 20,
+                      }}>
+                        <BadgeCheck size={10} /> Professor · RokoMed
+                      </span>
+                    )}
+                    <span style={{ fontSize: '0.7rem', color: '#4F6D8C' }}>{formatCommentDate(reply.createdAt)}</span>
+                    
+                    {canDeleteReply && (
+                      <button
+                        onClick={() => onDelete(reply.id)}
+                        style={{
+                          marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
+                          color: '#EF4444', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 3,
+                          padding: 2, borderRadius: 4, transition: 'all 0.15s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#F87171'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#EF4444'}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                  <RichText text={reply.text} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Reply input (Only for Database Comments) */}
+      {replyOpen && isDbComment && (
+        <div style={{
+          borderTop: '1px solid rgba(100,160,255,0.06)',
+          background: 'rgba(59,126,248,0.01)',
+          padding: '0.75rem 1.5rem 0.75rem 2.5rem',
+        }}>
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            const form = e.currentTarget
+            const input = form.elements.namedItem('replyText') as HTMLInputElement
+            if (input.value.trim()) {
+              onReplySubmit(comment.id, input.value.trim())
+              input.value = ''
+            }
+          }} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input
+              name="replyText"
+              placeholder="Escreva uma resposta..."
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(100,160,255,0.1)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#EBF4FF',
+                fontSize: '0.8125rem',
+                outline: 'none',
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                background: '#3B7EF8',
+                border: 'none',
+                borderRadius: 8,
+                color: '#fff',
+                padding: '8px 16px',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#2563EB'}
+              onMouseLeave={e => e.currentTarget.style.background = '#3B7EF8'}
+            >
+              Responder
+            </button>
+          </form>
         </div>
       )}
     </div>
@@ -156,8 +340,125 @@ function CommentCard({ thread, index }: { thread: CommentThread; index: number }
 }
 
 // ── Comments Section ────────────────────────────────────────────────────────────
-function CommentsSection({ title, groupName }: { title: string; groupName?: string }) {
-  const threads = getCommentsForLesson(title, groupName)
+interface CommentsSectionProps {
+  lessonId?: string
+  title: string
+  groupName?: string
+}
+
+function CommentsSection({ lessonId, title, groupName }: CommentsSectionProps) {
+  const user = useAuthStore(s => s.user)
+  const queryClient = useQueryClient()
+  const [newCommentText, setNewCommentText] = useState('')
+
+  // 1. Fetch real comments from database if lessonId is defined
+  const { data: dbCommentsData, isLoading } = useQuery({
+    queryKey: ['lesson-comments', lessonId],
+    queryFn: () => lessonId ? lessonsApi.getComments(lessonId) : Promise.resolve({ data: [] }),
+    enabled: !!lessonId,
+  })
+
+  // 2. Fetch static (fake) comments
+  const staticThreads = getCommentsForLesson(title, groupName)
+
+  // 3. Mutations
+  const addCommentMutation = useMutation({
+    mutationFn: ({ text, parentId }: { text: string; parentId?: string }) => {
+      if (!lessonId) return Promise.reject(new Error('ID da aula não disponível'))
+      return lessonsApi.addComment(lessonId, text, parentId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lesson-comments', lessonId] })
+    }
+  })
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => lessonsApi.deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lesson-comments', lessonId] })
+    }
+  })
+
+  // 4. Map static comments to unified format
+  const mappedStaticComments: UnifiedComment[] = staticThreads.map(t => ({
+    id: t.id,
+    text: t.question,
+    createdAt: t.time,
+    isAdminReply: false,
+    user: {
+      name: t.student.name,
+      role: 'ALUNO',
+      initials: t.student.initials,
+      color: t.student.color
+    },
+    replies: t.reply ? [
+      {
+        id: `reply-${t.id}`,
+        text: t.reply,
+        createdAt: t.time,
+        isAdminReply: true,
+        user: {
+          name: 'Dr. André',
+          role: 'ADMIN',
+          initials: 'DA',
+          color: '#3B7EF8'
+        }
+      }
+    ] : []
+  }))
+
+  // 5. Map db comments to unified format
+  const mappedDbComments: UnifiedComment[] = (dbCommentsData?.data ?? []).map((c: any) => ({
+    id: c.id,
+    text: c.text,
+    createdAt: c.createdAt,
+    isAdminReply: c.isAdminReply,
+    user: {
+      id: c.user.id,
+      name: c.user.name,
+      picture: c.user.picture,
+      role: c.user.role,
+      initials: getInitials(c.user.name),
+      color: getRandomColor(c.user.name)
+    },
+    replies: (c.replies ?? []).map((r: any) => ({
+      id: r.id,
+      text: r.text,
+      createdAt: r.createdAt,
+      isAdminReply: r.isAdminReply,
+      user: {
+        id: r.user.id,
+        name: r.user.name,
+        picture: r.user.picture,
+        role: r.user.role,
+        initials: getInitials(r.user.name),
+        color: getRandomColor(r.user.name)
+      }
+    }))
+  }))
+
+  // Merge them: DB comments first, then static ones
+  const allComments = [...mappedDbComments, ...mappedStaticComments]
+
+  const handleCreateRootComment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCommentText.trim()) return
+    addCommentMutation.mutate({ text: newCommentText.trim() })
+    setNewCommentText('')
+  }
+
+  const handleReplySubmit = (parentId: string, text: string) => {
+    addCommentMutation.mutate({ text, parentId })
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm('Tem certeza que deseja excluir este comentário?')) {
+      deleteCommentMutation.mutate(commentId)
+    }
+  }
+
+  const userInitials = user ? getInitials(user.name) : 'EU'
+  const userColor = user ? getRandomColor(user.name) : '#3B7EF8'
 
   return (
     <div style={{
@@ -183,7 +484,7 @@ function CommentsSection({ title, groupName }: { title: string; groupName?: stri
           border: '1px solid rgba(59,126,248,0.2)',
           padding: '2px 8px', borderRadius: 20,
         }}>
-          {threads.length} comentário{threads.length !== 1 ? 's' : ''}
+          {allComments.length} comentário{allComments.length !== 1 ? 's' : ''}
         </span>
         <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#4F6D8C', display: 'flex', alignItems: 'center', gap: 4 }}>
           <BadgeCheck size={12} color="#3B7EF8" /> Respostas verificadas pelo professor
@@ -192,34 +493,95 @@ function CommentsSection({ title, groupName }: { title: string; groupName?: stri
 
       {/* Comment list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '1.25rem 1.5rem' }}>
-        {threads.map((thread, i) => (
-          <CommentCard key={thread.id} thread={thread} index={i} />
+        {isLoading && (
+          <div style={{ color: '#4F6D8C', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>
+            Carregando discussões...
+          </div>
+        )}
+        {!isLoading && allComments.length === 0 && (
+          <div style={{ color: '#4F6D8C', fontSize: '0.875rem', textAlign: 'center', padding: '2rem 1rem' }}>
+            Ainda não há dúvidas sobre este tema. Seja o primeiro a perguntar!
+          </div>
+        )}
+        {!isLoading && allComments.map((comment, i) => (
+          <CommentCard
+            key={comment.id}
+            comment={comment}
+            currentUser={user}
+            onReplySubmit={handleReplySubmit}
+            onDelete={handleDeleteComment}
+            defaultOpen={i === 0}
+          />
         ))}
       </div>
 
-      {/* CTA to ask question */}
+      {/* Input to ask a question */}
       <div style={{
-        padding: '1rem 1.5rem',
+        padding: '1.25rem 1.5rem',
         borderTop: '1px solid rgba(100,160,255,0.06)',
-        display: 'flex', alignItems: 'center', gap: 12,
+        background: 'rgba(12,26,48,0.3)',
       }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(59,126,248,0.1)',
-          border: '1px solid rgba(59,126,248,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#3B7EF8', fontSize: '0.6875rem', fontWeight: 700, flexShrink: 0,
-        }}>
-          EU
-        </div>
-        <div style={{
-          flex: 1, background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(100,160,255,0.1)',
-          borderRadius: 10, padding: '0.625rem 1rem',
-          color: '#4F6D8C', fontSize: '0.875rem', cursor: 'text',
-        }}>
-          Tem uma dúvida sobre essa aula? Pergunte ao professor...
-        </div>
+        <form onSubmit={handleCreateRootComment} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            background: `${userColor}22`,
+            border: `2px solid ${userColor}40`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: userColor, fontSize: '0.75rem', fontWeight: 800,
+          }}>
+            {userInitials}
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <textarea
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              placeholder="Tem uma dúvida sobre essa aula? Pergunte ao professor..."
+              rows={2}
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(100,160,255,0.1)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                color: '#EBF4FF',
+                fontSize: '0.875rem',
+                outline: 'none',
+                resize: 'vertical',
+                fontFamily: 'inherit',
+                minHeight: 50,
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="submit"
+                disabled={!newCommentText.trim() || addCommentMutation.isPending}
+                style={{
+                  background: newCommentText.trim() ? '#3B7EF8' : 'rgba(59,126,248,0.2)',
+                  color: newCommentText.trim() ? '#fff' : '#4F6D8C',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 16px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: newCommentText.trim() ? 'pointer' : 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => {
+                  if (newCommentText.trim()) e.currentTarget.style.background = '#2563EB'
+                }}
+                onMouseLeave={e => {
+                  if (newCommentText.trim()) e.currentTarget.style.background = '#3B7EF8'
+                }}
+              >
+                <Send size={14} />
+                {addCommentMutation.isPending ? 'Enviando...' : 'Perguntar'}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   )
@@ -231,6 +593,7 @@ export default function LessonPlayerPage() {
   const navigate = useNavigate()
 
   const lesson = location.state as {
+    id: string
     title: string
     videoUrl: string
     description?: string
@@ -346,7 +709,7 @@ export default function LessonPlayerPage() {
         </div>
 
         {/* ── Comments Section ─────────────────────────────────────────────── */}
-        <CommentsSection title={lesson.title} groupName={lesson.groupName} />
+        <CommentsSection lessonId={lesson.id} title={lesson.title} groupName={lesson.groupName} />
 
       </main>
     </div>

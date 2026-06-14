@@ -60,6 +60,7 @@ model User {
   supportTickets  SupportTicket[]
   supportMessages SupportMessage[]
   gamePlays       GamePlay[]
+  lessonComments  LessonComment[]
 
   @@map("users")
 }
@@ -517,9 +518,31 @@ model Lesson {
   updatedAt   DateTime   @updatedAt
 
   specialty   Specialty? @relation(fields: [specialtyId], references: [id], onDelete: SetNull)
+  comments    LessonComment[]
 
   @@map("lessons")
 }
+
+model LessonComment {
+  id           String    @id @default(cuid())
+  lessonId     String
+  userId       String
+  parentId     String?   // null = raiz; preenchido = resposta a outro comentário
+  text         String
+  isAdminReply Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  lesson   Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   LessonComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  LessonComment[] @relation("CommentReplies")
+
+  @@index([lessonId])
+  @@index([parentId])
+  @@map("lesson_comments")
+}
+
 
 model GamePlay {
   id        String   @id @default(cuid())

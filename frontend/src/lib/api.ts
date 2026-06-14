@@ -162,6 +162,11 @@ export const adminApi = {
 export const lessonsApi = {
   list: () => api.get('/lessons').then(r => r.data),
   get: (id: string) => api.get(`/lessons/${id}`).then(r => r.data),
+  getComments: (id: string) => api.get(`/lessons/${id}/comments`).then(r => r.data),
+  addComment: (id: string, text: string, parentId?: string) =>
+    api.post(`/lessons/${id}/comments`, { text, parentId }).then(r => r.data),
+  deleteComment: (commentId: string) =>
+    api.delete(`/lessons/comments/${commentId}`).then(r => r.data),
 }
 
 // ── Parcerias (público, sem auth) ────────────────────────────────────────────

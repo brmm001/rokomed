@@ -62,6 +62,7 @@ export default function LessonsPage() {
         : activeCategory.name
       navigate('/aulas/player', {
         state: {
+          id: apiLesson.id,
           title: topic.title,
           videoUrl: apiLesson.videoUrl,
           description: topic.desc,
