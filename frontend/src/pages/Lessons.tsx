@@ -13,10 +13,15 @@ function norm(s: string) {
 
 function findApiLesson(topic: LessonTopic, apiLessons: any[]): any | null {
   const normTopic = norm(topic.title)
-  const topicWords = normTopic.split(' ').filter(w => w.length > 4)
+  // Try exact title match first
+  const exact = apiLessons.find((l: any) => norm(l.title) === normTopic)
+  if (exact) return exact
+  // Then try: any significant word (> 5 chars) in common
+  const topicWords = normTopic.split(' ').filter(w => w.length > 5)
+  if (topicWords.length === 0) return null
   return apiLessons.find((l: any) => {
     const normLesson = norm(l.title)
-    return topicWords.length > 0 && topicWords.filter(w => normLesson.includes(w)).length >= Math.ceil(topicWords.length * 0.6)
+    return topicWords.some(w => normLesson.includes(w))
   }) ?? null
 }
 
@@ -48,21 +53,24 @@ export default function LessonsPage() {
   const isSearching = searchQuery.trim().length > 0
 
   const handleTopicClick = (topic: LessonTopic) => {
-    const apiLesson = findApiLesson(topic, apiLessons)
     if (!isPro) { setShowUpgradeModal(true); return }
+    const apiLesson = findApiLesson(topic, apiLessons)
     if (apiLesson?.videoUrl) {
+      // Resolve correct category name even during search
+      const catName = isSearching
+        ? LESSON_CATALOG.find(c => c.topics.some(t => t.title === topic.title))?.name ?? activeCategory.name
+        : activeCategory.name
       navigate('/aulas/player', {
         state: {
           title: topic.title,
           videoUrl: apiLesson.videoUrl,
           description: topic.desc,
           durationMin: topic.durationMin ?? apiLesson.durationMin,
-          groupName: activeCategory.name,
+          groupName: catName,
         },
       })
-    } else {
-      setShowUpgradeModal(true)
     }
+    // PRO user + no video yet → do nothing (card already shows "Em breve")
   }
 
   const totalTopics = LESSON_CATALOG.reduce((acc, c) => acc + c.topics.length, 0)
