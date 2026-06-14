@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { lessonsApi } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 import {
-  Play, Lock, Clock, BookOpen, Sparkles,
+  Play, Lock, Clock, BookOpen, Sparkles, X,
   ChevronRight, ShieldCheck
 } from 'lucide-react'
 
