@@ -55,12 +55,19 @@ function buildOptions(alternativas: Record<string, string>): string {
   )
 }
 
-function buildCode(inst: string, ano: number, num: number): string {
+function buildCode(inst: string, ano: any, num: number): string {
   let normalizedInst = inst.trim()
   if (normalizedInst.startsWith('UNICAMP')) {
     normalizedInst = 'UNICAMP'
   }
-  return `${normalizedInst}-${ano}-${num}`
+  if (normalizedInst.toLowerCase().includes('revalida')) {
+    normalizedInst = 'Revalida'
+  }
+  let parsedAno = typeof ano === 'number' ? ano : parseInt(String(ano), 10)
+  if (isNaN(parsedAno)) {
+    parsedAno = 0
+  }
+  return `${normalizedInst}-${parsedAno}-${num}`
 }
 
 function getWords(text: string): Set<string> {
@@ -95,8 +102,9 @@ interface GabaritoMatchItem {
 const BATCH_SIZE = 50
 
 async function main() {
-  const filePath = process.argv[2]
-    ? path.resolve(process.argv[2])
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+  const filePath = args[0]
+    ? path.resolve(args[0])
     : path.resolve(__dirname, '../../questoes_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
@@ -123,7 +131,7 @@ async function main() {
             id: raw.id,
             numero: raw.numero_questao,
             words: getWords(raw.enunciado_completo),
-            ano: Number(raw.ano)
+            ano: parseInt(String(raw.ano), 10)
           })
         }
       } catch (e) {}
@@ -138,20 +146,38 @@ async function main() {
     instMap.set(row.acronym as string, row.id as string)
   }
 
-  // 2. Carregar todas as questões em memória
-  const rl = readline.createInterface({
-    input: fs.createReadStream(filePath, { encoding: 'utf-8' }),
-    crlfDelay: Infinity,
-  })
+  // 2. Carregar as questões em memória (filtrando apenas novas se --only-new estiver presente)
+  const onlyNew = process.argv.includes('--only-new')
+  let lines: string[] = []
+
+  if (onlyNew) {
+    console.log(`🔍 Buscando apenas as questões novas adicionadas via git diff...`)
+    try {
+      const diffOutput = require('child_process').execSync(
+        `git diff -U0 -- "${filePath}"`,
+        { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+      )
+      lines = diffOutput
+        .split('\n')
+        .filter((l: string) => l.startsWith('+') && !l.startsWith('+++'))
+        .map((l: string) => l.substring(1).replace(/^\uFEFF/, '').trim())
+        .filter(Boolean)
+      console.log(`  💡 Encontradas ${lines.length} novas questões no git diff.`)
+    } catch (err) {
+      console.error(`  ❌ Erro ao ler git diff:`, err)
+      process.exit(1)
+    }
+  } else {
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    lines = fileContent.split('\n').map(l => l.replace(/^\uFEFF/, '').trim()).filter(Boolean)
+  }
 
   const questions: RawQuestion[] = []
   let lineNum = 0
-  for await (const line of rl) {
-    const trimmed = line.replace(/^\uFEFF/, '').trim()
-    if (!trimmed) continue
+  for (const line of lines) {
     lineNum++
     try {
-      questions.push(JSON.parse(trimmed))
+      questions.push(JSON.parse(line))
     } catch {
       console.error(`  ❌ Linha ${lineNum}: JSON inválido`)
     }

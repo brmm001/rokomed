@@ -67,12 +67,24 @@ function buildOptions(alternativas: Record<string, string>) {
   )
 }
 
-function buildCode(instituicao: string, ano: number, numero: number): string {
-  return `${instituicao}-${ano}-${numero}`
+function buildCode(instituicao: string, ano: any, numero: number): string {
+  let normalizedInst = instituicao.trim()
+  if (normalizedInst.startsWith('UNICAMP')) {
+    normalizedInst = 'UNICAMP'
+  }
+  if (normalizedInst.toLowerCase().includes('revalida')) {
+    normalizedInst = 'Revalida'
+  }
+  let parsedAno = typeof ano === 'number' ? ano : parseInt(String(ano), 10)
+  if (isNaN(parsedAno)) {
+    parsedAno = 0
+  }
+  return `${normalizedInst}-${parsedAno}-${numero}`
 }
 
 async function main() {
-  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '../../questoes_importar.jsonl')
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+  const filePath = args[0] ? path.resolve(args[0]) : path.resolve(__dirname, '../../questoes_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Arquivo não encontrado: ${filePath}`)
@@ -82,17 +94,37 @@ async function main() {
   console.log('📥 Iniciando importação de questões...')
   console.log(`📄 Arquivo: ${filePath}`)
 
-  const rl = readline.createInterface({
-    input: fs.createReadStream(filePath, { encoding: 'utf-8' }),
-    crlfDelay: Infinity,
-  })
+  const onlyNew = process.argv.includes('--only-new')
+  let lines: string[] = []
+
+  if (onlyNew) {
+    console.log(`🔍 Buscando apenas as questões novas adicionadas via git diff...`)
+    try {
+      const diffOutput = require('child_process').execSync(
+        `git diff -U0 -- "${filePath}"`,
+        { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+      )
+      lines = diffOutput
+        .split('\n')
+        .filter((l: string) => l.startsWith('+') && !l.startsWith('+++'))
+        .map((l: string) => l.substring(1).replace(/^\uFEFF/, '').trim())
+        .filter(Boolean)
+      console.log(`  💡 Encontradas ${lines.length} novas questões no git diff.`)
+    } catch (err) {
+      console.error(`  ❌ Erro ao ler git diff:`, err)
+      process.exit(1)
+    }
+  } else {
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    lines = fileContent.split('\n').map(l => l.replace(/^\uFEFF/, '').trim()).filter(Boolean)
+  }
 
   let total    = 0
   let imported = 0
   let skipped  = 0
   let errors   = 0
 
-  for await (const line of rl) {
+  for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed) continue
 

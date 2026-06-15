@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { requireAuth } from '../middleware/auth'
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
+import { MercadoPagoConfig, Preference, Payment, PreApproval } from 'mercadopago'
 import { sendEmail } from '../lib/resend'
 import crypto from 'crypto'
 import { PLANS } from '../config/plans'
@@ -127,6 +127,97 @@ async function checkAndExpireSubscription(userId: string): Promise<void> {
       data: { plan: 'FREE' },
     })
   }
+}
+
+// ── Utilitário: ativa assinatura PRO após pagamento aprovado ──────────────────
+async function activateSubscription(
+  app: FastifyInstance,
+  userId: string,
+  planKey: string,
+  mercadoPagoId: string,
+  amount: number,
+  couponCode: string | null,
+  paymentMethod: string,
+  webhookPayload: string
+): Promise<void> {
+  const months = planKey === 'semiannual' ? 6 : planKey === 'annual' ? 12 : 1
+  const expiresAt = new Date()
+  expiresAt.setMonth(expiresAt.getMonth() + months)
+  const mpId = String(mercadoPagoId)
+
+  await prisma.payment.upsert({
+    where: { mercadoPagoId: mpId },
+    update: { status: 'approved' },
+    create: {
+      userId,
+      mercadoPagoId: mpId,
+      plan: 'PRO',
+      amount,
+      status: 'approved',
+      paymentMethod,
+      couponCode: couponCode || null,
+      webhookPayload,
+    },
+  })
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { plan: 'PRO' },
+  })
+
+  // Decrementa uso do cupom
+  if (couponCode) {
+    try {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
+      if (coupon && coupon.usesRemaining > 0) {
+        await prisma.coupon.update({
+          where: { id: coupon.id },
+          data: { usesRemaining: coupon.usesRemaining - 1 },
+        })
+      }
+    } catch (couponErr) {
+      app.log.error(couponErr, 'Erro ao decrementar uso do cupom')
+    }
+  }
+
+  // Idempotência: evita duplicar subscriptions
+  const existingSub = await prisma.subscription.findFirst({
+    where: { userId, status: 'active', expiresAt },
+  })
+
+  if (!existingSub) {
+    await prisma.subscription.create({
+      data: { userId, plan: 'PRO', status: 'active', expiresAt },
+    })
+  }
+
+  // E-mail de confirmação
+  const planLabel = planKey === 'annual' ? 'Anual' : planKey === 'semiannual' ? 'Semestral' : 'Mensal'
+  const successEmailHtml = getEmailTemplate(
+    'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
+    `
+      <h2>Seu pagamento foi aprovado! 🎉</h2>
+      <p>Olá, <strong>${updatedUser.name}</strong>!</p>
+      <p>É com muita alegria que damos as boas-vindas ao <strong>RokoMed PRO</strong>. Sua assinatura do plano <strong>${planLabel}</strong> foi ativada com sucesso.</p>
+      <div class="card">
+        <p><strong>Detalhes da sua assinatura:</strong></p>
+        <p style="margin-top: 8px;">• Plano: RokoMed PRO (${planLabel})</p>
+        <p>• Data de expiração: <strong>${expiresAt.toLocaleDateString('pt-BR')}</strong></p>
+        <p>• Status: <strong>Ativo</strong></p>
+      </div>
+      <p>Aproveite agora mesmo todos os recursos ilimitados!</p>
+      <br />
+      <p>Bons estudos,<br/><strong>Equipe RokoMed</strong></p>
+    `
+  )
+
+  sendEmail({
+    to: updatedUser.email,
+    subject: 'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
+    html: successEmailHtml,
+  }).catch(err => app.log.error('Erro ao enviar email de assinatura: ' + err.message))
+
+  app.log.info(`[activateSubscription] Conta ${userId} → PRO. Vencimento: ${expiresAt}`)
 }
 
 export default async function subscriptionRoutes(app: FastifyInstance) {
@@ -439,92 +530,16 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           }
 
           if (userId) {
-            const months = planKey === 'semiannual' ? 6 : planKey === 'annual' ? 12 : 1
-            const expiresAt = new Date()
-            expiresAt.setMonth(expiresAt.getMonth() + months)
-            const mpId = String(paymentInfo.id)
-
-            // FIX #2: Upsert seguro no Payment (mercadoPagoId garantidamente não-nulo)
-            await prisma.payment.upsert({
-              where: { mercadoPagoId: mpId },
-              update: { status: 'approved' },
-              create: {
-                userId,
-                mercadoPagoId: mpId,
-                plan: 'PRO',
-                amount: Number(paymentInfo.transaction_amount) || 0,
-                status: 'approved',
-                couponCode: couponCode || null,
-                webhookPayload: JSON.stringify(body)
-              }
-            })
-
-            const updatedUser = await prisma.user.update({
-              where: { id: userId },
-              data: { plan: 'PRO' }
-            })
-
-            // Decrementa usos do cupom se aplicável
-            if (couponCode) {
-              try {
-                const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } })
-                if (coupon && coupon.usesRemaining > 0) {
-                  await prisma.coupon.update({
-                    where: { id: coupon.id },
-                    data: { usesRemaining: coupon.usesRemaining - 1 }
-                  })
-                  app.log.info(`[Webhook] Cupom ${couponCode} decrementado. Usos restantes: ${coupon.usesRemaining - 1}`)
-                }
-              } catch (couponErr) {
-                app.log.error(couponErr, 'Erro ao decrementar uso do cupom')
-              }
-            }
-
-            // FIX #4: Idempotência — evitar duplicatas se o MP reenviar o webhook
-            const existingSub = await prisma.subscription.findFirst({
-              where: { userId, status: 'active', expiresAt },
-            })
-
-            if (!existingSub) {
-              await prisma.subscription.create({
-                data: {
-                  userId,
-                  plan: 'PRO',
-                  status: 'active',
-                  expiresAt
-                }
-              })
-            }
-
-            // Envia o e-mail de confirmação da compra (estilizado)
-            const successEmailHtml = getEmailTemplate(
-              'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
-              `
-                <h2>Seu pagamento foi aprovado! 🎉</h2>
-                <p>Olá, <strong>${updatedUser.name}</strong>!</p>
-                <p>É com muita alegria que damos as boas-vindas ao <strong>RokoMed PRO</strong>. Sua assinatura do plano <strong>${planKey.toUpperCase()}</strong> foi ativada com sucesso.</p>
-                
-                <div class="card">
-                  <p><strong>Detalhes da sua assinatura:</strong></p>
-                  <p style="margin-top: 8px;">• Plano: RokoMed PRO (${planKey === 'annual' ? 'Anual' : planKey === 'semiannual' ? 'Semestral' : 'Mensal'})</p>
-                  <p>• Data de expiração: <strong>${expiresAt.toLocaleDateString('pt-BR')}</strong></p>
-                  <p>• Status: <strong>Ativo</strong></p>
-                </div>
-
-                <p>Aproveite agora mesmo todos os recursos ilimitados, simulados inteligentes com inteligência artificial, flashcards e estatísticas detalhadas de desempenho para acelerar sua aprovação.</p>
-                
-                <br />
-                <p>Bons estudos e conte conosco,<br/><strong>Equipe RokoMed</strong></p>
-              `
+            await activateSubscription(
+              app,
+              userId,
+              planKey,
+              String(paymentInfo.id),
+              Number(paymentInfo.transaction_amount) || 0,
+              couponCode,
+              (paymentInfo.payment_method_id as string) || 'unknown',
+              JSON.stringify(body)
             )
-
-            sendEmail({
-              to: updatedUser.email,
-              subject: 'Pagamento Aprovado! Bem-vindo ao RokoMed PRO',
-              html: successEmailHtml
-            }).catch(err => app.log.error('Erro ao enviar email de assinatura: ' + err.message))
-
-            app.log.info(`[Webhook] Pagamento aprovado. Conta ${userId} → PRO. Vencimento: ${expiresAt}`)
           }
         }
       }
@@ -533,5 +548,230 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     }
 
     return reply.code(200).send({ received: true })
+  })
+
+  // ── CHECKOUT TRANSPARENTE ─────────────────────────────────────────────────
+
+  // POST /api/subscriptions/transparent/init — prepara dados para o Brick
+  app.post('/transparent/init', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { plan = 'monthly', couponCode } = request.body as { plan?: string; couponCode?: string }
+    const payload = request.user as { sub: string }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
+
+    const config = PLANS[plan]
+    if (!config) return reply.code(400).send({ error: 'Plano inválido' })
+
+    let finalAmount = config.amount
+    let discountApplied = 0
+    let couponInfo: any = null
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.toUpperCase() } })
+      if (coupon && coupon.isActive && coupon.usesRemaining > 0 && (!coupon.validUntil || coupon.validUntil >= new Date())) {
+        couponInfo = { code: coupon.code, type: coupon.type, value: coupon.value }
+        discountApplied = coupon.type === 'percent'
+          ? (config.amount * coupon.value) / 100
+          : coupon.value
+        finalAmount = Math.max(0.1, config.amount - discountApplied)
+      }
+    }
+
+    const publicKey = process.env.MERCADO_PAGO_PUBLIC_KEY || ''
+
+    return reply.send({
+      amount: Number(finalAmount.toFixed(2)),
+      originalAmount: config.amount,
+      discountApplied: Number(discountApplied.toFixed(2)),
+      coupon: couponInfo,
+      publicKey,
+      plan,
+      userInfo: {
+        email: user.email,
+        firstName: user.name?.split(' ')[0] ?? '',
+        lastName: user.name?.split(' ').slice(1).join(' ') ?? '',
+      },
+    })
+  })
+
+  // POST /api/subscriptions/transparent/subscribe — cartão recorrente via PreApproval
+  app.post('/transparent/subscribe', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const {
+      cardToken, paymentMethodId, issuerId, installments = 1,
+      email, identificationType, identificationNumber,
+      plan = 'monthly', couponCode,
+    } = request.body as {
+      cardToken: string; paymentMethodId: string; issuerId?: string; installments?: number;
+      email: string; identificationType: string; identificationNumber: string;
+      plan?: string; couponCode?: string;
+    }
+
+    const payload = request.user as { sub: string }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
+
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      return reply.code(503).send({ error: 'Pagamento indisponível no momento. Configure MERCADO_PAGO_ACCESS_TOKEN.' })
+    }
+
+    const config = PLANS[plan]
+    if (!config) return reply.code(400).send({ error: 'Plano inválido' })
+
+    let finalAmount = config.amount
+    let couponCodeUpper: string | null = null
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.toUpperCase() } })
+      if (coupon && coupon.isActive && coupon.usesRemaining > 0 && (!coupon.validUntil || coupon.validUntil >= new Date())) {
+        couponCodeUpper = coupon.code
+        const discount = coupon.type === 'percent'
+          ? (config.amount * coupon.value) / 100
+          : coupon.value
+        finalAmount = Math.max(0.1, config.amount - discount)
+      }
+    }
+
+    const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
+    const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+    try {
+      const preApprovalClient = new PreApproval(client)
+      const result = await preApprovalClient.create({
+        body: {
+          reason: `RokoMed PRO — ${config.title}`,
+          payer_email: email || user.email,
+          card_token_id: cardToken,
+          auto_recurring: {
+            frequency: 1,
+            frequency_type: 'months',
+            transaction_amount: Number(finalAmount.toFixed(2)),
+            currency_id: 'BRL',
+          },
+          back_url: `${frontUrl}/dashboard?payment=success`,
+          status: 'authorized',
+          external_reference: `${user.id}__${plan}__${couponCodeUpper || ''}`,
+        },
+      })
+
+      app.log.info(`[PreApproval] Resultado: ${JSON.stringify({ id: result.id, status: result.status })}`)
+
+      if (result.status === 'authorized' || result.status === 'active') {
+        // Ativa imediatamente — MP vai cobrar recorrentemente a partir daqui
+        await activateSubscription(
+          app,
+          user.id,
+          plan,
+          result.id ?? `preapproval_${Date.now()}`,
+          finalAmount,
+          couponCodeUpper,
+          'credit_card',
+          JSON.stringify(result)
+        )
+        return reply.send({ status: 'approved', subscriptionId: result.id })
+      }
+
+      // Assinatura criada mas ainda não autorizada (ex: cartão pendente de confirmação)
+      return reply.send({ status: result.status ?? 'pending', subscriptionId: result.id })
+    } catch (err: any) {
+      app.log.error({ err }, 'Erro ao criar PreApproval')
+      return reply.code(500).send({
+        error: 'Erro ao processar assinatura',
+        detail: err?.cause?.message ?? err?.message,
+      })
+    }
+  })
+
+  // POST /api/subscriptions/transparent/pix — gera pagamento PIX único (30 dias)
+  app.post('/transparent/pix', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { plan = 'monthly', couponCode, email, identificationType = 'CPF', identificationNumber } = request.body as {
+      plan?: string; couponCode?: string; email: string; identificationType?: string; identificationNumber: string;
+    }
+
+    const payload = request.user as { sub: string }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!user) return reply.code(404).send({ error: 'Usuário não encontrado' })
+
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      return reply.code(503).send({ error: 'Pagamento indisponível no momento.' })
+    }
+
+    const config = PLANS[plan]
+    if (!config) return reply.code(400).send({ error: 'Plano inválido' })
+
+    let finalAmount = config.amount
+    let couponCodeUpper: string | null = null
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.toUpperCase() } })
+      if (coupon && coupon.isActive && coupon.usesRemaining > 0 && (!coupon.validUntil || coupon.validUntil >= new Date())) {
+        couponCodeUpper = coupon.code
+        const discount = coupon.type === 'percent'
+          ? (config.amount * coupon.value) / 100
+          : coupon.value
+        finalAmount = Math.max(0.1, config.amount - discount)
+      }
+    }
+
+    const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
+
+    try {
+      const paymentClient = new Payment(client)
+      const result = await paymentClient.create({
+        body: {
+          transaction_amount: Number(finalAmount.toFixed(2)),
+          description: `RokoMed PRO — ${config.title}`,
+          payment_method_id: 'pix',
+          payer: {
+            email: email || user.email,
+            identification: { type: identificationType, number: identificationNumber },
+          },
+          external_reference: `${user.id}__${plan}__${couponCodeUpper || ''}`,
+          date_of_expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
+        },
+      })
+
+      if (!result.id) {
+        return reply.code(500).send({ error: 'MP não retornou ID do pagamento' })
+      }
+
+      const pixData = (result as any).point_of_interaction?.transaction_data
+
+      return reply.send({
+        status: result.status,
+        paymentId: String(result.id),
+        pixQrCode: pixData?.qr_code ?? null,
+        pixQrCodeBase64: pixData?.qr_code_base64 ?? null,
+        pixExpiresAt: pixData?.ticket_url ?? null,
+      })
+    } catch (err: any) {
+      app.log.error({ err }, 'Erro ao criar pagamento PIX')
+      return reply.code(500).send({
+        error: 'Erro ao gerar PIX',
+        detail: err?.cause?.message ?? err?.message,
+      })
+    }
+  })
+
+  // GET /api/subscriptions/transparent/pix-status/:id — polling para confirmar PIX
+  app.get('/transparent/pix-status/:id', { preHandler: [requireAuth] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string }
+
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      return reply.code(503).send({ error: 'Serviço indisponível' })
+    }
+
+    try {
+      const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
+      const paymentClient = new Payment(client)
+      const paymentInfo = await paymentClient.get({ id })
+
+      return reply.send({
+        status: paymentInfo.status,
+        statusDetail: paymentInfo.status_detail,
+      })
+    } catch (err: any) {
+      app.log.error({ err }, 'Erro ao consultar status do PIX')
+      return reply.code(500).send({ error: 'Erro ao consultar pagamento' })
+    }
   })
 }

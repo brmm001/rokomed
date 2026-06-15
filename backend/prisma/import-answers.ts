@@ -49,8 +49,19 @@ function mapDifficulty(raw: string | null | undefined): string {
   return map[raw.trim()] ?? 'MEDIO'
 }
 
-function buildCode(instituicao: string, ano: number, numero: number): string {
-  return `${instituicao}-${ano}-${numero}`
+function buildCode(instituicao: string, ano: any, numero: number): string {
+  let normalizedInst = instituicao.trim()
+  if (normalizedInst.startsWith('UNICAMP')) {
+    normalizedInst = 'UNICAMP'
+  }
+  if (normalizedInst.toLowerCase().includes('revalida')) {
+    normalizedInst = 'Revalida'
+  }
+  let parsedAno = typeof ano === 'number' ? ano : parseInt(String(ano), 10)
+  if (isNaN(parsedAno)) {
+    parsedAno = 0
+  }
+  return `${normalizedInst}-${parsedAno}-${numero}`
 }
 
 /** Monta HTML rico para o campo `explanation` */
@@ -224,7 +235,8 @@ async function resolveSpecialtyId(raw: GabaritoItem): Promise<string> {
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 async function main() {
-  const filePath = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '../../gabarito_importar.jsonl')
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+  const filePath = args[0] ? path.resolve(args[0]) : path.resolve(__dirname, '../../gabarito_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Arquivo não encontrado: ${filePath}`)
@@ -234,17 +246,37 @@ async function main() {
   console.log('📥 Iniciando importação de gabarito...')
   console.log(`📄 Arquivo: ${filePath}`)
 
-  const rl = readline.createInterface({
-    input:     fs.createReadStream(filePath, { encoding: 'utf-8' }),
-    crlfDelay: Infinity,
-  })
+  const onlyNew = process.argv.includes('--only-new')
+  let lines: string[] = []
+
+  if (onlyNew) {
+    console.log(`🔍 Buscando apenas os gabaritos novos adicionados via git diff...`)
+    try {
+      const diffOutput = require('child_process').execSync(
+        `git diff -U0 -- "${filePath}"`,
+        { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+      )
+      lines = diffOutput
+        .split('\n')
+        .filter((l: string) => l.startsWith('+') && !l.startsWith('+++'))
+        .map((l: string) => l.substring(1).replace(/^\uFEFF/, '').trim())
+        .filter(Boolean)
+      console.log(`  💡 Encontradas ${lines.length} novas respostas no git diff.`)
+    } catch (err) {
+      console.error(`  ❌ Erro ao ler git diff:`, err)
+      process.exit(1)
+    }
+  } else {
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    lines = fileContent.split('\n').map(l => l.replace(/^\uFEFF/, '').trim()).filter(Boolean)
+  }
 
   let total    = 0
   let updated  = 0
   let notFound = 0
   let errors   = 0
 
-  for await (const line of rl) {
+  for (const line of lines) {
     const trimmed = line.trim()
     if (!trimmed) continue
 
@@ -259,12 +291,8 @@ async function main() {
       continue
     }
 
-    let mappedInstitution = raw.instituicao
-    if (mappedInstitution.includes('UNICAMP')) {
-      mappedInstitution = 'UNICAMP'
-    }
-    const num = raw.numero_questao_original !== undefined ? raw.numero_questao_original : raw.numero_questao
-    const code = buildCode(mappedInstitution, raw.ano, num)
+    const num = raw.numero_questao_original ?? raw.numero_questao ?? 0
+    const code = buildCode(raw.instituicao, raw.ano, num)
 
     try {
       // Verifica se a questão existe

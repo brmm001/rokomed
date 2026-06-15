@@ -46,12 +46,19 @@ function mapDifficulty(raw: string | null | undefined): string {
   return map[raw.trim()] ?? 'MEDIO'
 }
 
-function buildCode(inst: string, ano: number, num: number): string {
+function buildCode(inst: string, ano: any, num: number): string {
   let normalizedInst = inst.trim()
   if (normalizedInst.startsWith('UNICAMP')) {
     normalizedInst = 'UNICAMP'
   }
-  return `${normalizedInst}-${ano}-${num}`
+  if (normalizedInst.toLowerCase().includes('revalida')) {
+    normalizedInst = 'Revalida'
+  }
+  let parsedAno = typeof ano === 'number' ? ano : parseInt(String(ano), 10)
+  if (isNaN(parsedAno)) {
+    parsedAno = 0
+  }
+  return `${normalizedInst}-${parsedAno}-${num}`
 }
 
 // Garante que um valor seja string ou null para o libSQL (nunca undefined)
@@ -184,8 +191,9 @@ function resolveSpecialtyId(raw: GabaritoItem): string {
 const BATCH_SIZE = 30
 
 async function main() {
-  const filePath = process.argv[2]
-    ? path.resolve(process.argv[2])
+  const args = process.argv.slice(2).filter(a => !a.startsWith('--'))
+  const filePath = args[0]
+    ? path.resolve(args[0])
     : path.resolve(__dirname, '../../gabarito_importar.jsonl')
 
   if (!fs.existsSync(filePath)) {
@@ -200,23 +208,41 @@ async function main() {
 
   // Carregar todos os codes existentes no BD
   const qRows = await client.execute('SELECT code FROM questions')
-  const existingCodes = new Set(qRows.rows.map(r => r.code as string))
+  const existingCodes = new Set(qRows.rows.map(r => (r.code as string).replace(/^REVALIDA-/i, 'Revalida-')))
   console.log(`  📋 ${existingCodes.size} questões no BD`)
 
-  // Ler gabarito
-  const rl = readline.createInterface({
-    input: fs.createReadStream(filePath, { encoding: 'utf-8' }),
-    crlfDelay: Infinity,
-  })
+  // Ler gabarito (filtrando apenas novas se --only-new estiver presente)
+  const onlyNew = process.argv.includes('--only-new')
+  let lines: string[] = []
+
+  if (onlyNew) {
+    console.log(`🔍 Buscando apenas as respostas novas adicionadas via git diff...`)
+    try {
+      const diffOutput = require('child_process').execSync(
+        `git diff -U0 -- "${filePath}"`,
+        { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+      )
+      lines = diffOutput
+        .split('\n')
+        .filter((l: string) => l.startsWith('+') && !l.startsWith('+++'))
+        .map((l: string) => l.substring(1).replace(/^\uFEFF/, '').trim())
+        .filter(Boolean)
+      console.log(`  💡 Encontradas ${lines.length} novas respostas no git diff.`)
+    } catch (err) {
+      console.error(`  ❌ Erro ao ler git diff:`, err)
+      process.exit(1)
+    }
+  } else {
+    const fileContent = fs.readFileSync(filePath, 'utf-8')
+    lines = fileContent.split('\n').map(l => l.replace(/^\uFEFF/, '').trim()).filter(Boolean)
+  }
 
   const items: GabaritoItem[] = []
   let lineNum = 0
-  for await (const line of rl) {
-    const t = line.replace(/^\uFEFF/, '').trim()
-    if (!t) continue
+  for (const line of lines) {
     lineNum++
     try {
-      items.push(JSON.parse(t))
+      items.push(JSON.parse(line))
     } catch {
       console.error(`  ❌ Linha ${lineNum}: JSON inválido`)
     }
@@ -240,9 +266,9 @@ async function main() {
 
   for (const raw of items) {
     const num  = raw.numero_questao_original ?? raw.numero_questao ?? 0
-    let code = raw.id
+    let code = raw.id.replace(/^REVALIDA-/i, 'Revalida-')
     if (!existingCodes.has(code)) {
-      code = buildCode(raw.instituicao, Number(raw.ano), num)
+      code = buildCode(raw.instituicao, raw.ano, num)
     }
 
     if (!existingCodes.has(code)) {
