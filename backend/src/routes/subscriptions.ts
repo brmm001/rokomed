@@ -634,6 +634,8 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
     const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN })
     const frontUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
 
+    const frequency = plan === 'semiannual' ? 6 : plan === 'annual' ? 12 : 1
+
     try {
       const preApprovalClient = new PreApproval(client)
       const result = await preApprovalClient.create({
@@ -642,7 +644,7 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
           payer_email: email || user.email,
           card_token_id: cardToken,
           auto_recurring: {
-            frequency: 1,
+            frequency,
             frequency_type: 'months',
             transaction_amount: Number(finalAmount.toFixed(2)),
             currency_id: 'BRL',

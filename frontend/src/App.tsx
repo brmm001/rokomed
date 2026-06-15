@@ -23,7 +23,6 @@ const SimuladoListPage = lazy(() => import('./pages/SimuladoList'))
 const AdaptiveSessionPage = lazy(() => import('./pages/AdaptiveSession'))
 const AnalyticsPage = lazy(() => import('./pages/Analytics'))
 const CheckoutPage = lazy(() => import('./pages/Checkout'))
-const CheckoutTestPage = lazy(() => import('./pages/CheckoutTest'))
 const PartnershipsPage = lazy(() => import('./pages/Partnerships'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPassword'))
@@ -131,7 +130,6 @@ export default function App() {
             <Route path="/forgot-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
             <Route path="/reset-password" element={<PublicOnly><ResetPasswordPage /></PublicOnly>} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/checkout-test" element={<CheckoutTestPage />} />
             <Route path="/pricing"  element={<PricingPage />} />
             <Route path="/parcerias" element={<PartnershipsPage />} />
             <Route path="/glossario" element={<GlossaryListPage />} />
