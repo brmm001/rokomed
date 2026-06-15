@@ -60,6 +60,7 @@ export default function CheckoutTestPage() {
   const [pixCountdown, setPixCountdown] = useState(1800) // 30 min
   const [rejectedReason, setRejectedReason] = useState('')
   const [brickReady, setBrickReady] = useState(false)
+  const [brickError, setBrickError] = useState<string | null>(null)
   const brickControllerRef = useRef<any>(null)
 
   // Form de identificação
@@ -102,8 +103,15 @@ export default function CheckoutTestPage() {
 
     // Precisa da public key (env var tem prioridade, fallback para o backend)
     const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY || initData?.publicKey
-    if (!publicKey) return
+    if (!publicKey) {
+      // Só exibe erro se initData já carregou (confirma que key não está configurada)
+      if (initData) {
+        setBrickError('Chave pública do Mercado Pago não configurada. Configure VITE_MERCADO_PAGO_PUBLIC_KEY na Vercel e MERCADO_PAGO_PUBLIC_KEY no backend.')
+      }
+      return
+    }
 
+    setBrickError(null)
     const amount = initData?.amount ?? 29.00
 
     // Destrói Brick anterior se existir
@@ -114,52 +122,62 @@ export default function CheckoutTestPage() {
     }
 
     const loadAndRenderBrick = () => {
-      const mp = new (window as any).MercadoPago(publicKey, { locale: 'pt-BR' })
-      const bricksBuilder = mp.bricks()
+      try {
+        const mp = new (window as any).MercadoPago(publicKey, { locale: 'pt-BR' })
+        const bricksBuilder = mp.bricks()
 
-      bricksBuilder.create('cardPayment', 'mp-card-container', {
-        initialization: {
-          amount,
-          payer: {
-            email: initData?.userInfo.email,
-          },
-        },
-        customization: {
-          visual: {
-            style: {
-              theme: 'dark',
-              customVariables: {
-                baseColor: '#3B7EF8',
-                fontSizeBase: '14px',
-                borderRadiusBase: '8px',
-                formBackgroundColor: '#0C1A2E',
-                inputBackgroundColor: '#0C1A2E',
-                inputBorderColor: 'rgba(100,160,255,0.2)',
-                labelTextColor: '#7B9DBF',
-                inputTextColor: '#EBF4FF',
-              },
+        bricksBuilder.create('cardPayment', 'mp-card-container', {
+          initialization: {
+            amount,
+            payer: {
+              email: initData?.userInfo.email,
             },
-            hidePaymentButton: false,
           },
-          paymentMethods: {
-            maxInstallments: 1, // apenas à vista — é assinatura
+          customization: {
+            visual: {
+              style: {
+                theme: 'dark',
+                customVariables: {
+                  baseColor: '#3B7EF8',
+                  fontSizeBase: '14px',
+                  borderRadiusBase: '8px',
+                  formBackgroundColor: '#0C1A2E',
+                  inputBackgroundColor: '#0C1A2E',
+                  inputBorderColor: 'rgba(100,160,255,0.2)',
+                  labelTextColor: '#7B9DBF',
+                  inputTextColor: '#EBF4FF',
+                },
+              },
+              hidePaymentButton: false,
+            },
+            paymentMethods: {
+              maxInstallments: 1,
+            },
           },
-        },
-        callbacks: {
-          onReady: () => setBrickReady(true),
-          onSubmit: async (cardFormData: any) => {
-            await handleCardSubmit(cardFormData)
+          callbacks: {
+            onReady: () => setBrickReady(true),
+            onSubmit: async (cardFormData: any) => {
+              await handleCardSubmit(cardFormData)
+            },
+            onError: (error: any) => {
+              console.error('[MP Brick error]', error)
+              const code = error?.cause?.[0]?.code
+              // E301 é erro de validação normal (usuário digitando), ignora
+              if (code && code !== 'E301') {
+                setBrickError(`Erro no formulário (${code}). Recarregue a página e tente novamente.`)
+              }
+            },
           },
-          onError: (error: any) => {
-            console.error('[MP Brick error]', error)
-            if (error?.cause?.length && error.cause[0]?.code !== 'E301') {
-              toast.error('Erro no formulário de pagamento. Verifique os dados do cartão.')
-            }
-          },
-        },
-      }).then((controller: any) => {
-        brickControllerRef.current = controller
-      })
+        }).then((controller: any) => {
+          brickControllerRef.current = controller
+        }).catch((err: any) => {
+          console.error('[Brick create error]', err)
+          setBrickError('Não foi possível carregar o formulário de pagamento. Verifique se a Public Key do Mercado Pago está correta.')
+        })
+      } catch (err: any) {
+        console.error('[MP init error]', err)
+        setBrickError('Erro ao inicializar o Mercado Pago. Verifique a Public Key e tente novamente.')
+      }
     }
 
     // Carrega o SDK MP se ainda não carregou
@@ -543,7 +561,20 @@ export default function CheckoutTestPage() {
                       </div>
                     )}
 
-                    {!brickReady && (
+                    {brickError ? (
+                      <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                        <div className="w-10 h-10 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center">
+                          <AlertTriangle className="w-5 h-5 text-red-400" />
+                        </div>
+                        <p className="text-sm text-red-300 leading-relaxed max-w-sm">{brickError}</p>
+                        <button
+                          onClick={() => { setBrickError(null); setBrickReady(false) }}
+                          className="text-xs text-[#3B7EF8] hover:underline font-mono uppercase tracking-wider"
+                        >
+                          Tentar novamente
+                        </button>
+                      </div>
+                    ) : !brickReady && (
                       <div className="flex items-center justify-center py-12 text-[#7B9DBF]">
                         <div className="w-6 h-6 border-2 border-[rgba(59,126,248,0.2)] border-t-[#3B7EF8] rounded-full animate-spin mr-3"></div>
                         Carregando formulário seguro...
