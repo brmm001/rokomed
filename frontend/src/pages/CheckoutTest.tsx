@@ -47,7 +47,7 @@ const MP_ERROR_MAP: Record<string, string> = {
 // ── Componente Principal ───────────────────────────────────────────────────────
 export default function CheckoutTestPage() {
   const navigate = useNavigate()
-  const { token, user: authUser } = useAuthStore()
+  const { token } = useAuthStore()
   const setAuth = useAuthStore(state => state.setAuth)
 
   // Estados principais
@@ -73,16 +73,6 @@ export default function CheckoutTestPage() {
   // CPF para PIX
   const [pixCpf, setPixCpf] = useState('')
 
-  // ── Inicialização ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    document.title = 'Checkout Transparente — RokoMed (Teste)'
-    window.scrollTo(0, 0)
-    if (token) {
-      setStep('payment')
-      fetchInitData()
-    }
-  }, [token])
-
   // ── Fetch init data ──────────────────────────────────────────────────────────
   const fetchInitData = useCallback(async (coupon?: string) => {
     try {
@@ -95,6 +85,16 @@ export default function CheckoutTestPage() {
       console.error('Erro ao inicializar checkout:', err)
     }
   }, [])
+
+  // ── Inicialização ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    document.title = 'Checkout Transparente — RokoMed (Teste)'
+    window.scrollTo(0, 0)
+    if (token) {
+      setStep('payment')
+      fetchInitData()
+    }
+  }, [token, fetchInitData])
 
   // ── MP Brick: carrega SDK e renderiza ────────────────────────────────────────
   useEffect(() => {
@@ -791,9 +791,9 @@ export default function CheckoutTestPage() {
             <div className="flex justify-between items-end">
               <div>
                 <span className="font-mono text-[0.7rem] uppercase tracking-widest text-[#7B9DBF] block mb-1">Valor mensal</span>
-                {initData?.discountApplied > 0 && (
+                {(initData?.discountApplied ?? 0) > 0 && (
                   <span className="line-through text-[#7B9DBF] text-sm mr-2">
-                    R$ {initData.originalAmount.toFixed(2)}
+                    R$ {initData!.originalAmount.toFixed(2)}
                   </span>
                 )}
               </div>
