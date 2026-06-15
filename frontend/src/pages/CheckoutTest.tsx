@@ -101,13 +101,15 @@ export default function CheckoutTestPage() {
   useEffect(() => {
     if (step !== 'payment' || activeTab !== 'card') return
 
-    // Precisa da public key (env var tem prioridade, fallback para o backend)
-    const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY || initData?.publicKey
+    // A publicKey vem do backend (/transparent/init → process.env.MERCADO_PAGO_PUBLIC_KEY)
+    // Aguarda initData carregar antes de tentar montar o Brick
+    const publicKey = initData?.publicKey
     if (!publicKey) {
-      // Só exibe erro se initData já carregou (confirma que key não está configurada)
       if (initData) {
-        setBrickError('Chave pública do Mercado Pago não configurada. Configure VITE_MERCADO_PAGO_PUBLIC_KEY na Vercel e MERCADO_PAGO_PUBLIC_KEY no backend.')
+        // initData carregou mas publicKey vazia → credencial não configurada no backend
+        setBrickError('Chave pública do Mercado Pago não configurada no servidor. Configure MERCADO_PAGO_PUBLIC_KEY nas variáveis de ambiente do backend.')
       }
+      // Se initData ainda não carregou, aguarda sem erro
       return
     }
 
