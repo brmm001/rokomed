@@ -98,7 +98,13 @@ export default function CheckoutTestPage() {
 
   // ── MP Brick: carrega SDK e renderiza ────────────────────────────────────────
   useEffect(() => {
-    if (step !== 'payment' || activeTab !== 'card' || !initData?.publicKey) return
+    if (step !== 'payment' || activeTab !== 'card') return
+
+    // Precisa da public key (env var tem prioridade, fallback para o backend)
+    const publicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY || initData?.publicKey
+    if (!publicKey) return
+
+    const amount = initData?.amount ?? 29.00
 
     // Destrói Brick anterior se existir
     if (brickControllerRef.current) {
@@ -106,9 +112,6 @@ export default function CheckoutTestPage() {
       brickControllerRef.current = null
       setBrickReady(false)
     }
-
-    const publicKey = initData.publicKey
-    const amount = initData.amount
 
     const loadAndRenderBrick = () => {
       const mp = new (window as any).MercadoPago(publicKey, { locale: 'pt-BR' })
@@ -118,7 +121,7 @@ export default function CheckoutTestPage() {
         initialization: {
           amount,
           payer: {
-            email: initData.userInfo.email,
+            email: initData?.userInfo.email,
           },
         },
         customization: {
