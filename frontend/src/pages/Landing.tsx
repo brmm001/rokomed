@@ -2265,7 +2265,7 @@ export default function LandingPage() {
         </footer>
 
         {/* Floating WhatsApp Button */}
-        <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="lp-wa-btn" aria-label="WhatsApp" onClick={() => trackClick('WHATSAPP_CLICK')}>
+        <a href="https://wa.me/5541987223343" target="_blank" rel="noopener noreferrer" className="lp-wa-btn" aria-label="WhatsApp" onClick={() => trackClick('WHATSAPP_CLICK')}>
           <MessageCircle size={32} />
         </a>
 
