@@ -285,18 +285,29 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.75rem; font-weight: 600;
 }
 
-/* Análise por alternativa */
 .explanation-content .alt-item {
-  display: flex; gap: 0.875rem; align-items: flex-start;
-  padding: 0.625rem 0.75rem; border-radius: 8px;
-  margin-bottom: 0.375rem; background: rgba(255,255,255,0.03);
-  border: 1px solid transparent; transition: border-color 0.2s;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  align-items: flex-start;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.375rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
 }
 .explanation-content .alt-item:hover { border-color: var(--border-accent); }
 .explanation-content .alt-letra {
-  width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 0.8125rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8125rem;
 }
 .explanation-content .alt-letra.correta {
   background: rgba(16,185,129,0.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.4);
@@ -304,7 +315,20 @@ h1, h2, h3, h4, h5, h6 {
 .explanation-content .alt-letra.incorreta {
   background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3);
 }
-.explanation-content .alt-texto { font-size: 0.9rem; line-height: 1.6; padding-top: 3px; }
+.explanation-content .alt-texto {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding-top: 3px;
+  flex: 1;
+}
+.explanation-content .alt-comentario {
+  width: 100%;
+  margin: 0.5rem 0 0 0;
+  padding-left: 42px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
 
 /* Blocos de seção */
 .explanation-content .comentario-geral,

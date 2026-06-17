@@ -283,11 +283,12 @@ export default function FreeExamPage() {
         .fe-explanation .comentario-geral, .fe-explanation .conteudo-completo, .fe-explanation .raciocinio-alternativas, .fe-explanation .contexto-especifico { padding: 16px 18px; border-radius: 12px; background: rgba(255,255,255,0.025); border: 1px solid rgba(100,160,255,0.08); margin-bottom: 14px; }
         .fe-explanation .pegadinha { padding: 16px 18px; border-radius: 12px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); margin-bottom: 14px; }
         .fe-explanation .pegadinha h4 { color: #F59E0B; }
-        .fe-explanation .alt-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
+        .fe-explanation .alt-item { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.02); border: 1px solid transparent; }
         .fe-explanation .alt-letra { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; font-family: 'Sora', sans-serif; }
         .fe-explanation .alt-letra.correta { background: rgba(16,185,129,0.18); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.35); }
         .fe-explanation .alt-letra.incorreta { background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.28); }
-        .fe-explanation .alt-texto { font-size: 13px; line-height: 1.6; color: #94A3B8; padding-top: 3px; }
+        .fe-explanation .alt-texto { font-size: 13px; line-height: 1.6; color: #94A3B8; padding-top: 3px; flex: 1; }
+        .fe-explanation .alt-comentario { width: 100%; margin: 8px 0 0 0; padding-left: 40px; font-size: 13px; color: #94A3B8; line-height: 1.6; }
 
         .fe-next-btn {
           display: inline-flex; align-items: center; gap: 8px;
