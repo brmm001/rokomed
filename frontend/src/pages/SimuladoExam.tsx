@@ -245,7 +245,7 @@ export default function SimuladoExamPage() {
                     <div style={{ fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--text-primary)', marginBottom: '1rem' }}
                       dangerouslySetInnerHTML={{ __html: q.statement }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: q.explanation || q.reasoningLine?.length ? '1rem' : 0 }}>
-                      {q.options.map(opt => (
+                      {q.options.filter(opt => opt.text && opt.text.trim() !== '').map(opt => (
                         <div key={opt.letter} style={{ display: 'flex', gap: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 8,
                           background: opt.letter === q.correctOption ? 'rgba(16,185,129,0.1)' : opt.letter === eq.selectedOpt ? 'rgba(239,68,68,0.08)' : 'transparent',
                           border: `1px solid ${opt.letter === q.correctOption ? 'rgba(16,185,129,0.3)' : opt.letter === eq.selectedOpt ? 'rgba(239,68,68,0.2)' : 'transparent'}` }}>
@@ -360,7 +360,7 @@ export default function SimuladoExamPage() {
 
         {/* Alternativas */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-          {q.options.map(({ letter, text }) => (
+          {q.options.filter(opt => opt.text && opt.text.trim() !== '').map(({ letter, text }) => (
             <button key={letter} id={`opt-${letter}`}
               onClick={() => handleAnswer(eq.order, letter)}
               className={`apple-option${answered === letter ? ' selected' : ''}`}>

@@ -289,7 +289,7 @@ export default function GamePistaPage() {
               </h3>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {questionData.options.map(opt => {
+                {questionData.options.filter(opt => opt.text && opt.text.trim() !== '').map(opt => {
                   const isIncorrectGuess = incorrectGuesses.includes(opt.letter)
                   
                   let border = '1px solid var(--border)'

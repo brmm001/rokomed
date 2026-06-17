@@ -210,7 +210,7 @@ export default function AdaptiveSessionPage() {
     )
   }
 
-  const options = question?.options || []
+  const options = (question?.options || []).filter((opt: any) => opt.text && opt.text.trim() !== '')
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: 800, margin: '0 auto', padding: '1rem' }}>

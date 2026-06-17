@@ -190,7 +190,8 @@ export default function FreeExamPage() {
 
   let parsedOpts: any[] = []
   try {
-    parsedOpts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options
+    const rawOpts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options
+    parsedOpts = (Array.isArray(rawOpts) ? rawOpts : []).filter((opt: any) => opt && opt.text && opt.text.trim() !== '')
   } catch (_) {}
 
   return (
