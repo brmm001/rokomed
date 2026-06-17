@@ -142,8 +142,8 @@
 .internal-system .apple-option {
   width: 100%;
   text-align: left;
-  padding: 18px 20px;
-  border-radius: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(28, 28, 30, 0.4);
   color: var(--text-primary);
@@ -152,9 +152,17 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
   margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .internal-system .apple-option {
+    padding: 18px 20px;
+    border-radius: 16px;
+    font-size: 16px;
+  }
 }
 
 .internal-system .apple-option:hover:not(:disabled) {

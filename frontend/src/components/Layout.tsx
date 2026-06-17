@@ -299,7 +299,7 @@ export default function Layout() {
       </aside>
 
       {/* Main */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-200 ${isFocusMode ? 'ml-0' : 'ml-0 md:ml-[260px]'}`}>
+      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-200 ${isFocusMode ? 'ml-0' : 'ml-0 md:ml-[260px]'}`}>
         {/* Mobile header */}
         <header className={`items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--bg-surface)] sticky top-0 z-30 ${isFocusMode ? 'hidden' : 'flex md:hidden'}`}>
           <div className="flex items-center gap-3">
@@ -310,7 +310,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: '2rem' }}>
+        <main className="flex-1 p-4 md:p-8 min-w-0">
           <Outlet />
         </main>
       </div>

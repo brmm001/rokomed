@@ -232,7 +232,7 @@ export default function StudyPage() {
 
       {/* ── Question Card ────────────────────────────────────────────────── */}
       <div style={{ padding: '0 0.5rem 2rem 0.5rem', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '1.35rem', fontWeight: 500, lineHeight: 1.6, color: 'var(--text-primary)', marginBottom: '2.5rem', letterSpacing: '-0.015em' }}
+        <div className="text-lg md:text-xl font-medium leading-relaxed text-[var(--text-primary)] mb-6 md:mb-10 tracking-tight"
           dangerouslySetInnerHTML={{ __html: q.statement }} />
 
         {q.images && q.images.length > 0 && (

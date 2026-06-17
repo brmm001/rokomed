@@ -345,7 +345,7 @@ export default function SimuladoExamPage() {
           {q.year && <span className="badge badge-gray">{q.year}</span>}
         </div>
 
-        <div style={{ fontSize: '1.35rem', fontWeight: 500, lineHeight: 1.6, color: 'var(--text-primary)', marginBottom: '2.5rem', letterSpacing: '-0.015em' }}
+        <div className="text-lg md:text-xl font-medium leading-relaxed text-[var(--text-primary)] mb-6 md:mb-10 tracking-tight"
           dangerouslySetInnerHTML={{ __html: q.statement }} />
 
         {q.images && q.images.length > 0 && (
