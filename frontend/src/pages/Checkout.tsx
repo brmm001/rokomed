@@ -465,7 +465,7 @@ export default function CheckoutPage() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative z-10">
+        <div className="flex-1 flex flex-col items-center justify-center md:justify-start md:pt-20 lg:pt-24 pb-16 p-6 md:p-12 relative z-10">
           <div className="w-full max-w-lg">
 
             {/* ── STEP: IDENTIFICAÇÃO ─────────────────────────────────── */}
@@ -531,12 +531,9 @@ export default function CheckoutPage() {
                   <span className="flex items-center justify-center w-5 h-5 border border-[#3B7EF8] bg-[#3B7EF8]/10 text-[#3B7EF8] rounded-full text-[10px] font-mono">2</span>
                   <span className="font-mono text-[0.6rem] uppercase tracking-widest text-[#3B7EF8]">Pagamento</span>
                 </div>
-                <h1 className="font-extrabold text-3xl mb-2 text-[#EBF4FF] tracking-tight leading-tight">
+                <h1 className="font-extrabold text-3xl mb-8 text-[#EBF4FF] tracking-tight leading-tight">
                   Dados de Pagamento
                 </h1>
-                <p className="text-[#7B9DBF] mb-6 font-medium">
-                  Checkout 100% transparente — seus dados ficam aqui.
-                </p>
 
                 {/* Cupom */}
                 <div className="mb-6">
@@ -841,7 +838,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* ── RIGHT COLUMN: Order Summary ──────────────────────────────────── */}
-      <div className="hidden md:flex w-[400px] lg:w-[460px] bg-[#0C1A2E] text-white p-10 lg:p-12 flex-col justify-center relative shrink-0">
+      <div className="hidden md:flex w-[400px] lg:w-[460px] bg-[#0C1A2E] text-white p-10 lg:p-12 flex-col justify-start md:pt-[144px] lg:pt-[160px] relative shrink-0">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,126,248,0.07),transparent_60%)] pointer-events-none z-0" />
 
         <div className="relative z-10">
