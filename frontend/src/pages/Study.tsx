@@ -166,7 +166,7 @@ export default function StudyPage() {
     </div>
   )
 
-  const options  = q.options.filter(opt => opt.text && opt.text.trim() !== '')
+  const options  = q.options
   const isCorrect = selected !== null && selected === q.correctOption
   const breadcrumb = buildBreadcrumb(q.specialty)
 

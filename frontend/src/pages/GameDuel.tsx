@@ -430,7 +430,7 @@ export default function GameDuelPage() {
 
           {/* Options list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {currentQ?.options?.filter(opt => opt.text && opt.text.trim() !== '').map((opt) => {
+            {currentQ?.options?.map((opt) => {
               const isUserChoice = userSelected === opt.letter
               const isBotChoice = botSelected === opt.letter
               const isCorrect = opt.letter === currentQ.correctOption

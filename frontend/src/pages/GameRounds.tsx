@@ -264,7 +264,7 @@ export default function GameRoundsPage() {
 
                       {/* Options */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {questions[currentIdx]?.options?.filter(opt => opt.text && opt.text.trim() !== '').map((opt) => {
+                        {questions[currentIdx]?.options?.map((opt) => {
                           const isChoice = selectedOpt === opt.letter
                           const isCorrect = opt.letter === questions[currentIdx].correctOption
                           
