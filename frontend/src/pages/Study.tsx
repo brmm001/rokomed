@@ -339,7 +339,7 @@ export default function StudyPage() {
           </div>
 
           {/* Cards de estatísticas */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* % Acerto global */}
             <div className="apple-card" style={{ padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>

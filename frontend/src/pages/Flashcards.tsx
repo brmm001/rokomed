@@ -158,7 +158,7 @@ export default function FlashcardsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2.5rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
         <div className="glass" style={{ padding: '1.25rem', borderRadius: 16, textAlign: 'center' }}>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>
             {stats?.total ?? 0}

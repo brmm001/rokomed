@@ -196,7 +196,7 @@ export default function SimuladoExamPage() {
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
           {[
             { label: 'ACERTOS', value: correct, sub: `de ${total}`, color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
             { label: 'ERROS',   value: wrong,   sub: `de ${total}`, color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },

@@ -173,7 +173,7 @@ export default function AdaptiveSessionPage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
           <div className="glass" style={{ borderRadius: 12, padding: '1rem' }}>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent-green)' }}>{result.accuracy}%</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Acerto</div>
