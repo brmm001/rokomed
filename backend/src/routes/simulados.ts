@@ -174,9 +174,9 @@ export default async function simuladoRoutes(app: FastifyInstance) {
           specialty:   q.specialty,
           institution: q.institution,
           images:      q.images,
-          // Só exibe gabarito e explicação após finalizar
+          correctOption: q.correctOption,
+          // Só exibe explicação após finalizar
           ...(isFinished ? {
-            correctOption: q.correctOption,
             explanation:   q.explanation,
             reasoningLine: (() => { try { return JSON.parse(q.reasoningLine ?? '[]') } catch { return [] } })(),
           } : {}),

@@ -4,9 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { questionsApi } from '../lib/api'
 import {
   Search, Bookmark, SlidersHorizontal,
-  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle, Printer
+  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle
 } from 'lucide-react'
-import PrintSelectorModal from '../components/PrintSelectorModal'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
 
@@ -23,7 +22,6 @@ export default function QuestionBankPage() {
   const [bookmarked, setBookmarked] = useState(false)
   const [wrongOnly, setWrongOnly]   = useState(searchParams.get('wrongOnly') === 'true')
   const [showFilters, setShowFilters] = useState(searchParams.get('wrongOnly') === 'true' || false)
-  const [showPrint, setShowPrint]   = useState(false)
 
   const { data: filtersData } = useQuery({
     queryKey: ['question-filters'],
@@ -101,18 +99,6 @@ export default function QuestionBankPage() {
               {activeFilters}
             </span>
           )}
-        </button>
-
-        <button
-          id="print-questions-btn"
-          className="apple-btn apple-btn-secondary"
-          onClick={() => setShowPrint(true)}
-          disabled={!data?.data?.length}
-          title="Imprimir questões desta página"
-          style={{ gap: '0.5rem', flexShrink: 0 }}
-        >
-          <Printer size={16} />
-          Imprimir
         </button>
       </div>
 
@@ -269,22 +255,6 @@ export default function QuestionBankPage() {
             Próxima <ChevronRight size={16} />
           </button>
         </div>
-      )}
-
-      {/* Modal de impressão */}
-      {showPrint && (
-        <PrintSelectorModal
-          filters={{
-            search,
-            specialty,
-            institution,
-            year,
-            difficulty,
-            bookmarked,
-            wrongOnly,
-          }}
-          onClose={() => setShowPrint(false)}
-        />
       )}
     </div>
   )
