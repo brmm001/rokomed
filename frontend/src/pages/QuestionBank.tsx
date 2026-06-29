@@ -3,9 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { questionsApi } from '../lib/api'
 import {
-  Search, Filter, Bookmark, SlidersHorizontal,
-  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle
+  Search, Bookmark, SlidersHorizontal,
+  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle, Printer
 } from 'lucide-react'
+import PrintModal, { type PrintQuestion } from '../components/PrintView'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
 
@@ -22,6 +23,7 @@ export default function QuestionBankPage() {
   const [bookmarked, setBookmarked] = useState(false)
   const [wrongOnly, setWrongOnly]   = useState(searchParams.get('wrongOnly') === 'true')
   const [showFilters, setShowFilters] = useState(searchParams.get('wrongOnly') === 'true' || false)
+  const [showPrint, setShowPrint]   = useState(false)
 
   const { data: filtersData } = useQuery({
     queryKey: ['question-filters'],
@@ -99,6 +101,18 @@ export default function QuestionBankPage() {
               {activeFilters}
             </span>
           )}
+        </button>
+
+        <button
+          id="print-questions-btn"
+          className="apple-btn apple-btn-secondary"
+          onClick={() => setShowPrint(true)}
+          disabled={!data?.data?.length}
+          title="Imprimir questões desta página"
+          style={{ gap: '0.5rem', flexShrink: 0 }}
+        >
+          <Printer size={16} />
+          Imprimir
         </button>
       </div>
 
@@ -255,6 +269,32 @@ export default function QuestionBankPage() {
             Próxima <ChevronRight size={16} />
           </button>
         </div>
+      )}
+
+      {/* Modal de impressão */}
+      {showPrint && data?.data && (
+        <PrintModal
+          title="Banco de Questões — RokoMed"
+          questions={data.data.map((q: {
+            id: string
+            statement: string
+            options?: { letter: string; text: string }[]
+            correctOption?: string
+            year?: number
+            difficulty: string
+            specialty?: { name: string }
+            institution?: { acronym: string }
+          }, idx: number) => ({
+            number: (page - 1) * 20 + idx + 1,
+            statement: q.statement,
+            options: q.options ?? [],
+            correctOption: q.correctOption,
+            year: q.year,
+            institution: q.institution?.acronym,
+            specialty: q.specialty?.name,
+          } as PrintQuestion))}
+          onClose={() => setShowPrint(false)}
+        />
       )}
     </div>
   )

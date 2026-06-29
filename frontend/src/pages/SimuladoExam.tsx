@@ -163,14 +163,42 @@ export default function SimuladoExamPage() {
             </div>
           ))}
         </div>
-        <button id="start-simulado-btn" className="btn btn-primary" onClick={handleStart}
-          disabled={startMutation.isPending}
-          style={{ padding: '0.875rem 2.5rem', fontSize: '1.0625rem', fontWeight: 700, borderRadius: 12 }}>
-          {startMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <>🚀 Iniciar Simulado</>}
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            id="print-before-start-btn"
+            className="btn btn-ghost"
+            onClick={() => setShowPrint(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Printer size={16} /> Imprimir Simulado
+          </button>
+          <button id="start-simulado-btn" className="btn btn-primary" onClick={handleStart}
+            disabled={startMutation.isPending}
+            style={{ padding: '0.875rem 2.5rem', fontSize: '1.0625rem', fontWeight: 700, borderRadius: 12 }}>
+            {startMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <>🚀 Iniciar Simulado</>}
+          </button>
+        </div>
+
+        {/* Modal de impressão (antes de iniciar) */}
+        {showPrint && (
+          <PrintModal
+            title={exam.title}
+            questions={exam.questions.map((eq, i) => ({
+              number: i + 1,
+              statement: eq.question.statement,
+              options: eq.question.options,
+              correctOption: eq.question.correctOption,
+              year: eq.question.year,
+              institution: eq.question.institution?.acronym,
+              specialty: eq.question.specialty?.name,
+            } as PrintQuestion))}
+            onClose={() => setShowPrint(false)}
+          />
+        )}
       </div>
     )
   }
+
 
   /* ── Tela de resultado (FINISHED) ── */
   if (showResult && exam.status === 'FINISHED') {
