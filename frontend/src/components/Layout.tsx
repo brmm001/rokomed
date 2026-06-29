@@ -317,12 +317,31 @@ export default function Layout() {
 
       <SupportWidget />
       {showOnboarding && (
-        <OnboardingModal onComplete={() => {
-          // Atualiza o store local para não mostrar novamente
-          useAuthStore.setState(state => ({
-            user: state.user ? { ...state.user, onboardingDone: true } : null
-          }))
-        }} />
+        <div style={{ position: 'relative' }}>
+          <OnboardingModal onComplete={() => {
+            useAuthStore.setState(state => ({
+              user: state.user ? { ...state.user, onboardingDone: true } : null
+            }))
+          }} />
+          {/* Botão pular — canto superior direito do backdrop */}
+          <button
+            onClick={() => useAuthStore.setState(state => ({
+              user: state.user ? { ...state.user, onboardingDone: true } : null
+            }))}
+            style={{
+              position: 'fixed', top: 16, right: 16, zIndex: 10001,
+              background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 10, padding: '6px 14px', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontFamily: 'Outfit, sans-serif',
+              fontWeight: 600, backdropFilter: 'blur(8px)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+          >
+            Pular →
+          </button>
+        </div>
       )}
     </div>
   )

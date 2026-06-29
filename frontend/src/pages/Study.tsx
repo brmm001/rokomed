@@ -7,8 +7,9 @@ import toast from 'react-hot-toast'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, MessageSquare, CheckCircle,
   XCircle, ChevronDown, ChevronUp, Clock, Flag, Loader2,
-  Brain, BarChart3, Target, ChevronRight, TrendingUp,
+  Brain, BarChart3, Target, ChevronRight, TrendingUp, Printer,
 } from 'lucide-react'
+import PrintModal, { type PrintQuestion } from '../components/PrintView'
 
 /* ── tipos ────────────────────────────────────────────────────────────────── */
 interface SpecialtyNode {
@@ -63,6 +64,7 @@ export default function StudyPage() {
   const [showExpl, setShowExpl]   = useState(true)
   const [showNote, setShowNote]   = useState(false)
   const [noteText, setNoteText]   = useState('')
+  const [showPrint, setShowPrint] = useState(false)
   const startTime = useRef(Date.now())
 
   const { data: q, isLoading } = useQuery<Question>({
@@ -226,6 +228,15 @@ export default function StudyPage() {
           <button id="note-btn" className={`btn ${showNote ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => setShowNote(p => !p)} style={{ padding: '0.5rem 0.75rem' }}>
             <MessageSquare size={18} />
+          </button>
+          <button
+            id="print-question-btn"
+            className="btn btn-ghost"
+            onClick={() => setShowPrint(true)}
+            title="Imprimir esta questão"
+            style={{ padding: '0.5rem 0.75rem' }}
+          >
+            <Printer size={18} />
           </button>
         </div>
       </div>
@@ -491,6 +502,23 @@ export default function StudyPage() {
             Próxima questão
           </button>
         </div>
+      )}
+
+      {/* Modal de impressão */}
+      {showPrint && q && (
+        <PrintModal
+          title={`Questão ${q.code ?? q.id}${q.institution ? ` — ${q.institution.acronym}` : ''}${q.year ? ` (${q.year})` : ''}`}
+          questions={[{
+            number: 1,
+            statement: q.statement,
+            options: q.options,
+            correctOption: q.correctOption,
+            year: q.year,
+            institution: q.institution?.acronym,
+            specialty: q.specialty?.name,
+          } as PrintQuestion]}
+          onClose={() => setShowPrint(false)}
+        />
       )}
     </div>
   )

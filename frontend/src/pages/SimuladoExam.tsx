@@ -6,8 +6,9 @@ import toast from 'react-hot-toast'
 import {
   ArrowLeft, ArrowRight, CheckCircle, XCircle, Flag, Clock,
   BarChart3, BookOpen, Brain, Target, ChevronDown, ChevronUp,
-  Trophy, RotateCcw, Loader2,
+  Trophy, RotateCcw, Loader2, Printer,
 } from 'lucide-react'
+import PrintModal, { type PrintQuestion } from '../components/PrintView'
 
 /* ── tipos ── */
 interface ExamQuestion {
@@ -61,6 +62,7 @@ export default function SimuladoExamPage() {
   const [localAnswers, setLocalAnswers] = useState<Record<number, string>>({})  // order → selectedOpt
   const [showResult, setShowResult]   = useState(false)
   const [showExpl, setShowExpl]       = useState<number | null>(null)
+  const [showPrint, setShowPrint]     = useState(false)
   const pendingRef = useRef<Record<number, string>>({})
 
   const { data: exam, isLoading } = useQuery<MockExam>({
@@ -284,10 +286,35 @@ export default function SimuladoExamPage() {
           <button className="btn btn-ghost" onClick={() => navigate('/simulados')}>
             <ArrowLeft size={16} /> Meus Simulados
           </button>
+          <button
+            id="print-exam-btn"
+            className="btn btn-ghost"
+            onClick={() => setShowPrint(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Printer size={16} /> Imprimir Questões
+          </button>
           <button className="btn btn-primary" onClick={() => navigate('/simulados/novo')}>
             <RotateCcw size={16} /> Novo Simulado
           </button>
         </div>
+
+        {/* Modal de impressão */}
+        {showPrint && (
+          <PrintModal
+            title={exam.title}
+            questions={exam.questions.map((eq, i) => ({
+              number: i + 1,
+              statement: eq.question.statement,
+              options: eq.question.options,
+              correctOption: eq.question.correctOption,
+              year: eq.question.year,
+              institution: eq.question.institution?.acronym,
+              specialty: eq.question.specialty?.name,
+            } as PrintQuestion))}
+            onClose={() => setShowPrint(false)}
+          />
+        )}
       </div>
     )
   }
@@ -396,18 +423,47 @@ export default function SimuladoExamPage() {
           <span>/{exam.totalQuestions} respondidas</span>
         </div>
 
-        {current < exam.totalQuestions - 1 ? (
-          <button className="apple-btn" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))}>
-            Próxima <ArrowRight size={16} />
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            id="print-during-exam-btn"
+            className="btn btn-ghost"
+            onClick={() => setShowPrint(true)}
+            title="Imprimir questões"
+            style={{ padding: '0.6rem 0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}
+          >
+            <Printer size={15} /> Imprimir
           </button>
-        ) : (
-          <button id="finish-simulado-btn" className="apple-btn"
-            onClick={handleFinish} disabled={finishMutation.isPending}
-            style={{ background: '#fff', color: '#000' }}>
-            {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Finalizar</>}
-          </button>
-        )}
+
+          {current < exam.totalQuestions - 1 ? (
+            <button className="apple-btn" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))}>
+              Próxima <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button id="finish-simulado-btn" className="apple-btn"
+              onClick={handleFinish} disabled={finishMutation.isPending}
+              style={{ background: '#fff', color: '#000' }}>
+              {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Finalizar</>}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Modal de impressão (durante simulado) */}
+      {showPrint && (
+        <PrintModal
+          title={exam.title}
+          questions={eqs.map((eq2, i) => ({
+            number: i + 1,
+            statement: eq2.question.statement,
+            options: eq2.question.options,
+            correctOption: eq2.question.correctOption,
+            year: eq2.question.year,
+            institution: eq2.question.institution?.acronym,
+            specialty: eq2.question.specialty?.name,
+          } as PrintQuestion))}
+          onClose={() => setShowPrint(false)}
+        />
+      )}
     </div>
   )
 }
