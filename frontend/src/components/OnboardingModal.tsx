@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { adminApi, userApi } from '../lib/api'
 import api from '../lib/api'
@@ -12,20 +12,31 @@ import toast from 'react-hot-toast'
 function Typewriter({ text, speed = 25 }: { text: string; speed?: number }) {
   const [displayedText, setDisplayedText] = useState('')
   const [isTyping, setIsTyping] = useState(true)
+  const activeRef = useRef(true)
 
   useEffect(() => {
+    activeRef.current = true
     setDisplayedText('')
     setIsTyping(true)
     let i = 0
-    const timer = setInterval(() => {
-      setDisplayedText((prev) => prev + text.charAt(i))
+
+    const tick = () => {
+      if (!activeRef.current) return
       i++
+      setDisplayedText(text.slice(0, i))
       if (i >= text.length) {
-        clearInterval(timer)
         setIsTyping(false)
+        return
       }
-    }, speed)
-    return () => clearInterval(timer)
+      setTimeout(tick, speed)
+    }
+
+    const id = setTimeout(tick, speed)
+
+    return () => {
+      activeRef.current = false
+      clearTimeout(id)
+    }
   }, [text, speed])
 
   return (
