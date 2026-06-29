@@ -6,7 +6,7 @@ import {
   Search, Bookmark, SlidersHorizontal,
   BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle, Printer
 } from 'lucide-react'
-import PrintModal, { type PrintQuestion } from '../components/PrintView'
+import PrintSelectorModal from '../components/PrintSelectorModal'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
 
@@ -272,27 +272,17 @@ export default function QuestionBankPage() {
       )}
 
       {/* Modal de impressão */}
-      {showPrint && data?.data && (
-        <PrintModal
-          title="Banco de Questões — RokoMed"
-          questions={data.data.map((q: {
-            id: string
-            statement: string
-            options?: { letter: string; text: string }[]
-            correctOption?: string
-            year?: number
-            difficulty: string
-            specialty?: { name: string }
-            institution?: { acronym: string }
-          }, idx: number) => ({
-            number: (page - 1) * 20 + idx + 1,
-            statement: q.statement,
-            options: q.options ?? [],
-            correctOption: q.correctOption,
-            year: q.year,
-            institution: q.institution?.acronym,
-            specialty: q.specialty?.name,
-          } as PrintQuestion))}
+      {showPrint && (
+        <PrintSelectorModal
+          filters={{
+            search,
+            specialty,
+            institution,
+            year,
+            difficulty,
+            bookmarked,
+            wrongOnly,
+          }}
           onClose={() => setShowPrint(false)}
         />
       )}
