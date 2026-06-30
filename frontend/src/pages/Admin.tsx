@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi, lessonsApi } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -8,7 +8,7 @@ import {
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
   Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
   Play, Edit, Upload, FileUp, Database, CheckSquare, XCircle, AlertCircle,
-  FolderTree, Image, X, Loader2
+  FolderTree, Image, X, Loader2, Search, ChevronLeft, ChevronRight
 } from 'lucide-react'
 
 type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities' | 'import' | 'specialties'
@@ -68,6 +68,19 @@ export default function AdminPage() {
   const [imgDragging, setImgDragging] = useState(false)
   const imgFileRef = useRef<HTMLInputElement>(null)
 
+  // Questions search & pagination state
+  const [qPage, setQPage] = useState(1)
+  const [qSearch, setQSearch] = useState('')
+  const [debouncedQSearch, setDebouncedQSearch] = useState('')
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQSearch(qSearch)
+      setQPage(1)
+    }, 400)
+    return () => clearTimeout(handler)
+  }, [qSearch])
+
   const qc = useQueryClient()
 
   const { data: stats,   isLoading: statsLoading   } = useQuery({ queryKey: ['admin-stats'],   queryFn: adminApi.stats })
@@ -101,7 +114,11 @@ export default function AdminPage() {
       toast.error(err.response?.data?.error || 'Erro ao salvar prioridade')
     }
   })
-  const { data: qData,   isLoading: qLoading        } = useQuery({ queryKey: ['admin-questions'], queryFn: () => adminApi.questions(), enabled: tab === 'questions' })
+  const { data: qData,   isLoading: qLoading        } = useQuery({
+    queryKey: ['admin-questions', qPage, debouncedQSearch],
+    queryFn: () => adminApi.questions({ page: qPage, search: debouncedQSearch }),
+    enabled: tab === 'questions'
+  })
   const { data: uData,   isLoading: uLoading        } = useQuery({ queryKey: ['admin-users'],     queryFn: () => adminApi.users(),     enabled: tab === 'users' })
   const { data: logs,    isLoading: logsLoading     } = useQuery({ queryKey: ['admin-logs'],      queryFn: () => adminApi.logs(),      enabled: tab === 'logs' })
   const { data: tickets, isLoading: ticketsLoading  } = useQuery({ queryKey: ['admin-support'],   queryFn: adminApi.supportTickets,    enabled: tab === 'support' })
@@ -419,6 +436,41 @@ export default function AdminPage() {
       {/* ── Questions Tab ─────────────────────────────────────────────────── */}
       {tab === 'questions' && (
         <div className="animate-fade-in">
+          {/* Barra de Busca */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                className="input"
+                placeholder="Pesquisar por enunciado, código, especialidade ou instituição..."
+                value={qSearch}
+                onChange={(e) => setQSearch(e.target.value)}
+                style={{ width: '100%', paddingLeft: '2.5rem', paddingRight: qSearch ? '2.5rem' : '1rem' }}
+              />
+              {qSearch && (
+                <button
+                  onClick={() => setQSearch('')}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
               {qData?.total ?? '...'} questões
@@ -430,52 +482,79 @@ export default function AdminPage() {
               <RefreshCw size={18} className="animate-spin" /> Carregando...
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              {qData?.data?.map((q: {
-                id: string
-                code: string
-                statement: string
-                year?: number
-                difficulty: string
-                isPublished: boolean
-                specialty?: { name: string }
-                institution?: { name: string; acronym: string }
-              }) => (
-                <div key={q.id} className="glass" style={{ borderRadius: 12, padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
-                      dangerouslySetInnerHTML={{ __html: q.statement.replace(/<[^>]+>/g, '').slice(0, 100) + '...' }}
-                    />
-                    <div style={{ display: 'flex', gap: '0.375rem', marginTop: 6 }}>
-                      {q.specialty   && <span className="badge badge-blue" style={{ fontSize: '0.65rem' }}>{q.specialty.name}</span>}
-                      {q.institution && <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>{q.institution.acronym}</span>}
-                      {q.year        && <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>{q.year}</span>}
-                      <span className={`badge ${q.isPublished ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.65rem' }}>
-                        {q.isPublished ? 'Publicada' : 'Rascunho'}
-                      </span>
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                {qData?.data?.map((q: {
+                  id: string
+                  code: string
+                  statement: string
+                  year?: number
+                  difficulty: string
+                  isPublished: boolean
+                  specialty?: { name: string }
+                  institution?: { name: string; acronym: string }
+                }) => (
+                  <div key={q.id} className="glass" style={{ borderRadius: 12, padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                        dangerouslySetInnerHTML={{ __html: q.statement.replace(/<[^>]+>/g, '').slice(0, 100) + '...' }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.375rem', marginTop: 6 }}>
+                        {q.specialty   && <span className="badge badge-blue" style={{ fontSize: '0.65rem' }}>{q.specialty.name}</span>}
+                        {q.institution && <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>{q.institution.acronym}</span>}
+                        {q.year        && <span className="badge badge-gray" style={{ fontSize: '0.65rem' }}>{q.year}</span>}
+                        <span className={`badge ${q.isPublished ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.65rem' }}>
+                          {q.isPublished ? 'Publicada' : 'Rascunho'}
+                        </span>
+                      </div>
                     </div>
+                    <button
+                      id={`img-q-${q.id}`}
+                      className="btn btn-ghost"
+                      title="Gerenciar imagens"
+                      style={{ padding: '0.5rem 0.75rem', flexShrink: 0, color: 'var(--accent-blue)' }}
+                      onClick={() => { setImageModal({ questionId: q.id, code: q.code || q.id }); setImgPreview(null); setImgCaption('') }}
+                    >
+                      <Image size={15} />
+                    </button>
+                    <button
+                      id={`delete-q-${q.id}`}
+                      className="btn btn-danger"
+                      style={{ padding: '0.5rem 0.75rem', flexShrink: 0 }}
+                      onClick={() => { if (confirm('Deletar esta questão?')) deleteQ.mutate(q.id) }}
+                      disabled={deleteQ.isPending}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
+                ))}
+              </div>
+
+              {/* Paginação */}
+              {qData && qData.totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
                   <button
-                    id={`img-q-${q.id}`}
                     className="btn btn-ghost"
-                    title="Gerenciar imagens"
-                    style={{ padding: '0.5rem 0.75rem', flexShrink: 0, color: 'var(--accent-blue)' }}
-                    onClick={() => { setImageModal({ questionId: q.id, code: q.code || q.id }); setImgPreview(null); setImgCaption('') }}
+                    onClick={() => setQPage(prev => Math.max(prev - 1, 1))}
+                    disabled={qPage === 1}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 1rem' }}
                   >
-                    <Image size={15} />
+                    <ChevronLeft size={16} /> Anterior
                   </button>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                    Página <strong>{qPage}</strong> de {qData.totalPages}
+                  </span>
                   <button
-                    id={`delete-q-${q.id}`}
-                    className="btn btn-danger"
-                    style={{ padding: '0.5rem 0.75rem', flexShrink: 0 }}
-                    onClick={() => { if (confirm('Deletar esta questão?')) deleteQ.mutate(q.id) }}
-                    disabled={deleteQ.isPending}
+                    className="btn btn-ghost"
+                    onClick={() => setQPage(prev => Math.min(prev + 1, qData.totalPages))}
+                    disabled={qPage === qData.totalPages}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.5rem 1rem' }}
                   >
-                    <Trash2 size={15} />
+                    Próxima <ChevronRight size={16} />
                   </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}

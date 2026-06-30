@@ -55,11 +55,23 @@ export default async function adminRoutes(app: FastifyInstance) {
 
   // GET /api/admin/questions — todas as questões (incluindo não publicadas)
   app.get('/questions', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { page = '1', limit = '20' } = request.query as { page?: string; limit?: string }
+    const { page = '1', limit = '20', search } = request.query as { page?: string; limit?: string; search?: string }
     const p = parseInt(page), l = parseInt(limit)
+
+    const where: any = {}
+    if (search) {
+      where.OR = [
+        { code: { contains: search } },
+        { statement: { contains: search } },
+        { institution: { name: { contains: search } } },
+        { institution: { acronym: { contains: search } } },
+        { specialty: { name: { contains: search } } },
+      ]
+    }
 
     const [questions, total] = await Promise.all([
       prisma.question.findMany({
+        where,
         skip: (p - 1) * l, take: l,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -67,7 +79,7 @@ export default async function adminRoutes(app: FastifyInstance) {
           institution: { select: { name: true, acronym: true } },
         },
       }),
-      prisma.question.count(),
+      prisma.question.count({ where }),
     ])
 
     return reply.send({ data: questions, total, page: p, totalPages: Math.ceil(total / l) })
