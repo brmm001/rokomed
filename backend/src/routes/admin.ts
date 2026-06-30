@@ -128,6 +128,91 @@ export default async function adminRoutes(app: FastifyInstance) {
     return reply.send({ deleted: true })
   })
 
+  // ── Imagens de Questões ───────────────────────────────────────────────────
+
+  // GET /api/admin/questions/:id/images — listar imagens da questão
+  app.get('/questions/:id/images', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string }
+    const images = await prisma.questionImage.findMany({
+      where: { questionId: id },
+      orderBy: { order: 'asc' },
+    })
+    return reply.send({ images })
+  })
+
+  // POST /api/admin/questions/:id/images — adicionar imagem (base64 data URL)
+  app.post('/questions/:id/images', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload = request.user as { sub: string }
+    const { id }  = request.params as { id: string }
+
+    const schema = z.object({
+      url:     z.string().startsWith('data:image/').max(6 * 1024 * 1024, 'Imagem muito grande (máx 4MB)'),
+      caption: z.string().max(255).optional(),
+      order:   z.number().int().nonnegative().optional(),
+    })
+
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    // Calcula order como próximo disponível se não fornecido
+    const nextOrder = parsed.data.order ?? await prisma.questionImage.count({ where: { questionId: id } })
+
+    const image = await prisma.questionImage.create({
+      data: {
+        questionId: id,
+        url:     parsed.data.url,
+        caption: parsed.data.caption ?? null,
+        order:   nextOrder,
+      },
+    })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'ADD_QUESTION_IMAGE', target: id },
+    })
+
+    return reply.code(201).send({ image })
+  })
+
+  // PATCH /api/admin/questions/images/:imageId — editar caption ou order
+  app.patch('/questions/images/:imageId', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { imageId } = request.params as { imageId: string }
+
+    const schema = z.object({
+      caption: z.string().max(255).nullable().optional(),
+      order:   z.number().int().nonnegative().optional(),
+    })
+
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.issues[0].message })
+
+    const image = await prisma.questionImage.update({
+      where: { id: imageId },
+      data: {
+        caption: parsed.data.caption === undefined ? undefined : parsed.data.caption,
+        order:   parsed.data.order,
+      },
+    })
+
+    return reply.send({ image })
+  })
+
+  // DELETE /api/admin/questions/images/:imageId — remover imagem
+  app.delete('/questions/images/:imageId', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const payload  = request.user as { sub: string }
+    const { imageId } = request.params as { imageId: string }
+
+    const image = await prisma.questionImage.findUnique({ where: { id: imageId } })
+    if (!image) return reply.code(404).send({ error: 'Imagem não encontrada' })
+
+    await prisma.questionImage.delete({ where: { id: imageId } })
+
+    await prisma.adminLog.create({
+      data: { adminId: payload.sub, action: 'DELETE_QUESTION_IMAGE', target: imageId },
+    })
+
+    return reply.send({ deleted: true })
+  })
+
   // ── Import de Questões (JSONL) ────────────────────────────────────────────
 
   // POST /api/admin/questions/import — upload de arquivo .jsonl de questões

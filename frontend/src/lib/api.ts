@@ -156,6 +156,15 @@ export const adminApi = {
       timeout: 5 * 60 * 1000,
     }).then(r => r.data)
   },
+  // ── Imagens de questões ──────────────────────────────────────────────────
+  getQuestionImages: (questionId: string) =>
+    api.get(`/admin/questions/${questionId}/images`).then(r => r.data),
+  addQuestionImage: (questionId: string, data: { url: string; caption?: string }) =>
+    api.post(`/admin/questions/${questionId}/images`, data).then(r => r.data),
+  updateQuestionImage: (imageId: string, data: { caption?: string | null; order?: number }) =>
+    api.patch(`/admin/questions/images/${imageId}`, data).then(r => r.data),
+  deleteQuestionImage: (imageId: string) =>
+    api.delete(`/admin/questions/images/${imageId}`).then(r => r.data),
 }
 
 // ── Lessons ──────────────────────────────────────────────────────────────────

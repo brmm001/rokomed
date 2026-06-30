@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi, lessonsApi } from '../lib/api'
 import toast from 'react-hot-toast'
@@ -8,7 +8,7 @@ import {
   AlertTriangle, BookMarked, MessageSquare, ShoppingCart,
   Send, CheckCircle, Clock, Mail, Handshake, MousePointerClick,
   Play, Edit, Upload, FileUp, Database, CheckSquare, XCircle, AlertCircle,
-  FolderTree
+  FolderTree, Image, X, Loader2
 } from 'lucide-react'
 
 type AdminTab = 'stats' | 'questions' | 'users' | 'logs' | 'support' | 'leads' | 'partnerships' | 'clicks' | 'lessons' | 'priorities' | 'import' | 'specialties'
@@ -60,6 +60,13 @@ export default function AdminPage() {
   const [aResult, setAResult] = useState<ImportResult | null>(null)
   const qFileRef = useRef<HTMLInputElement>(null)
   const aFileRef = useRef<HTMLInputElement>(null)
+
+  // Image modal state
+  const [imageModal, setImageModal] = useState<{ questionId: string; code: string } | null>(null)
+  const [imgCaption, setImgCaption] = useState('')
+  const [imgPreview, setImgPreview] = useState<string | null>(null)
+  const [imgDragging, setImgDragging] = useState(false)
+  const imgFileRef = useRef<HTMLInputElement>(null)
 
   const qc = useQueryClient()
 
@@ -115,6 +122,76 @@ export default function AdminPage() {
     mutationFn: (id: string) => adminApi.deleteQuestion(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-questions'] }); toast.success('Questão deletada') },
   })
+
+  // ── Image modal data & mutations ─────────────────────────────────────────
+  const { data: questionImagesData, isLoading: imagesLoading } = useQuery({
+    queryKey: ['admin-question-images', imageModal?.questionId],
+    queryFn: () => adminApi.getQuestionImages(imageModal!.questionId),
+    enabled: !!imageModal,
+  })
+
+  const addImage = useMutation({
+    mutationFn: ({ questionId, url, caption }: { questionId: string; url: string; caption?: string }) =>
+      adminApi.addQuestionImage(questionId, { url, caption }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-question-images', imageModal?.questionId] })
+      setImgPreview(null)
+      setImgCaption('')
+      toast.success('Imagem adicionada!')
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Erro ao adicionar imagem'),
+  })
+
+  const updateImageCaption = useMutation({
+    mutationFn: ({ imageId, caption }: { imageId: string; caption: string }) =>
+      adminApi.updateQuestionImage(imageId, { caption }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-question-images', imageModal?.questionId] })
+      toast.success('Legenda salva!')
+    },
+  })
+
+  const deleteImage = useMutation({
+    mutationFn: (imageId: string) => adminApi.deleteQuestionImage(imageId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-question-images', imageModal?.questionId] })
+      toast.success('Imagem removida')
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || 'Erro ao remover imagem'),
+  })
+
+  // Comprime a imagem no browser usando Canvas (max 1024px, qualidade 0.82)
+  const compressImage = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new window.Image()
+        img.onload = () => {
+          const MAX = 1024
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.round(img.width * scale)
+          canvas.height = Math.round(img.height * scale)
+          const ctx = canvas.getContext('2d')!
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          resolve(canvas.toDataURL('image/jpeg', 0.82))
+        }
+        img.onerror = reject
+        img.src = e.target?.result as string
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }, [])
+
+  const handleImageFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) { toast.error('Selecione uma imagem válida'); return }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande (máx 10MB)'); return }
+    try {
+      const compressed = await compressImage(file)
+      setImgPreview(compressed)
+    } catch { toast.error('Erro ao processar imagem') }
+  }, [compressImage])
 
   // Lessons mutations & queries
   const { data: specialtiesData } = useQuery({
@@ -356,6 +433,7 @@ export default function AdminPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {qData?.data?.map((q: {
                 id: string
+                code: string
                 statement: string
                 year?: number
                 difficulty: string
@@ -378,6 +456,15 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <button
+                    id={`img-q-${q.id}`}
+                    className="btn btn-ghost"
+                    title="Gerenciar imagens"
+                    style={{ padding: '0.5rem 0.75rem', flexShrink: 0, color: 'var(--accent-blue)' }}
+                    onClick={() => { setImageModal({ questionId: q.id, code: q.code || q.id }); setImgPreview(null); setImgCaption('') }}
+                  >
+                    <Image size={15} />
+                  </button>
+                  <button
                     id={`delete-q-${q.id}`}
                     className="btn btn-danger"
                     style={{ padding: '0.5rem 0.75rem', flexShrink: 0 }}
@@ -390,6 +477,178 @@ export default function AdminPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Modal de Imagens da Questão ───────────────────────────────────── */}
+      {imageModal && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setImageModal(null) }}
+        >
+          <div className="glass" style={{
+            borderRadius: 20, width: '100%', maxWidth: 680,
+            maxHeight: '90vh', overflowY: 'auto',
+            border: '1px solid var(--border)', boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Image size={18} style={{ color: 'var(--accent-blue)' }} />
+                  Imagens da Questão
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2, fontFamily: 'monospace' }}>{imageModal.code}</div>
+              </div>
+              <button className="btn btn-ghost" style={{ padding: '0.5rem' }} onClick={() => setImageModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+              {/* Imagens existentes */}
+              <div>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  Imagens existentes {questionImagesData?.images?.length > 0 && `(${questionImagesData.images.length})`}
+                </div>
+                {imagesLoading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <Loader2 size={16} className="animate-spin" /> Carregando...
+                  </div>
+                ) : questionImagesData?.images?.length === 0 ? (
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 10, textAlign: 'center', border: '1px dashed var(--border)' }}>
+                    Nenhuma imagem adicionada ainda
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {questionImagesData?.images?.map((img: { id: string; url: string; caption: string | null; order: number }) => (
+                      <div key={img.id} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.875rem', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                        <img
+                          src={img.url}
+                          alt={img.caption || 'imagem da questão'}
+                          style={{ width: 96, height: 72, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--border)' }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>Legenda</div>
+                          <input
+                            className="input"
+                            style={{ width: '100%', fontSize: '0.8125rem', padding: '0.375rem 0.625rem' }}
+                            defaultValue={img.caption || ''}
+                            placeholder="Legenda da imagem (opcional)"
+                            onBlur={(e) => {
+                              const val = e.target.value
+                              if (val !== (img.caption || '')) {
+                                updateImageCaption.mutate({ imageId: img.id, caption: val })
+                              }
+                            }}
+                          />
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>Ordem: {img.order}</div>
+                        </div>
+                        <button
+                          className="btn btn-danger"
+                          style={{ padding: '0.4rem 0.6rem', flexShrink: 0 }}
+                          title="Remover imagem"
+                          disabled={deleteImage.isPending}
+                          onClick={() => { if (confirm('Remover esta imagem?')) deleteImage.mutate(img.id) }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Upload de nova imagem */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                  Adicionar nova imagem
+                </div>
+
+                {/* Drop zone */}
+                <div
+                  style={{
+                    border: `2px dashed ${imgDragging ? 'var(--accent-blue)' : imgPreview ? 'var(--accent-green)' : 'var(--border)'}`,
+                    borderRadius: 12, padding: '1.5rem', textAlign: 'center', cursor: 'pointer',
+                    background: imgDragging ? 'rgba(59,130,246,0.06)' : imgPreview ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
+                    transition: 'all 0.2s',
+                  }}
+                  onClick={() => !imgPreview && imgFileRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setImgDragging(true) }}
+                  onDragLeave={() => setImgDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault(); setImgDragging(false)
+                    const file = e.dataTransfer.files[0]
+                    if (file) handleImageFile(file)
+                  }}
+                >
+                  {imgPreview ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                      <img src={imgPreview} alt="preview" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, objectFit: 'contain', border: '1px solid var(--border)' }} />
+                      <button
+                        className="btn btn-ghost"
+                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem', color: 'var(--accent-red)' }}
+                        onClick={(e) => { e.stopPropagation(); setImgPreview(null) }}
+                      >
+                        <X size={12} /> Trocar imagem
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                      <Upload size={28} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />
+                      <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Arraste uma imagem ou clique para selecionar</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>JPG, PNG, WebP · compressão automática · máx 10MB</div>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  ref={imgFileRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = '' }}
+                />
+
+                {/* Caption input */}
+                <div style={{ marginTop: '0.875rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                    Legenda <span style={{ color: 'var(--text-muted)' }}>(opcional)</span>
+                  </label>
+                  <input
+                    className="input"
+                    style={{ width: '100%', fontSize: '0.875rem' }}
+                    placeholder="Ex: Raio-X de tórax mostrando consolidação bilateral"
+                    value={imgCaption}
+                    onChange={(e) => setImgCaption(e.target.value)}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <button className="btn btn-ghost" onClick={() => { setImgPreview(null); setImgCaption('') }} disabled={!imgPreview}>
+                    Cancelar
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    disabled={!imgPreview || addImage.isPending}
+                    onClick={() => {
+                      if (!imgPreview || !imageModal) return
+                      addImage.mutate({ questionId: imageModal.questionId, url: imgPreview, caption: imgCaption || undefined })
+                    }}
+                  >
+                    {addImage.isPending ? <><Loader2 size={14} className="animate-spin" /> Enviando...</> : <><Plus size={14} /> Adicionar Imagem</>}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       )}
 
