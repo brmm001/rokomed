@@ -8,6 +8,7 @@ export interface PrintQuestion {
   year?: number
   institution?: string
   specialty?: string
+  images?: { id: string; url: string; caption?: string }[]
 }
 
 interface PrintViewProps {
@@ -46,6 +47,15 @@ export function openPrintWindow(title: string, questions: PrintQuestion[]) {
         )
         .join('')
 
+      const imagesHTML = q.images && q.images.length > 0
+        ? `<div class="images-list">${q.images.map(img =>
+            `<figure class="img-figure">
+              <img src="${img.url}" alt="${img.caption || 'Imagem da questao'}" class="question-img" />
+              ${img.caption ? `<figcaption class="img-caption">${img.caption}</figcaption>` : ''}
+            </figure>`
+          ).join('')}</div>`
+        : ''
+
       return `
         <div class="question-block">
           <div class="question-header">
@@ -53,6 +63,7 @@ export function openPrintWindow(title: string, questions: PrintQuestion[]) {
             ${meta ? `<span class="question-meta">${meta}</span>` : ''}
           </div>
           <div class="question-statement">${q.statement}</div>
+          ${imagesHTML}
           <div class="options-list">
             ${optionsHTML}
           </div>
@@ -96,6 +107,10 @@ export function openPrintWindow(title: string, questions: PrintQuestion[]) {
     .answer-space { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed #ddd; }
     .answer-line-label { font-size: 11px; color: #999; white-space: nowrap; font-style: italic; }
     .answer-line { flex: 1; border-bottom: 1px solid #bbb; height: 16px; }
+    .images-list { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 16px; }
+    .img-figure { margin: 0; }
+    .question-img { max-width: 320px; max-height: 260px; width: auto; height: auto; display: block; border: 1px solid #ccc; border-radius: 4px; }
+    .img-caption { font-size: 10px; color: #888; text-align: center; margin-top: 4px; font-style: italic; }
     .gabarito-section { page-break-before: always; padding: 48px 64px; }
     .gabarito-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #111; }
     .gabarito-subtitle { font-size: 12px; color: #888; margin-bottom: 28px; border-bottom: 2px solid #111; padding-bottom: 10px; }
@@ -107,6 +122,7 @@ export function openPrintWindow(title: string, questions: PrintQuestion[]) {
     @media print {
       body { padding: 0; }
       .gabarito-section { page-break-before: always; }
+      .question-img { max-width: 300px; max-height: 240px; }
       @page { size: A4; margin: 18mm 15mm; }
     }
   </style>

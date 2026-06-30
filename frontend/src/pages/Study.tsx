@@ -516,6 +516,7 @@ export default function StudyPage() {
             year: q.year,
             institution: q.institution?.acronym,
             specialty: q.specialty?.name,
+            images: q.images,
           } as PrintQuestion]}
           onClose={() => setShowPrint(false)}
         />

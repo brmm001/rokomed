@@ -191,6 +191,7 @@ export default function SimuladoExamPage() {
               year: eq.question.year,
               institution: eq.question.institution?.acronym,
               specialty: eq.question.specialty?.name,
+              images: eq.question.images,
             } as PrintQuestion))}
             onClose={() => setShowPrint(false)}
           />
@@ -339,6 +340,7 @@ export default function SimuladoExamPage() {
               year: eq.question.year,
               institution: eq.question.institution?.acronym,
               specialty: eq.question.specialty?.name,
+              images: eq.question.images,
             } as PrintQuestion))}
             onClose={() => setShowPrint(false)}
           />
@@ -488,6 +490,7 @@ export default function SimuladoExamPage() {
             year: eq2.question.year,
             institution: eq2.question.institution?.acronym,
             specialty: eq2.question.specialty?.name,
+            images: eq2.question.images,
           } as PrintQuestion))}
           onClose={() => setShowPrint(false)}
         />
