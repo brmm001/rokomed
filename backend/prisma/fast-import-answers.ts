@@ -70,18 +70,30 @@ function asStr(v: unknown): string | null {
 }
 
 function buildExplanation(raw: GabaritoItem): string {
-  // Alternativas no novo formato: array de {letra, texto, correta, comentario}
-  const alts = (raw.alternativas ?? [])
-    .map(alt => `
+  // Alternativas: prefere alternativas_com_justificativas (novo formato), depois alternativas
+  const altsSource = raw.alternativas_com_justificativas ?? raw.alternativas ?? []
+  const racioMap: Record<string, string> = raw.raciocinio_por_alternativa ?? {}
+
+  const alts = altsSource
+    .map(alt => {
+      const comentario = alt.comentario || alt.justificativa || racioMap[alt.letra] || ''
+      return `
       <div class="alt-item">
         <span class="alt-letra ${alt.correta ? 'correta' : 'incorreta'}">${alt.letra}</span>
         <span class="alt-texto">${alt.texto ?? ''}</span>
-        ${alt.comentario ? `<p class="alt-comentario">${alt.comentario}</p>` : ''}
-      </div>`).join('')
+        ${comentario ? `<p class="alt-comentario">${comentario}</p>` : ''}
+      </div>`
+    }).join('')
 
-  const gatilhos = (raw.gatilhos_clinicos ?? raw.palavras_chave ?? [])
+  const gatilhos = (raw.gatilhos_clinicos ?? raw.gatilhos ?? raw.palavras_chave ?? [])
     .slice(0, 5)
     .map((g: string) => `<span class="gatilho">${g}</span>`).join(' ')
+
+  // Linha de raciocínio: string ou array
+  const linhaRaciocinio = raw.linha_de_raciocinio_completa
+    ?? (Array.isArray(raw.linha_de_raciocinio) ? raw.linha_de_raciocinio.join(' ') : undefined)
+
+  const pegadinha = raw.pegadinha_principal ?? raw.pegadinha
 
   return `
 <section class="explicacao">
@@ -94,17 +106,17 @@ function buildExplanation(raw: GabaritoItem): string {
     <h4>🔍 Análise das Alternativas</h4>
     ${alts}
   </div>
-  ${raw.linha_de_raciocinio_completa ? `
+  ${linhaRaciocinio ? `
   <div class="linha-raciocinio">
     <h4>💡 Linha de Raciocínio</h4>
-    <p>${raw.linha_de_raciocinio_completa}</p>
+    <p>${linhaRaciocinio}</p>
   </div>` : ''}
   ${raw.como_matar_a_questao_rapido ? `
   <div class="dica-rapida">
     <h4>⚡ Como matar rápido</h4>
     <p>${raw.como_matar_a_questao_rapido}</p>
   </div>` : ''}
-  ${raw.pegadinha_principal ? `<div class="pegadinha"><h4>⚠️ Pegadinha</h4><p>${raw.pegadinha_principal}</p></div>` : ''}
+  ${pegadinha ? `<div class="pegadinha"><h4>⚠️ Pegadinha</h4><p>${pegadinha}</p></div>` : ''}
 </section>`.trim()
 }
 
@@ -115,6 +127,7 @@ interface Alternativa {
   texto?: string
   correta?: boolean
   comentario?: string
+  justificativa?: string
   linha_raciocinio?: string
   por_que_esta_certa?: string | null
   por_que_esta_errada?: string | null
@@ -122,8 +135,8 @@ interface Alternativa {
 }
 
 interface GabaritoItem {
-  id:                         string
-  numero_questao:             number
+  id?:                        string
+  numero_questao?:            number
   numero_questao_original?:   number
   instituicao:                string
   ano:                        number
@@ -132,17 +145,24 @@ interface GabaritoItem {
   grande_tema?:               string
   tema?:                      string
   subtema?:                   string
+  subtema_2?:                 string
   micro_subtema?:             string
   dificuldade?:               string
   gabarito?:                  string      // campo novo: letra da resposta certa
   resposta_correta?:          string      // campo legado
   alternativas?:              Alternativa[]
+  alternativas_com_justificativas?: Alternativa[]  // formato enriquecido
+  raciocinio_por_alternativa?: Record<string, string>  // mapa letra -> texto
   comentario_geral?:          string
+  linha_de_raciocinio?:       string[]    // array formato novo
   linha_de_raciocinio_completa?: string
   como_matar_a_questao_rapido?: string
   gatilhos_clinicos?:         string[]
+  gatilhos?:                  string[]    // alias formato novo
   palavras_chave?:            string[]
   pegadinha_principal?:       string
+  pegadinha?:                 string      // alias formato novo
+  tags?:                      string[]
 }
 
 // ─── Cache de especialidades ──────────────────────────────────────────────────
@@ -266,20 +286,27 @@ async function main() {
 
   for (const raw of items) {
     const num  = raw.numero_questao_original ?? raw.numero_questao ?? 0
-    let code = raw.id.replace(/^REVALIDA-/i, 'Revalida-')
+
+    // Normaliza o id: substitui underscores por hífens e ajusta prefixo Revalida
+    const rawId = raw.id
+      ? raw.id.replace(/_/g, '-').replace(/^REVALIDA-/i, 'Revalida-')
+      : null
+
+    let code = rawId ?? buildCode(raw.instituicao, raw.ano, num)
     if (!existingCodes.has(code)) {
       code = buildCode(raw.instituicao, raw.ano, num)
     }
 
     if (!existingCodes.has(code)) {
       notFound++
-      notFoundList.push(code)
+      notFoundList.push(rawId ?? buildCode(raw.instituicao, raw.ano, num))
       continue
     }
 
     // Tenta campo direto; se vazio, deriva do array alternativas (correta: true)
+    const altsSource = raw.alternativas_com_justificativas ?? raw.alternativas ?? []
     const correct = raw.gabarito || raw.resposta_correta
-      || (raw.alternativas ?? []).find(a => a.correta === true)?.letra
+      || altsSource.find(a => a.correta === true)?.letra
       || ''
     if (!correct) {
       console.warn(`  ⚠️  Sem gabarito: ${code}`)
@@ -287,9 +314,11 @@ async function main() {
     }
 
     const specialtyId = resolveSpecialtyId(raw)
-    const reasoning   = JSON.stringify(raw.linha_de_raciocinio_completa
-      ? [raw.linha_de_raciocinio_completa]
-      : [])
+
+    // Linha de raciocínio: string ou array
+    const linhaStr = raw.linha_de_raciocinio_completa
+      ?? (Array.isArray(raw.linha_de_raciocinio) ? raw.linha_de_raciocinio.join(' ') : undefined)
+    const reasoning = JSON.stringify(linhaStr ? [linhaStr] : [])
 
     resolvedMap.set(code, {
       specialtyId,

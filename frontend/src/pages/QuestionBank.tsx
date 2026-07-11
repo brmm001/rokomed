@@ -1,13 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { questionsApi } from '../lib/api'
 import {
-  Search, Bookmark, SlidersHorizontal,
-  BookOpen, ChevronRight, ChevronLeft, X, RefreshCw, AlertTriangle
+  Search, BookOpen, ChevronRight, ChevronLeft, X, RefreshCw,
+  Filter, Target, Building2, GraduationCap, ChevronDown,
+  XCircle, BarChart3, List, LayoutGrid, Star,
 } from 'lucide-react'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
+
+const diffConfig = {
+  FACIL:   { label: 'Fácil',   color: '#10B981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  dot: '#10B981' },
+  MEDIO:   { label: 'Médio',   color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)',  dot: '#F59E0B' },
+  DIFICIL: { label: 'Difícil', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',   dot: '#EF4444' },
+}
 
 export default function QuestionBankPage() {
   const navigate = useNavigate()
@@ -22,6 +29,8 @@ export default function QuestionBankPage() {
   const [bookmarked, setBookmarked] = useState(false)
   const [wrongOnly, setWrongOnly]   = useState(searchParams.get('wrongOnly') === 'true')
   const [showFilters, setShowFilters] = useState(searchParams.get('wrongOnly') === 'true' || false)
+  const [viewMode, setViewMode]     = useState<'list' | 'compact'>('list')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const { data: filtersData } = useQuery({
     queryKey: ['question-filters'],
@@ -57,144 +66,296 @@ export default function QuestionBankPage() {
 
   const activeFilters = [specialty, institution, year, difficulty, bookmarked ? 'bookmarked' : '', wrongOnly ? 'wrongOnly' : ''].filter(Boolean).length
 
-  const diffColor = { FACIL: 'badge-green', MEDIO: 'badge-gold', DIFICIL: 'badge-red' } as const
-
   return (
-    <div className="animate-fade-in" style={{ maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 className="apple-title">Banco de Questões</h1>
-        <p className="apple-subtitle">
-          {data?.total ? `${((data.total + 300) * 10).toLocaleString('pt-BR')} questões disponíveis` : 'Carregando...'}
-        </p>
-      </div>
+    <div style={{ maxWidth: 1080, margin: '0 auto', paddingBottom: '3rem' }}>
 
-      {/* Search + Filter bar */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'flex-start' }}>
-        <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', gap: '0.5rem' }}>
+      {/* ── Hero Header ───────────────────────────────────────────────── */}
+      <div style={{
+        position: 'relative',
+        borderRadius: 24,
+        overflow: 'hidden',
+        marginBottom: '2rem',
+        background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(20,184,166,0.1) 50%, rgba(139,92,246,0.08) 100%)',
+        border: '1px solid rgba(99,179,237,0.15)',
+        padding: '2.5rem 2rem',
+      }}>
+        {/* Decorative glows */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: 80, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(20,184,166,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: 14,
+              background: 'linear-gradient(135deg, #3B82F6, #14B8A6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(59,130,246,0.35)',
+              flexShrink: 0,
+            }}>
+              <BookOpen size={24} color="white" />
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.875rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif', color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                Banco de Questões
+              </h1>
+              <p style={{ margin: 0, marginTop: 4, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                Resíduos Médicos · REVALIDA
+              </p>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap' }}>
+            {[
+              { icon: <Target size={15} />, label: 'Questões', value: data?.total?.toLocaleString('pt-BR') ?? '—', color: '#3B82F6' },
+              { icon: <GraduationCap size={15} />, label: 'Especialidades', value: filtersData?.specialties?.length ?? '—', color: '#14B8A6' },
+              { icon: <Building2 size={15} />, label: 'Instituições', value: filtersData?.institutions?.length ?? '—', color: '#8B5CF6' },
+            ].map(({ icon, label, value, color }) => (
+              <div key={label} style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 14,
+                padding: '0.75rem 1.125rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                minWidth: 88,
+              }}>
+                <div style={{ color, marginBottom: 4 }}>{icon}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'Outfit', color: '#fff', lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 3, fontWeight: 500 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Search bar inside hero */}
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.625rem', marginTop: '1.5rem', position: 'relative' }}>
           <div style={{ flex: 1, position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <Search size={17} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input
+              ref={searchRef}
               id="question-search"
               type="text"
               className="input"
-              placeholder="Buscar questões..."
+              placeholder="Buscar por palavra-chave, diagnóstico, tema..."
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              style={{ paddingLeft: '2.5rem' }}
+              style={{
+                paddingLeft: '2.75rem',
+                paddingRight: searchInput ? '3rem' : '1rem',
+                background: 'rgba(10,22,40,0.7)',
+                border: '1px solid rgba(99,179,237,0.2)',
+                borderRadius: 12,
+                fontSize: '0.9375rem',
+                height: 48,
+                backdropFilter: 'blur(8px)',
+              }}
             />
+            {searchInput && (
+              <button type="button" onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 4 }}>
+                <X size={15} />
+              </button>
+            )}
           </div>
-          <button type="submit" className="apple-btn apple-btn-secondary" style={{ padding: '12px 16px' }}><Search size={16} /></button>
+          <button type="submit" style={{
+            height: 48, padding: '0 1.5rem',
+            background: 'linear-gradient(135deg, #3B82F6, #14B8A6)',
+            color: 'white', border: 'none', borderRadius: 12,
+            fontWeight: 600, fontSize: '0.9375rem', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            boxShadow: '0 4px 16px rgba(59,130,246,0.35)',
+            whiteSpace: 'nowrap',
+          }}>
+            <Search size={16} /> Buscar
+          </button>
+          <button
+            id="toggle-filters-btn"
+            type="button"
+            onClick={() => setShowFilters(p => !p)}
+            style={{
+              height: 48, padding: '0 1.25rem',
+              background: showFilters ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.06)',
+              color: showFilters ? '#93C5FD' : 'var(--text-secondary)',
+              border: showFilters ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 12,
+              fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              position: 'relative',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Filter size={16} />
+            Filtros
+            {activeFilters > 0 && (
+              <span style={{
+                background: '#3B82F6', color: '#fff', borderRadius: '50%',
+                width: 18, height: 18, fontSize: '0.625rem', fontWeight: 800,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {activeFilters}
+              </span>
+            )}
+            <ChevronDown size={14} style={{ transform: showFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
         </form>
-
-        <button
-          id="toggle-filters-btn"
-          className={`apple-btn ${!showFilters ? 'apple-btn-secondary' : ''}`}
-          onClick={() => setShowFilters(p => !p)}
-          style={{ gap: '0.5rem', position: 'relative' }}
-        >
-          <SlidersHorizontal size={16} />
-          Filtros
-          {activeFilters > 0 && (
-            <span style={{ position: 'absolute', top: -6, right: -6, background: 'var(--apple-accent-secondary)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-              {activeFilters}
-            </span>
-          )}
-        </button>
       </div>
 
-      {/* Filters panel */}
+      {/* ── Active filter chips ───────────────────────────────────────── */}
+      {activeFilters > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ativos:</span>
+          {specialty && filtersData?.specialties && (() => {
+            const s = filtersData.specialties.find((x: { id: string; name: string }) => x.id === specialty)
+            return s ? <FilterChip label={s.name} onRemove={() => { setSpecialty(''); setPage(1) }} color="#3B82F6" /> : null
+          })()}
+          {institution && filtersData?.institutions && (() => {
+            const i = filtersData.institutions.find((x: { id: string; acronym: string }) => x.id === institution)
+            return i ? <FilterChip label={i.acronym} onRemove={() => { setInstitution(''); setPage(1) }} color="#8B5CF6" /> : null
+          })()}
+          {year && <FilterChip label={`Ano ${year}`} onRemove={() => { setYear(''); setPage(1) }} color="#14B8A6" />}
+          {difficulty && <FilterChip label={diffConfig[difficulty as keyof typeof diffConfig]?.label ?? difficulty} onRemove={() => { setDifficulty(''); setPage(1) }} color={diffConfig[difficulty as keyof typeof diffConfig]?.color ?? '#888'} />}
+          {bookmarked && <FilterChip label="⭐ Favoritas" onRemove={() => { setBookmarked(false); setPage(1) }} color="#F59E0B" />}
+          {wrongOnly && <FilterChip label="✗ Apenas erros" onRemove={() => { setWrongOnly(false); setPage(1) }} color="#EF4444" />}
+          {search && <FilterChip label={`"${search}"`} onRemove={() => { setSearch(''); setSearchInput(''); setPage(1) }} color="#64748B" />}
+          <button onClick={clearFilters} style={{
+            background: 'none', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171',
+            borderRadius: 99, padding: '3px 10px', fontSize: '0.75rem', fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <X size={11} /> Limpar tudo
+          </button>
+        </div>
+      )}
+
+      {/* ── Filters panel ─────────────────────────────────────────────── */}
       {showFilters && (
-        <div className="apple-card animate-spring" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Especialidade</label>
-              <select id="filter-specialty" className="input" value={specialty} onChange={e => { setSpecialty(e.target.value); setPage(1) }} style={{ cursor: 'pointer' }}>
-                <option value="">Todas</option>
-                {filtersData?.specialties?.map((s: { id: string; name: string }) => (
-                  <option key={s.id} value={s.id}>📁 {s.name}</option>
-                ))}
-              </select>
-            </div>
+        <div style={{
+          background: 'rgba(10,22,40,0.8)',
+          border: '1px solid rgba(99,179,237,0.12)',
+          borderRadius: 18,
+          padding: '1.5rem',
+          marginBottom: '1.5rem',
+          backdropFilter: 'blur(12px)',
+          animation: 'qb-slide-down 0.25s cubic-bezier(0.2,0.8,0.2,1) both',
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+            <FilterSelect id="filter-specialty" label="Especialidade" icon={<GraduationCap size={13} />} value={specialty} onChange={v => { setSpecialty(v); setPage(1) }}>
+              <option value="">Todas especialidades</option>
+              {filtersData?.specialties?.map((s: { id: string; name: string }) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </FilterSelect>
 
-            <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Instituição</label>
-              <select id="filter-institution" className="input" value={institution} onChange={e => { setInstitution(e.target.value); setPage(1) }}>
-                <option value="">Todas</option>
-                {filtersData?.institutions?.map((i: { id: string; acronym: string; name: string }) => (
-                  <option key={i.id} value={i.id}>{i.acronym} — {i.name}</option>
-                ))}
-              </select>
-            </div>
+            <FilterSelect id="filter-institution" label="Instituição" icon={<Building2 size={13} />} value={institution} onChange={v => { setInstitution(v); setPage(1) }}>
+              <option value="">Todas instituições</option>
+              {filtersData?.institutions?.map((i: { id: string; acronym: string; name: string }) => (
+                <option key={i.id} value={i.id}>{i.acronym} — {i.name}</option>
+              ))}
+            </FilterSelect>
 
-            <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Ano</label>
-              <select id="filter-year" className="input" value={year} onChange={e => { setYear(e.target.value); setPage(1) }}>
-                <option value="">Todos</option>
-                {filtersData?.years?.map((y: number) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+            <FilterSelect id="filter-year" label="Ano" icon={<BarChart3 size={13} />} value={year} onChange={v => { setYear(v); setPage(1) }}>
+              <option value="">Todos os anos</option>
+              {filtersData?.years?.map((y: number) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </FilterSelect>
 
+            {/* Difficulty */}
             <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Dificuldade</label>
-              <div className="apple-segmented-control">
-                <button type="button" className={difficulty === '' ? 'active' : ''} onClick={() => { setDifficulty(''); setPage(1) }}>Todas</button>
-                {DIFFICULTIES.map(d => (
-                  <button type="button" key={d} className={difficulty === d ? 'active' : ''} onClick={() => { setDifficulty(d); setPage(1) }}>{d}</button>
-                ))}
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <BarChart3 size={13} /> Dificuldade
+              </label>
+              <div style={{ display: 'flex', gap: '0.375rem' }}>
+                {(['', ...DIFFICULTIES] as const).map(d => {
+                  const cfg = d ? diffConfig[d] : null
+                  const active = difficulty === d
+                  return (
+                    <button key={d} type="button" onClick={() => { setDifficulty(d as string); setPage(1) }} style={{
+                      flex: 1, padding: '8px 4px',
+                      borderRadius: 10,
+                      border: active ? `1px solid ${cfg?.border ?? 'rgba(255,255,255,0.3)'}` : '1px solid rgba(255,255,255,0.07)',
+                      background: active ? (cfg?.bg ?? 'rgba(255,255,255,0.1)') : 'rgba(255,255,255,0.03)',
+                      color: active ? (cfg?.color ?? '#fff') : 'var(--text-muted)',
+                      fontSize: '0.75rem', fontWeight: 700,
+                      cursor: 'pointer', transition: 'all 0.15s ease',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                    }}>
+                      {cfg && <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, flexShrink: 0, display: 'inline-block' }} />}
+                      {d === '' ? 'Todas' : cfg?.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              <input id="filter-bookmarked" type="checkbox" checked={bookmarked} onChange={e => { setBookmarked(e.target.checked); setPage(1) }} />
-              <Bookmark size={14} />
-              Somente favoritas
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              <input id="filter-wrongonly" type="checkbox" checked={wrongOnly} onChange={e => { setWrongOnly(e.target.checked); setPage(1) }} />
-              <AlertTriangle size={14} style={{ color: '#EF4444' }} />
-              Apenas erros
-            </label>
-
-            {activeFilters > 0 && (
-              <button className="apple-btn apple-btn-secondary" onClick={clearFilters} style={{ padding: '8px 12px', fontSize: '13px' }}>
-                <X size={14} /> Limpar filtros
-              </button>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+            <ToggleSwitch id="filter-bookmarked" checked={bookmarked} onChange={v => { setBookmarked(v); setPage(1) }} icon={<Star size={13} />} label="Somente favoritas" color="#F59E0B" />
+            <ToggleSwitch id="filter-wrongonly" checked={wrongOnly} onChange={v => { setWrongOnly(v); setPage(1) }} icon={<XCircle size={13} />} label="Apenas erros" color="#EF4444" />
           </div>
         </div>
       )}
 
-      {/* Questions list */}
+      {/* ── Toolbar: results count + view toggle ─────────────────────── */}
+      {!isLoading && data && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {isFetching && <RefreshCw size={13} className="animate-spin" style={{ color: 'var(--text-muted)' }} />}
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {data.total?.toLocaleString('pt-BR')} questões
+              {search && <> para <strong style={{ color: 'var(--text-secondary)' }}>"{search}"</strong></>}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            {(['list', 'compact'] as const).map(mode => (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{
+                padding: '6px 10px', borderRadius: 8, border: 'none',
+                background: viewMode === mode ? 'rgba(59,130,246,0.2)' : 'transparent',
+                color: viewMode === mode ? '#93C5FD' : 'var(--text-muted)',
+                cursor: 'pointer', transition: 'all 0.15s',
+              }}>
+                {mode === 'list' ? <List size={15} /> : <LayoutGrid size={15} />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Questions list ────────────────────────────────────────────── */}
       {isLoading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="apple-card" style={{ padding: '24px', opacity: 0.4 + i * 0.1 }}>
-              <div style={{ height: 14, background: 'var(--bg-elevated)', borderRadius: 4, width: '80%', marginBottom: 10 }} />
-              <div style={{ height: 12, background: 'var(--bg-elevated)', borderRadius: 4, width: '60%' }} />
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} style={{ opacity: 1 - i * 0.12 }} />
           ))}
         </div>
       ) : data?.data?.length === 0 ? (
-        <div className="apple-card" style={{ padding: '40px', textAlign: 'center' }}>
-          <BookOpen size={48} color="var(--text-muted)" style={{ marginBottom: 16 }} />
-          <h3 style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Nenhuma questão encontrada</h3>
-          <button className="apple-btn apple-btn-secondary" onClick={clearFilters} style={{ marginTop: 16 }}>
+        <div style={{
+          textAlign: 'center', padding: '4rem 2rem',
+          background: 'rgba(10,22,40,0.5)',
+          border: '1px dashed rgba(99,179,237,0.2)',
+          borderRadius: 20,
+        }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 1.25rem',
+          }}>
+            <BookOpen size={32} color="var(--text-muted)" />
+          </div>
+          <h3 style={{ color: 'var(--text-secondary)', fontWeight: 600, margin: '0 0 0.5rem' }}>Nenhuma questão encontrada</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0 0 1.5rem' }}>
+            Tente ajustar os filtros ou use termos diferentes.
+          </p>
+          <button className="apple-btn apple-btn-secondary" onClick={clearFilters} style={{ margin: '0 auto' }}>
             <RefreshCw size={14} /> Limpar filtros
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {isFetching && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8125rem', marginBottom: 4 }}>
-              <RefreshCw size={14} className="animate-spin" /> Atualizando...
-            </div>
-          )}
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: viewMode === 'compact' ? 4 : 10 }}>
           {data?.data?.map((q: {
             id: string
             statement: string
@@ -204,58 +365,287 @@ export default function QuestionBankPage() {
             institution?: { acronym: string }
             isBookmarked: boolean
           }, idx: number) => (
-            <button
+            <QuestionCard
               key={q.id}
-              id={`question-item-${idx}`}
+              q={q}
+              idx={(page - 1) * 20 + idx + 1}
+              viewMode={viewMode}
               onClick={() => navigate(`/questoes/${q.id}`)}
-              className="apple-card"
-              style={{
-                padding: '24px',
-                textAlign: 'left', cursor: 'pointer',
-                display: 'flex', alignItems: 'flex-start', gap: '16px',
-                width: '100%',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                background: 'rgba(59,130,246,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'Outfit', fontWeight: 700, color: 'var(--accent-blue)', fontSize: '0.875rem',
-              }}>
-                {(page - 1) * 20 + idx + 1}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                  dangerouslySetInnerHTML={{ __html: q.statement.replace(/<[^>]+>/g, '').slice(0, 200) + '...' }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                  {q.specialty && <span className="badge badge-blue">{q.specialty.name}</span>}
-                  {q.institution && <span className="badge badge-gray">{q.institution.acronym}</span>}
-                  {q.year && <span className="badge badge-gray">{q.year}</span>}
-                  <span className={`badge ${diffColor[q.difficulty]}`}>{q.difficulty}</span>
-                  {q.isBookmarked && <Bookmark size={12} color="var(--accent-gold)" fill="var(--accent-gold)" />}
-                </div>
-              </div>
-              <ChevronRight size={18} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 4 }} />
-            </button>
+            />
           ))}
         </div>
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination ─────────────────────────────────────────────────── */}
       {data && data.totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
-          <button className="apple-btn apple-btn-secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ padding: '8px 16px', fontSize: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem', marginTop: '2rem' }}>
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{
+            height: 40, padding: '0 1rem',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: '0.875rem', fontWeight: 500, opacity: page === 1 ? 0.4 : 1,
+          }}>
             <ChevronLeft size={16} /> Anterior
           </button>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500 }}>
-            Página {page} de {data.totalPages}
-          </span>
-          <button className="apple-btn apple-btn-secondary" onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} style={{ padding: '8px 16px', fontSize: '14px' }}>
+
+          <div style={{ display: 'flex', gap: '0.375rem' }}>
+            {getPaginationRange(page, data.totalPages).map((p, i) =>
+              p === '...' ? (
+                <span key={`el-${i}`} style={{ width: 36, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>…</span>
+              ) : (
+                <button key={p} onClick={() => setPage(p as number)} style={{
+                  width: 40, height: 40, borderRadius: 10, border: 'none',
+                  background: page === p ? 'linear-gradient(135deg, #3B82F6, #14B8A6)' : 'rgba(255,255,255,0.05)',
+                  color: page === p ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: page === p ? 700 : 500, fontSize: '0.875rem', cursor: 'pointer',
+                  boxShadow: page === p ? '0 4px 14px rgba(59,130,246,0.35)' : 'none',
+                }}>
+                  {p}
+                </button>
+              )
+            )}
+          </div>
+
+          <button onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} style={{
+            height: 40, padding: '0 1rem',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: '0.875rem', fontWeight: 500, opacity: page === data.totalPages ? 0.4 : 1,
+          }}>
             Próxima <ChevronRight size={16} />
           </button>
         </div>
       )}
+
+      {/* ── Injected keyframes ──────────────────────────────────────────── */}
+      <style>{`
+        @keyframes qb-slide-down {
+          from { opacity: 0; transform: translateY(-10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes qb-card-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .qb-question-card {
+          transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .qb-question-card:hover {
+          border-color: rgba(99,179,237,0.25) !important;
+          background: rgba(15,32,64,0.9) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(59,130,246,0.1) !important;
+        }
+        .qb-question-card:hover .qb-chevron {
+          color: #93C5FD;
+          transform: translateX(3px);
+        }
+        .qb-question-card .qb-chevron {
+          transition: color 0.2s, transform 0.2s;
+        }
+      `}</style>
     </div>
   )
+}
+
+/* ── Sub-components ──────────────────────────────────────────────────────── */
+
+function FilterChip({ label, onRemove, color }: { label: string; onRemove: () => void; color: string }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      background: `${color}18`, border: `1px solid ${color}40`, color,
+      borderRadius: 99, padding: '4px 10px', fontSize: '0.75rem', fontWeight: 600,
+    }}>
+      {label}
+      <button onClick={onRemove} style={{ background: 'none', border: 'none', color, cursor: 'pointer', display: 'flex', padding: 1, opacity: 0.7 }}>
+        <X size={11} />
+      </button>
+    </span>
+  )
+}
+
+function FilterSelect({ id, label, icon, value, onChange, children }: {
+  id: string; label: string; icon: React.ReactNode; value: string
+  onChange: (v: string) => void; children: React.ReactNode
+}) {
+  return (
+    <div>
+      <label htmlFor={id} style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        {icon} {label}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <select id={id} value={value} onChange={e => onChange(e.target.value)} style={{
+          width: '100%', height: 40,
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+          borderRadius: 10, color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+          fontSize: '0.875rem', padding: '0 2rem 0 0.875rem',
+          appearance: 'none', cursor: 'pointer', outline: 'none',
+          fontFamily: 'Inter, sans-serif',
+        }}
+          onFocus={e => e.target.style.borderColor = 'rgba(59,130,246,0.5)'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.09)'}
+        >
+          {children}
+        </select>
+        <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+      </div>
+    </div>
+  )
+}
+
+function ToggleSwitch({ id, checked, onChange, icon, label, color }: {
+  id: string; checked: boolean; onChange: (v: boolean) => void
+  icon: React.ReactNode; label: string; color: string
+}) {
+  return (
+    <label htmlFor={id} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
+      <div style={{ position: 'relative' }}>
+        <input id={id} type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} />
+        <div style={{
+          width: 38, height: 22, borderRadius: 99,
+          background: checked ? color : 'rgba(255,255,255,0.08)',
+          border: `1px solid ${checked ? color : 'rgba(255,255,255,0.1)'}`,
+          transition: 'all 0.2s', position: 'relative',
+        }}>
+          <div style={{
+            width: 16, height: 16, borderRadius: '50%', background: '#fff',
+            position: 'absolute', top: 2, left: checked ? 18 : 2,
+            transition: 'left 0.2s cubic-bezier(0.2,0.8,0.2,1)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+          }} />
+        </div>
+      </div>
+      <span style={{ fontSize: '0.875rem', color: checked ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+        <span style={{ color: checked ? color : 'var(--text-muted)' }}>{icon}</span>
+        {label}
+      </span>
+    </label>
+  )
+}
+
+function QuestionCard({ q, idx, viewMode, onClick }: {
+  q: { id: string; statement: string; year?: number; difficulty: 'FACIL' | 'MEDIO' | 'DIFICIL'; specialty?: { name: string }; institution?: { acronym: string }; isBookmarked: boolean }
+  idx: number; viewMode: 'list' | 'compact'; onClick: () => void
+}) {
+  const cfg = diffConfig[q.difficulty]
+  const isCompact = viewMode === 'compact'
+  const plainText = q.statement.replace(/<[^>]+>/g, '').slice(0, isCompact ? 120 : 200)
+
+  return (
+    <button
+      id={`question-item-${idx - 1}`}
+      onClick={onClick}
+      className="qb-question-card"
+      style={{
+        width: '100%', textAlign: 'left', cursor: 'pointer',
+        background: 'rgba(10,22,40,0.6)',
+        border: '1px solid rgba(99,179,237,0.1)',
+        borderRadius: isCompact ? 12 : 16,
+        padding: isCompact ? '0.875rem 1.125rem' : '1.25rem 1.5rem',
+        display: 'flex', alignItems: isCompact ? 'center' : 'flex-start', gap: isCompact ? 12 : 16,
+        animation: 'qb-card-in 0.3s ease both',
+      }}
+    >
+      {/* Number badge */}
+      <div style={{
+        flexShrink: 0,
+        width: isCompact ? 30 : 38, height: isCompact ? 30 : 38,
+        borderRadius: isCompact ? 8 : 10,
+        background: `${cfg.color}18`, border: `1px solid ${cfg.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Outfit', fontWeight: 700, color: cfg.color, fontSize: isCompact ? '0.8rem' : '0.875rem',
+      }}>
+        {idx}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{
+          margin: 0, fontSize: isCompact ? '0.8375rem' : '0.9rem',
+          color: 'var(--text-primary)', lineHeight: 1.55,
+          display: '-webkit-box', WebkitLineClamp: isCompact ? 1 : 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          marginBottom: isCompact ? 0 : '0.5rem',
+        }}>
+          {plainText}{plainText.length >= (isCompact ? 120 : 200) ? '…' : ''}
+        </p>
+
+        {!isCompact && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color,
+              borderRadius: 99, padding: '2px 9px', fontSize: '0.7rem', fontWeight: 700,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot, display: 'inline-block' }} />
+              {cfg.label}
+            </span>
+            {q.specialty && (
+              <span style={{
+                background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#93C5FD',
+                borderRadius: 99, padding: '2px 9px', fontSize: '0.7rem', fontWeight: 600,
+              }}>{q.specialty.name}</span>
+            )}
+            {q.institution && (
+              <span style={{
+                background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#C4B5FD',
+                borderRadius: 99, padding: '2px 9px', fontSize: '0.7rem', fontWeight: 600,
+              }}>{q.institution.acronym}</span>
+            )}
+            {q.year && (
+              <span style={{
+                background: 'rgba(100,116,139,0.1)', border: '1px solid rgba(100,116,139,0.2)', color: '#94A3B8',
+                borderRadius: 99, padding: '2px 9px', fontSize: '0.7rem', fontWeight: 600,
+              }}>{q.year}</span>
+            )}
+            {q.isBookmarked && <Star size={12} color="#F59E0B" fill="#F59E0B" />}
+          </div>
+        )}
+
+        {isCompact && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, display: 'inline-block', flexShrink: 0 }} />
+            <span style={{ fontSize: '0.7rem', color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
+            {q.specialty && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>· {q.specialty.name}</span>}
+            {q.institution && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>· {q.institution.acronym}</span>}
+            {q.year && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>· {q.year}</span>}
+          </div>
+        )}
+      </div>
+
+      <ChevronRight size={16} color="var(--text-muted)" className="qb-chevron" style={{ flexShrink: 0 }} />
+    </button>
+  )
+}
+
+function SkeletonCard({ style }: { style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      background: 'rgba(10,22,40,0.5)', border: '1px solid rgba(99,179,237,0.07)',
+      borderRadius: 16, padding: '1.25rem 1.5rem',
+      display: 'flex', alignItems: 'flex-start', gap: 16, ...style,
+    }}>
+      <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255,255,255,0.04)', flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ height: 14, background: 'rgba(255,255,255,0.05)', borderRadius: 7, width: '75%', marginBottom: 10 }} />
+        <div style={{ height: 12, background: 'rgba(255,255,255,0.04)', borderRadius: 7, width: '50%', marginBottom: 10 }} />
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[48, 72, 36].map(w => <div key={w} style={{ height: 18, width: w, background: 'rgba(255,255,255,0.04)', borderRadius: 99 }} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function getPaginationRange(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | '...')[] = [1]
+  if (current > 3) pages.push('...')
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) pages.push(p)
+  if (current < total - 2) pages.push('...')
+  pages.push(total)
+  return pages
 }
