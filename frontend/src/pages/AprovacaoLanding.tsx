@@ -24,13 +24,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import api, { subscriptionApi } from '../lib/api'
+import { subscriptionApi } from '../lib/api'
 import { trackClick } from '../lib/tracker'
 
 export default function AprovacaoLandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [leadEmail, setLeadEmail] = useState('')
-  const [loadingLead, setLoadingLead] = useState(false)
   const [activeAgendaTab, setActiveAgendaTab] = useState<'cronograma' | 'assuntos' | 'caderno'>('cronograma')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -51,23 +49,7 @@ export default function AprovacaoLandingPage() {
     trackClick('APROVACAO_LANDING_VIEW')
   }, [])
 
-  const handleLeadCapture = async () => {
-    if (!leadEmail.includes('@')) {
-      alert('Por favor, insira um e-mail válido.')
-      return
-    }
-    setLoadingLead(true)
-    try {
-      trackClick('APROVACAO_LEAD_CAPTURE', leadEmail)
-      await api.post('/auth/lead', { email: leadEmail })
-      localStorage.setItem('rokomed_lead_email', leadEmail)
-      window.location.href = '/simulado-gratis'
-    } catch (e) {
-      console.error(e)
-      localStorage.setItem('rokomed_lead_email', leadEmail)
-      window.location.href = '/simulado-gratis'
-    }
-  }
+
 
   const faqItems = [
     {
@@ -1494,25 +1476,7 @@ export default function AprovacaoLandingPage() {
               <span className="ap-trust-item"><span className="ap-trust-dot"></span> Revisão inteligente dos seus erros</span>
             </div>
 
-            {/* Email Lead Capture — preservado integralmente */}
-            <div className="ap-lead-box">
-              <input
-                type="email"
-                placeholder="Seu melhor e-mail profissional..."
-                value={leadEmail}
-                onChange={e => setLeadEmail(e.target.value)}
-                className="ap-lead-input"
-                aria-label="Seu melhor e-mail profissional"
-              />
-              <button
-                onClick={handleLeadCapture}
-                disabled={loadingLead}
-                className="ap-btn ap-btn-cyan"
-                style={{ padding: '12px 24px', fontSize: '13px', borderRadius: '12px' }}
-              >
-                {loadingLead ? 'Processando...' : 'Estudar Grátis'} <ArrowRight size={14} />
-              </button>
-            </div>
+
 
             <div className="ap-cta-sub">
               <span><ShieldCheck size={13} color="var(--green)" /> Acesso imediato</span>
