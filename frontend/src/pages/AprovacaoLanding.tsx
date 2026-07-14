@@ -3,25 +3,25 @@ import { Link } from 'react-router-dom'
 import {
   CheckCircle2,
   MessageSquare,
-  Award,
   ArrowRight,
   Star,
   ChevronDown,
   Check,
-  Zap,
   Sparkles,
-  Play,
   LayoutDashboard,
   BookOpen,
   TrendingUp,
   Layers,
-  Video,
-  Smartphone,
   Target,
   Flame,
-  Clock,
-  ArrowUpRight,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw,
+  Search,
+  Lightbulb,
+  RotateCcw,
+  XCircle,
+  BarChart2,
+  Zap,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import api, { subscriptionApi } from '../lib/api'
@@ -33,7 +33,6 @@ export default function AprovacaoLandingPage() {
   const [loadingLead, setLoadingLead] = useState(false)
   const [activeAgendaTab, setActiveAgendaTab] = useState<'cronograma' | 'assuntos' | 'caderno'>('cronograma')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
 
   const { data: plansData } = useQuery({
     queryKey: ['plans'],
@@ -48,7 +47,7 @@ export default function AprovacaoLandingPage() {
   const annualInstallment = Math.round(annualTotal / 12)
 
   useEffect(() => {
-    document.title = 'Bora Passar RokoMed — O Caminho para sua Aprovação na Residência'
+    document.title = 'RokoMed — Pare de estudar no escuro para a residência médica'
     trackClick('APROVACAO_LANDING_VIEW')
   }, [])
 
@@ -72,23 +71,54 @@ export default function AprovacaoLandingPage() {
 
   const faqItems = [
     {
-      q: "O que é o RokoMed?",
-      a: "O RokoMed é uma plataforma inteligente e adaptativa de preparação para residência médica. Composta por mais de 15.000 questões comentadas, simulados personalizáveis, análise de prioridades de banca e um tutor inteligente alimentado por Inteligência Artificial (o Dr. André)."
+      q: "As questões são de provas reais?",
+      a: "Sim. O RokoMed reúne questões de provas reais de residência médica aplicadas pelas principais bancas e instituições do país, incluindo ENARE, USP, UNIFESP, UNICAMP, SUS-SP e outras."
     },
     {
-      q: "Como o RokoMed me ajuda a ser aprovado mais rápido?",
-      a: "Ao contrário dos métodos tradicionais, focamos no estudo ativo. A plataforma monitora suas taxas de acerto, calcula suas fraquezas e cria um caderno de erros dinâmico automático. O Dr. André analisa seu perfil e tira dúvidas teóricas nos comentários das questões."
+      q: "Quais instituições e bancas estão disponíveis?",
+      a: "A plataforma conta com questões de diversas bancas e instituições, com destaque para ENARE, USP-SP, UNIFESP, UNICAMP, SUS-SP e outras grandes provas de residência médica."
     },
     {
-      q: "Os planos pagos oferecem acesso ao Dr. André (Tutor IA)?",
-      a: "Sim! Todos os planos PRO dão direito a consultas com o Dr. André. O plano gratuito oferece 5 créditos experimentais para testar a inteligência do tutor."
+      q: "Quantas questões existem atualmente?",
+      a: "O RokoMed conta com mais de 15.000 questões comentadas, organizadas por especialidade, tema, banca e nível de dificuldade."
+    },
+    {
+      q: "Todas as questões são comentadas?",
+      a: "Sim. Todas as questões possuem comentário explicativo. Além disso, você pode usar a IA Tutor (Dr. André) para aprofundar qualquer explicação ou esclarecer dúvidas específicas diretamente nos comentários da questão."
+    },
+    {
+      q: "Como funciona a IA Tutor (Dr. André)?",
+      a: "O Dr. André é o tutor de IA do RokoMed. Ele analisa as questões que você errou, explica o raciocínio por trás de cada alternativa e responde perguntas teóricas diretamente no contexto da questão. Os planos PRO têm acesso ilimitado ao Dr. André."
+    },
+    {
+      q: "Como funcionam os flashcards?",
+      a: "Os flashcards são adaptativos: o sistema prioriza os conteúdos que você tem mais dificuldade, trazendo-os para revisão com mais frequência. Isso torna sua revisão mais objetiva e reduz o tempo perdido com conteúdos que você já domina."
+    },
+    {
+      q: "Como funciona a análise de desempenho?",
+      a: "O RokoMed acompanha seu histórico de questões e identifica especialidades, temas e padrões onde você perde mais pontos. Você tem acesso a gráficos de evolução e pode visualizar claramente onde sua performance precisa de atenção."
+    },
+    {
+      q: "O RokoMed funciona no celular?",
+      a: "Sim. A plataforma é responsiva e funciona bem no celular, tablet e desktop, sem necessidade de instalar nenhum aplicativo."
+    },
+    {
+      q: "Novas questões são adicionadas?",
+      a: "Sim. A plataforma é atualizada continuamente com novas questões de provas recentes."
     },
     {
       q: "Existe fidelidade contratual?",
-      a: "Não. Você pode cancelar sua assinatura a qualquer momento com apenas um clique na área de perfil, sem qualquer multa contratual. Seu acesso continuará ativo até o fim do ciclo contratado."
+      a: "Não. Você pode cancelar sua assinatura a qualquer momento com apenas um clique na área de perfil, sem nenhuma multa contratual. Seu acesso permanece ativo até o fim do período contratado."
+    },
+    {
+      q: "Como funciona a garantia de 7 dias?",
+      a: "Se você assinar e não ficar satisfeito nos primeiros 7 dias, basta entrar em contato e devolvemos o valor integralmente. Sem burocracia."
+    },
+    {
+      q: "Qual é a diferença entre o RokoMed e um cursinho tradicional?",
+      a: "Cursinhos tradicionais geralmente focam em centenas de horas de videoaulas. O RokoMed é uma plataforma focada em estudo ativo por questões: você resolve, identifica onde está perdendo pontos, entende seus erros com comentários e IA, e revisa com flashcards adaptativos. O objetivo não é consumir conteúdo passivamente, mas transformar seus erros em uma preparação mais objetiva."
     }
   ]
-
 
   return (
     <div className="ap-root">
@@ -197,6 +227,11 @@ export default function AprovacaoLandingPage() {
           border-color: var(--border-hover);
           background: rgba(255, 255, 255, 0.05);
           transform: translateY(-1px);
+        }
+
+        .ap-btn-lg {
+          font-size: 16px;
+          padding: 18px 40px;
         }
 
         /* Cards styling */
@@ -322,6 +357,31 @@ export default function AprovacaoLandingPage() {
           max-width: 600px;
         }
 
+        /* Trust bar */
+        .ap-trust-bar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 32px;
+          font-size: 13px;
+          color: var(--text-secondary);
+          font-weight: 500;
+        }
+
+        .ap-trust-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .ap-trust-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--cyan);
+          flex-shrink: 0;
+        }
+
         /* Lead capture container */
         .ap-lead-box {
           display: flex;
@@ -333,7 +393,7 @@ export default function AprovacaoLandingPage() {
           width: 100%;
           align-items: center;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-          margin-bottom: 32px;
+          margin-bottom: 16px;
         }
 
         .ap-lead-input {
@@ -349,6 +409,20 @@ export default function AprovacaoLandingPage() {
 
         .ap-lead-input::placeholder {
           color: var(--text-muted);
+        }
+
+        .ap-cta-sub {
+          font-size: 12px;
+          color: var(--text-muted);
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .ap-cta-sub span {
+          display: flex;
+          align-items: center;
+          gap: 4px;
         }
 
         /* Hero Right: Floating Interface Teaser */
@@ -450,7 +524,100 @@ export default function AprovacaoLandingPage() {
           line-height: 1.6;
         }
 
-        /* Methodology Step Cards */
+        /* Problem Section */
+        .ap-problem-sec {
+          background: linear-gradient(180deg, #030812 0%, #050e1a 100%);
+          position: relative;
+        }
+
+        .ap-problem-list {
+          max-width: 680px;
+          margin: 0 auto 48px;
+        }
+
+        .ap-problem-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 18px 0;
+          border-bottom: 1px solid var(--border);
+          font-size: 17px;
+          color: var(--text-secondary);
+          line-height: 1.5;
+        }
+
+        .ap-problem-item:last-child {
+          border-bottom: none;
+        }
+
+        .ap-problem-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: rgba(239, 68, 68, 0.08);
+          border: 1px solid rgba(239, 68, 68, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .ap-problem-questions {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 20px;
+          max-width: 800px;
+          margin: 0 auto 40px;
+        }
+
+        .ap-problem-q {
+          padding: 20px 24px;
+          background: rgba(59, 126, 248, 0.04);
+          border: 1px solid rgba(59, 126, 248, 0.12);
+          border-radius: 16px;
+          font-size: 15px;
+          color: var(--cyan);
+          font-weight: 500;
+          line-height: 1.4;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        /* Ciclo Roko */
+        .ap-ciclo-sec {
+          position: relative;
+          background: #050E1A;
+        }
+
+        .ap-ciclo-flow {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 56px;
+          flex-wrap: wrap;
+        }
+
+        .ap-ciclo-pill {
+          font-family: 'Sora', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          padding: 8px 20px;
+          border-radius: 9999px;
+          border: 1px solid var(--border-hover);
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.03);
+          letter-spacing: 0.04em;
+        }
+
+        .ap-ciclo-arrow {
+          color: var(--cyan);
+          font-size: 18px;
+          opacity: 0.6;
+        }
+
         .ap-step-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -505,6 +672,20 @@ export default function AprovacaoLandingPage() {
           box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
         }
 
+        .ap-step-label {
+          font-family: 'Sora', sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--primary);
+          margin-bottom: 6px;
+        }
+
+        .ap-step-card:nth-child(2) .ap-step-label { color: var(--cyan); }
+        .ap-step-card:nth-child(3) .ap-step-label { color: #EC4899; }
+        .ap-step-card:nth-child(4) .ap-step-label { color: var(--amber); }
+
         .ap-step-title {
           font-family: 'Outfit', sans-serif;
           font-size: 20px;
@@ -522,7 +703,7 @@ export default function AprovacaoLandingPage() {
         /* Interactive scheduler mockup */
         .ap-sched-sec {
           padding: 100px 0;
-          background: #050E1A;
+          background: #030812;
           position: relative;
         }
 
@@ -613,11 +794,113 @@ export default function AprovacaoLandingPage() {
           margin-bottom: 18px;
         }
 
-        /* Features */
+        /* Features / Benefits */
         .ap-features-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 28px;
+        }
+
+        .ap-benefit-headline {
+          font-family: 'Outfit', sans-serif;
+          font-size: 19px;
+          font-weight: 700;
+          color: white;
+          margin-top: 20px;
+          margin-bottom: 6px;
+          line-height: 1.3;
+        }
+
+        /* Questions positioning section */
+        .ap-questions-sec {
+          background: #050E1A;
+          position: relative;
+        }
+
+        .ap-questions-inner {
+          max-width: 800px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .ap-questions-stat {
+          font-family: 'Outfit', sans-serif;
+          font-size: clamp(60px, 10vw, 100px);
+          font-weight: 800;
+          background: linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          line-height: 1;
+          margin-bottom: 8px;
+        }
+
+        /* Comparison */
+        .ap-compare-sec {
+          position: relative;
+        }
+
+        .ap-compare-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        .ap-compare-col {
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          border: 1px solid var(--border);
+        }
+
+        .ap-compare-col.roko {
+          border-color: rgba(59, 126, 248, 0.3);
+          box-shadow: 0 8px 32px rgba(59, 126, 248, 0.08);
+        }
+
+        .ap-compare-head {
+          padding: 16px 24px;
+          font-family: 'Sora', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .ap-compare-col:not(.roko) .ap-compare-head {
+          background: rgba(255, 255, 255, 0.02);
+          color: var(--text-muted);
+          border-bottom: 1px solid var(--border);
+        }
+
+        .ap-compare-col.roko .ap-compare-head {
+          background: rgba(59, 126, 248, 0.08);
+          color: var(--cyan);
+          border-bottom: 1px solid rgba(59, 126, 248, 0.15);
+        }
+
+        .ap-compare-item {
+          padding: 16px 24px;
+          font-size: 14px;
+          line-height: 1.5;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .ap-compare-item:last-child {
+          border-bottom: none;
+        }
+
+        .ap-compare-col:not(.roko) .ap-compare-item {
+          color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.01);
+        }
+
+        .ap-compare-col.roko .ap-compare-item {
+          color: var(--text-primary);
+          background: rgba(12, 26, 48, 0.4);
         }
 
         /* Testimonials */
@@ -642,12 +925,19 @@ export default function AprovacaoLandingPage() {
           height: 100%;
         }
 
+        .ap-test-stars {
+          display: flex;
+          gap: 3px;
+          margin-bottom: 16px;
+        }
+
         .ap-test-quote {
           font-size: 14px;
-          line-height: 1.6;
+          line-height: 1.7;
           color: var(--text-primary);
           font-style: italic;
           margin-bottom: 20px;
+          flex: 1;
         }
 
         .ap-test-tag {
@@ -659,14 +949,13 @@ export default function AprovacaoLandingPage() {
           padding: 4px 10px;
           border-radius: 4px;
           align-self: flex-start;
-          margin-bottom: auto;
+          margin-bottom: 20px;
         }
 
         .ap-test-user {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-top: 24px;
           padding-top: 16px;
           border-top: 1px solid var(--border);
         }
@@ -683,62 +972,7 @@ export default function AprovacaoLandingPage() {
           font-weight: 700;
           color: #030812;
           font-size: 14px;
-        }
-
-        /* Steps & Video */
-        .ap-journey-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 64px;
-          align-items: center;
-        }
-
-        .ap-j-step {
-          display: flex;
-          gap: 16px;
-          margin-bottom: 32px;
-        }
-
-        .ap-j-num {
-          font-family: 'Outfit', sans-serif;
-          font-size: 28px;
-          font-weight: 800;
-          background: linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          line-height: 1;
-        }
-
-        .ap-video-mock {
-          aspect-ratio: 16/9;
-          background: radial-gradient(circle at center, rgba(12, 26, 48, 0.8) 0%, rgba(5, 13, 26, 0.95) 100%);
-          border: 1px solid rgba(100, 160, 255, 0.15);
-          border-radius: 20px;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .ap-play-btn {
-          width: 72px;
-          height: 72px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #030812;
-          box-shadow: 0 8px 24px rgba(165, 195, 247, 0.2);
-          cursor: pointer;
-          border: none;
-          transition: transform 0.2s;
-        }
-
-        .ap-play-btn:hover {
-          transform: scale(1.1);
+          flex-shrink: 0;
         }
 
         /* Pricing layout */
@@ -786,6 +1020,7 @@ export default function AprovacaoLandingPage() {
           text-transform: uppercase;
           letter-spacing: 0.05em;
           font-family: 'Sora', sans-serif;
+          white-space: nowrap;
         }
 
         .ap-price-card:hover {
@@ -845,6 +1080,69 @@ export default function AprovacaoLandingPage() {
           color: var(--text-primary);
         }
 
+        /* Why cheaper section */
+        .ap-cheaper-sec {
+          background: #030812;
+          position: relative;
+        }
+
+        .ap-cheaper-inner {
+          max-width: 760px;
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        /* For whom section */
+        .ap-forwhom-sec {
+          background: #050E1A;
+          position: relative;
+        }
+
+        .ap-forwhom-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 32px;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        .ap-forwhom-col {
+          padding: 32px;
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--border);
+        }
+
+        .ap-forwhom-col.yes {
+          background: rgba(16, 185, 129, 0.03);
+          border-color: rgba(16, 185, 129, 0.15);
+        }
+
+        .ap-forwhom-col.maybe-not {
+          background: rgba(255, 255, 255, 0.01);
+        }
+
+        .ap-forwhom-head {
+          font-family: 'Outfit', sans-serif;
+          font-size: 18px;
+          font-weight: 700;
+          margin-bottom: 20px;
+        }
+
+        .ap-forwhom-col.yes .ap-forwhom-head { color: var(--green); }
+        .ap-forwhom-col.maybe-not .ap-forwhom-head { color: var(--text-secondary); }
+
+        .ap-forwhom-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ap-forwhom-col.yes .ap-forwhom-item { color: var(--text-primary); }
+        .ap-forwhom-col.maybe-not .ap-forwhom-item { color: var(--text-secondary); }
+
         /* FAQ Accordion */
         .ap-faq-list {
           max-width: 800px;
@@ -880,13 +1178,28 @@ export default function AprovacaoLandingPage() {
           font-family: 'Outfit', sans-serif;
           font-weight: 600;
           font-size: 16px;
+          gap: 16px;
         }
 
         .ap-faq-ans {
           padding: 0 24px 20px;
           font-size: 14px;
           color: var(--text-secondary);
-          line-height: 1.6;
+          line-height: 1.7;
+        }
+
+        /* Final CTA Section */
+        .ap-finalcta-sec {
+          background: linear-gradient(180deg, #030812 0%, #05101e 100%);
+          position: relative;
+          text-align: center;
+        }
+
+        .ap-finalcta-inner {
+          max-width: 680px;
+          margin: 0 auto;
+          position: relative;
+          z-index: 1;
         }
 
         /* Footer */
@@ -911,7 +1224,7 @@ export default function AprovacaoLandingPage() {
 
         /* Responsive */
         @media (max-width: 991px) {
-          .ap-hero-grid, .ap-sched-grid, .ap-journey-grid {
+          .ap-hero-grid, .ap-sched-grid, .ap-forwhom-grid {
             grid-template-columns: 1fr;
             gap: 40px;
           }
@@ -920,6 +1233,9 @@ export default function AprovacaoLandingPage() {
           }
           .ap-dashboard-teaser {
             margin: 0 auto;
+          }
+          .ap-compare-grid {
+            grid-template-columns: 1fr;
           }
         }
 
@@ -1035,10 +1351,6 @@ export default function AprovacaoLandingPage() {
             grid-template-columns: 1fr;
             gap: 32px;
           }
-          .ap-journey-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
           .ap-step-grid {
             grid-template-columns: 1fr;
           }
@@ -1049,6 +1361,12 @@ export default function AprovacaoLandingPage() {
             grid-template-columns: 1fr;
           }
           .ap-features-grid {
+            grid-template-columns: 1fr;
+          }
+          .ap-forwhom-grid {
+            grid-template-columns: 1fr;
+          }
+          .ap-compare-grid {
             grid-template-columns: 1fr;
           }
 
@@ -1074,22 +1392,25 @@ export default function AprovacaoLandingPage() {
             min-height: 300px;
           }
 
-          /* Table comparison */
+          /* Compare */
           .ap-compare-wrap {
             overflow-x: auto;
-          }
-          .ap-compare-table {
-            min-width: 560px;
-          }
-
-          /* Journey video */
-          .ap-video-mock {
-            min-height: 200px;
           }
 
           /* Price card popular badge */
           .ap-price-card.popular {
             margin-top: 12px;
+          }
+
+          .ap-ciclo-flow {
+            gap: 6px;
+          }
+          .ap-ciclo-pill {
+            font-size: 12px;
+            padding: 6px 14px;
+          }
+          .ap-trust-bar {
+            gap: 12px;
           }
         }
 
@@ -1115,8 +1436,8 @@ export default function AprovacaoLandingPage() {
             Roko<span>Med</span>
           </Link>
           <nav className="ap-nav-links">
-            <a href="#metodologia" className="ap-nav-link">Metodologia</a>
-            <a href="#agenda" className="ap-nav-link">Agenda</a>
+            <a href="#ciclo-roko" className="ap-nav-link">Metodologia</a>
+            <a href="#plataforma" className="ap-nav-link">Plataforma</a>
             <a href="#depoimentos" className="ap-nav-link">Depoimentos</a>
             <a href="#planos" className="ap-nav-link">Planos</a>
             <a href="#faq" className="ap-nav-link">Dúvidas</a>
@@ -1136,8 +1457,8 @@ export default function AprovacaoLandingPage() {
         {/* Mobile dropdown menu */}
         {mobileMenuOpen && (
           <div className="ap-mobile-menu">
-            <a href="#metodologia" onClick={() => setMobileMenuOpen(false)}>Metodologia</a>
-            <a href="#agenda" onClick={() => setMobileMenuOpen(false)}>Agenda</a>
+            <a href="#ciclo-roko" onClick={() => setMobileMenuOpen(false)}>Metodologia</a>
+            <a href="#plataforma" onClick={() => setMobileMenuOpen(false)}>Plataforma</a>
             <a href="#depoimentos" onClick={() => setMobileMenuOpen(false)}>Depoimentos</a>
             <a href="#planos" onClick={() => setMobileMenuOpen(false)}>Planos</a>
             <a href="#faq" onClick={() => setMobileMenuOpen(false)}>Dúvidas</a>
@@ -1146,26 +1467,34 @@ export default function AprovacaoLandingPage() {
         )}
       </header>
 
-      {/* ── Hero Section ── */}
+      {/* ── 1. HERO SECTION ── */}
       <section className="ap-hero-sec">
         <div className="ap-container ap-hero-grid">
           
           <div>
             <div className="ap-badge">
               <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
-              RokoMed Inteligência Ativa • Preparação Focada
+              Plataforma inteligente para residência médica
             </div>
             
             <h1 className="ap-title">
-              Domine as bancas com<br />
-              <span>estudo ativo guiado por IA</span>
+              Pare de estudar no escuro<br />
+              para a <span>residência médica.</span>
             </h1>
             
             <p className="ap-subtitle">
-              Chega de videoaulas intermináveis e resumos estáticos. O RokoMed analisa seu edital, cria uma trilha de estudo adaptativa e resolve suas dúvidas instantaneamente com o Dr. André, nosso tutor inteligente de IA.
+              Resolva questões reais, descubra exatamente onde está perdendo pontos e transforme seus erros em revisões inteligentes com IA e flashcards adaptativos.
             </p>
 
-            {/* Email Lead Capture */}
+            {/* Trust line */}
+            <div className="ap-trust-bar">
+              <span className="ap-trust-item"><span className="ap-trust-dot"></span> 15.000+ questões comentadas</span>
+              <span className="ap-trust-item"><span className="ap-trust-dot"></span> ENARE, USP, UNIFESP e outras</span>
+              <span className="ap-trust-item"><span className="ap-trust-dot"></span> IA Tutor</span>
+              <span className="ap-trust-item"><span className="ap-trust-dot"></span> Revisão inteligente dos seus erros</span>
+            </div>
+
+            {/* Email Lead Capture — preservado integralmente */}
             <div className="ap-lead-box">
               <input
                 type="email"
@@ -1185,16 +1514,24 @@ export default function AprovacaoLandingPage() {
               </button>
             </div>
 
-            {/* Trust symbols */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', color: 'var(--text-secondary)', marginTop: -12 }}>
-              <div style={{ display: 'flex', color: 'var(--amber)' }}>
-                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="currentColor" />)}
-              </div>
-              <span>Avaliado em <strong>4.9/5</strong> por mais de 2.000 médicos.</span>
+            <div className="ap-cta-sub">
+              <span><ShieldCheck size={13} color="var(--green)" /> Acesso imediato</span>
+              <span><Check size={13} color="var(--green)" /> Sem fidelidade</span>
+              <span><ShieldCheck size={13} color="var(--green)" /> 7 dias de garantia</span>
+            </div>
+
+            <div style={{ marginTop: 24 }}>
+              <Link
+                to="/checkout?plan=monthly"
+                className="ap-btn ap-btn-primary"
+                style={{ fontSize: '15px', padding: '16px 36px' }}
+              >
+                Começar agora por R$ {monthlyPrice}/mês <ArrowRight size={16} />
+              </Link>
             </div>
           </div>
 
-          {/* Hero Right: Teaser Card and Rotator */}
+          {/* Hero Right: Dashboard Teaser */}
           <div className="ap-hero-visual">
             {/* Rotating stamp animation */}
             <div style={{ position: 'absolute', top: -36, left: -36, zIndex: 10, width: 120, height: 120 }}>
@@ -1203,11 +1540,11 @@ export default function AprovacaoLandingPage() {
                   <path id="badge-circle" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" />
                 </defs>
                 <text fontSize="8.2" fontWeight="700" letterSpacing="2.5" fill="currentColor">
-                  <textPath href="#badge-circle">✦ ROKOMED ✦ MÁXIMO RENDIMENTO ✦ INTELIGÊNCIA ATIVA </textPath>
+                  <textPath href="#badge-circle">✦ ROKOMED ✦ ESTUDO ATIVO ✦ RESIDÊNCIA MÉDICA </textPath>
                 </text>
               </svg>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', color: '#030812', fontWeight: 800, fontSize: 10, textAlign: 'center', lineHeight: 1.1, boxShadow: '0 4px 12px var(--cyan-glow)' }}>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#030812', fontWeight: 800, fontSize: 10, textAlign: 'center', lineHeight: 1.1, boxShadow: '0 4px 12px var(--cyan-glow)' }}>
                   Roko<br />Med
                 </div>
               </div>
@@ -1216,31 +1553,47 @@ export default function AprovacaoLandingPage() {
             {/* Interactive Dashboard teaser */}
             <div className="ap-dashboard-teaser">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cyan)', textTransform: 'uppercase', fontFamily: 'Sora' }}>Painel RokoMed PRO</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cyan)', textTransform: 'uppercase', fontFamily: 'Sora' }}>Análise de Desempenho</span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', color: 'var(--green)', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
                   <TrendingUp size={10} /> +18.4% esta semana
                 </span>
               </div>
-              
-              <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
-                <div style={{ flex: 1, padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12 }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Taxa de Acerto</div>
-                  <div style={{ fontSize: '20px', fontWeight: 800, color: 'white', marginTop: 4, fontFamily: 'Outfit' }}>78.4%</div>
+
+              {/* Mini question teaser */}
+              <div style={{ padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12, marginBottom: 14 }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, fontFamily: 'Sora', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questão Recente — Clínica Médica (USP)</div>
+                <div style={{ fontSize: '12px', color: 'white', lineHeight: 1.5, marginBottom: 10 }}>
+                  Homem, 58 anos, HAS, DM2. Queixa de dispneia aos esforços progressiva há 2 meses. Ausculta: B3. Diagnóstico mais provável?
                 </div>
-                <div style={{ flex: 1, padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12 }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Sequência</div>
-                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#F97316', marginTop: 4, fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Flame size={18} fill="#F97316" /> 14 dias
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ padding: '6px 10px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', fontSize: '11px', color: '#FCA5A5', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <XCircle size={11} color="#EF4444" /> A) Pericardite aguda
+                  </div>
+                  <div style={{ padding: '6px 10px', borderRadius: 6, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', fontSize: '11px', color: '#6EE7B7', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CheckCircle2 size={11} color="#10B981" /> B) Insuficiência Cardíaca
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+                <div style={{ flex: 1, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 10 }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Taxa de Acerto</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginTop: 2, fontFamily: 'Outfit' }}>78.4%</div>
+                </div>
+                <div style={{ flex: 1, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 10 }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Sequência</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#F97316', marginTop: 2, fontFamily: 'Outfit', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Flame size={16} fill="#F97316" /> 14d
                   </div>
                 </div>
               </div>
 
-              <div style={{ padding: 16, background: 'rgba(59, 126, 248, 0.05)', border: '1px solid rgba(59, 126, 248, 0.15)', borderRadius: 12 }}>
+              <div style={{ padding: 14, background: 'rgba(59, 126, 248, 0.05)', border: '1px solid rgba(59, 126, 248, 0.15)', borderRadius: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '11px', fontWeight: 700, color: 'var(--primary)', marginBottom: 6, fontFamily: 'Sora' }}>
-                  <MessageSquare size={13} /> COMENTÁRIO DO DR. ANDRÉ (Tutor IA)
+                  <MessageSquare size={11} /> IA TUTOR — Análise do Erro
                 </div>
-                <p style={{ fontSize: '11.5px', color: '#B2CBE5', lineHeight: 1.4 }}>
-                  "Você melhorou em Pediatria, mas Gastro ainda responde por 35% das suas dúvidas. Criei um caderno de erros focado nas questões da USP dos últimos 3 anos para revisar amanhã."
+                <p style={{ fontSize: '11.5px', color: '#B2CBE5', lineHeight: 1.5 }}>
+                  "Você perdeu 35% dos pontos em Gastroenterologia. Identifiquei as questões específicas da USP para focar na revisão de amanhã."
                 </p>
               </div>
             </div>
@@ -1259,49 +1612,117 @@ export default function AprovacaoLandingPage() {
               <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Cirurgia — Abdome Agudo</span>
               <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Pediatria — Reanimação Neonatal</span>
               <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> GO — Pré-eclâmpsia e Eclâmpsia</span>
+              <span className="ap-marquee-item"><span className="ap-marquee-dot">◆</span> Neurologia — AVC Isquêmico</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Metodologia Section ── */}
-      <section id="metodologia" style={{ padding: '100px 0' }}>
+      {/* ── 2. PROBLEM SECTION ── */}
+      <section className="ap-problem-sec" style={{ padding: '100px 0' }}>
         <div className="ap-container">
           <div className="ap-sec-header">
-            <div className="ap-sec-tag">Metodologia RokoMed</div>
-            <h2 className="ap-sec-title">Se é para passar, que seja <span>do jeito certo</span></h2>
-            <p className="ap-sec-desc">
-              Não adianta maratonar videoaulas passivas. O RokoMed acelera sua retenção de conteúdo com um ciclo prático focado em questões, análise estatística e revisão no tempo certo.
+            <div className="ap-sec-tag">O problema real</div>
+            <h2 className="ap-sec-title">Você estuda, mas sabe exatamente onde está <span>perdendo pontos?</span></h2>
+          </div>
+
+          <div className="ap-problem-list">
+            <div className="ap-problem-item">
+              <div className="ap-problem-icon">
+                <BookOpen size={15} color="#EF4444" />
+              </div>
+              <span>Você resolve questões. Assiste aulas. Faz resumos. Pula de um assunto para outro.</span>
+            </div>
+            <div className="ap-problem-item">
+              <div className="ap-problem-icon">
+                <Search size={15} color="#EF4444" />
+              </div>
+              <span>Mas continua sem saber em quais especialidades e temas está perdendo mais pontos.</span>
+            </div>
+            <div className="ap-problem-item">
+              <div className="ap-problem-icon">
+                <BarChart2 size={15} color="#EF4444" />
+              </div>
+              <span>Sem dados claros sobre seu desempenho, fica difícil saber o que revisar primeiro.</span>
+            </div>
+          </div>
+
+          <div className="ap-problem-questions">
+            <div className="ap-problem-q">
+              <Search size={16} style={{ flexShrink: 0 }} />
+              Onde exatamente estou perdendo meus pontos?
+            </div>
+            <div className="ap-problem-q">
+              <RefreshCw size={16} style={{ flexShrink: 0 }} />
+              O que devo revisar primeiro?
+            </div>
+            <div className="ap-problem-q">
+              <TrendingUp size={16} style={{ flexShrink: 0 }} />
+              Estou realmente melhorando?
+            </div>
+          </div>
+
+          <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+            <p style={{ fontSize: '17px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              O RokoMed foi criado para transformar essas dúvidas em{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>questões, dados e uma revisão mais objetiva.</strong>
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. O CICLO ROKO (Metodologia) ── */}
+      <section id="ciclo-roko" className="ap-ciclo-sec" style={{ padding: '100px 0' }}>
+        <div className="ap-container">
+          <div className="ap-sec-header">
+            <div className="ap-sec-tag">O Ciclo Roko</div>
+            <h2 className="ap-sec-title">Transforme cada erro em <span>um próximo passo claro.</span></h2>
+            <p className="ap-sec-desc">
+              O RokoMed não é um banco de questões solto. É um sistema integrado onde cada erro vira aprendizado e cada sessão de estudo gera informação útil.
+            </p>
+          </div>
+
+          <div className="ap-ciclo-flow">
+            <span className="ap-ciclo-pill">Resolva</span>
+            <span className="ap-ciclo-arrow">→</span>
+            <span className="ap-ciclo-pill">Descubra</span>
+            <span className="ap-ciclo-arrow">→</span>
+            <span className="ap-ciclo-pill">Corrija</span>
+            <span className="ap-ciclo-arrow">→</span>
+            <span className="ap-ciclo-pill">Fixe</span>
           </div>
 
           <div className="ap-step-grid">
             <div className="ap-step-card">
               <div className="ap-step-num">01</div>
-              <h3 className="ap-step-title">Aprendizado</h3>
-              <p className="ap-step-desc">Resumos estratégicos e cartões teóricos que dão o embasamento direto para o assunto do dia.</p>
+              <div className="ap-step-label">Resolva</div>
+              <h3 className="ap-step-title">Treine com questões reais</h3>
+              <p className="ap-step-desc">Mais de 15.000 questões das principais provas e bancas de residência médica: ENARE, USP, UNIFESP, UNICAMP, SUS-SP e outras.</p>
             </div>
             <div className="ap-step-card">
               <div className="ap-step-num">02</div>
-              <h3 className="ap-step-title">Fixação</h3>
-              <p className="ap-step-desc">Exercícios focados e mapeados pela relevância histórica de incidência no seu exame de residência.</p>
+              <div className="ap-step-label">Descubra</div>
+              <h3 className="ap-step-title">Veja onde você perde pontos</h3>
+              <p className="ap-step-desc">O RokoMed identifica especialidades, temas e padrões onde você mais erra. Não é achismo: é o seu histórico de respostas transformado em dado.</p>
             </div>
             <div className="ap-step-card">
               <div className="ap-step-num">03</div>
-              <h3 className="ap-step-title">Foco IA</h3>
-              <p className="ap-step-desc">O Dr. André identifica suas lacunas conceituais e ajusta o nível de explicação automaticamente.</p>
+              <div className="ap-step-label">Corrija</div>
+              <h3 className="ap-step-title">Entenda por que errou</h3>
+              <p className="ap-step-desc">Comentários detalhados em cada questão e a IA Tutor (Dr. André) para explicar o raciocínio, aprofundar conceitos e esclarecer dúvidas diretamente no contexto do erro.</p>
             </div>
             <div className="ap-step-card">
               <div className="ap-step-num">04</div>
-              <h3 className="ap-step-title">Revisão</h3>
-              <p className="ap-step-desc">Agenda adaptativa inteligente que traz os assuntos de volta antes de entrarem na curva de esquecimento.</p>
+              <div className="ap-step-label">Fixe</div>
+              <h3 className="ap-step-title">Revise o que realmente importa</h3>
+              <p className="ap-step-desc">Flashcards adaptativos e caderno de erros inteligente transformam suas lacunas em revisão focada. Você revisa mais o que esquece e menos o que já domina.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Interactive Agenda Section ── */}
-      <section id="agenda" className="ap-sched-sec">
+      {/* ── 4. PRODUCT DEMO / PLATAFORMA INTERATIVA ── */}
+      <section id="plataforma" className="ap-sched-sec">
         <div className="ap-container ap-sched-grid">
           
           {/* Left: Interactive mockup */}
@@ -1311,37 +1732,34 @@ export default function AprovacaoLandingPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div className="ap-mock-header">
                     <span style={{ fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px' }}>
-                      <LayoutDashboard size={16} color="var(--primary)" /> Cronograma Adaptativo
+                      <LayoutDashboard size={16} color="var(--primary)" /> Análise de Desempenho
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '2px 8px', borderRadius: 4 }}>Meta diária: 2h</span>
+                    <span style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600 }}>↑ Melhorando</span>
                   </div>
                   
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Esta semana seu foco é cobrir o edital prioritário da <strong>USP</strong>:</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Suas especialidades com mais oportunidade de melhora:</p>
                     
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 10, border: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, color: 'white' }}>Pediatria - Aleitamento</span>
-                        <span style={{ color: 'var(--green)', fontWeight: 600 }}>Meta batida!</span>
+                    {[
+                      { label: 'Gastroenterologia', pct: '52%', color: '#EF4444', tag: 'Maior lacuna' },
+                      { label: 'Cardiologia', pct: '68%', color: 'var(--amber)', tag: 'Em progresso' },
+                      { label: 'Pediatria', pct: '81%', color: 'var(--green)', tag: 'Dominando' },
+                    ].map((item, i) => (
+                      <div key={i} style={{ background: 'rgba(255,255,255,0.02)', padding: 12, borderRadius: 10, border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: 6 }}>
+                          <span style={{ fontWeight: 600, color: 'white' }}>{item.label}</span>
+                          <span style={{ color: item.color, fontWeight: 600, fontSize: '11px' }}>{item.tag}</span>
+                        </div>
+                        <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', background: item.color, width: item.pct, transition: 'width 0.6s' }}></div>
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: 4 }}>{item.pct} de acerto</div>
                       </div>
-                      <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: 'var(--green)', width: '100%' }}></div>
-                      </div>
-                    </div>
-
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 10, border: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, color: 'white' }}>Cardiologia - Hipertensão</span>
-                        <span style={{ color: 'var(--primary)' }}>A fazer hoje</span>
-                      </div>
-                      <div style={{ height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: 'var(--primary)', width: '40%' }}></div>
-                      </div>
-                    </div>
+                    ))}
 
                     <div style={{ display: 'flex', gap: 12, marginTop: 'auto' }}>
                       <Link to="/questoes" className="ap-btn ap-btn-primary" style={{ flex: 1, padding: 12, fontSize: '12px', borderRadius: '8px' }}>
-                        Estudar Assunto do Dia
+                        Ver minha análise completa
                       </Link>
                     </div>
                   </div>
@@ -1352,30 +1770,33 @@ export default function AprovacaoLandingPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div className="ap-mock-header">
                     <span style={{ fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px' }}>
-                      <BookOpen size={16} color="var(--cyan)" /> Painel de Assuntos
+                      <BookOpen size={16} color="var(--cyan)" /> Questão + Explicação
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--cyan)', fontWeight: 600 }}>Incidência USP</span>
+                    <span style={{ fontSize: '11px', color: 'var(--cyan)', fontWeight: 600 }}>USP-SP 2024</span>
                   </div>
 
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <p style={{ fontSize: '12px', color: 'white', lineHeight: 1.6 }}>Mulher, 34 anos, queixa de palpitações e sudorese. TSH &lt; 0,1. T4 livre aumentado. Qual o tratamento de primeira linha?</p>
+                    
                     {[
-                      { label: 'Síndrome Coronariana Aguda', area: 'Clínica', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Altíssima relevância' },
-                      { label: 'Sepse e Choque Séptico', area: 'Clínica / Infectologia', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Altíssima relevância' },
-                      { label: 'Pré-eclâmpsia e Eclâmpsia', area: 'GO', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', tag: 'Alta relevância' },
-                      { label: 'Abdome Agudo / Apendicite', area: 'Cirurgia', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', tag: 'Média relevância' },
-                      { label: 'Reanimação Neonatal', area: 'Pediatria', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', tag: 'Média relevância' },
+                      { opt: 'A', text: 'Levotiroxina', wrong: false, selected: false },
+                      { opt: 'B', text: 'Metimazol', wrong: false, selected: true, correct: true },
+                      { opt: 'C', text: 'Iodo radioativo', wrong: true, selected: false },
                     ].map((item, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                        <div>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'white', display: 'block' }}>{item.label}</span>
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.area}</span>
-                        </div>
-                        <span style={{ fontSize: '10px', color: item.color, background: item.bg, padding: '2px 7px', borderRadius: 4, fontWeight: 700, whiteSpace: 'nowrap', marginLeft: 8 }}>{item.tag}</span>
+                      <div key={i} style={{ 
+                        padding: '8px 12px', borderRadius: 8, fontSize: '12px', display: 'flex', gap: 8, alignItems: 'center',
+                        background: item.correct ? 'rgba(16,185,129,0.08)' : item.wrong ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.02)',
+                        border: `1px solid ${item.correct ? 'rgba(16,185,129,0.2)' : item.wrong ? 'rgba(239,68,68,0.15)' : 'var(--border)'}`,
+                        color: item.correct ? '#6EE7B7' : item.wrong ? '#FCA5A5' : 'var(--text-secondary)'
+                      }}>
+                        <span style={{ fontWeight: 700 }}>{item.opt})</span> {item.text}
+                        {item.correct && <CheckCircle2 size={12} color="#10B981" style={{ marginLeft: 'auto' }} />}
                       </div>
                     ))}
 
-                    <div style={{ marginTop: 'auto', padding: 10, background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: '11px', color: 'var(--text-secondary)' }}>
-                      💡 Filtrado para priorizar temas com peso {`>=`} 3 no último edital.
+                    <div style={{ padding: 10, background: 'rgba(59, 126, 248, 0.05)', border: '1px solid rgba(59, 126, 248, 0.15)', borderRadius: 8, marginTop: 4 }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--primary)', marginBottom: 4, fontFamily: 'Sora', textTransform: 'uppercase' }}>Comentário da Questão</div>
+                      <p style={{ fontSize: '11px', color: '#B2CBE5', lineHeight: 1.5 }}>Na Doença de Graves, o Metimazol é a primeira linha por inibir a síntese hormonal. O iodo é opção mas não primeira linha em adultos jovens.</p>
                     </div>
                   </div>
                 </div>
@@ -1385,13 +1806,13 @@ export default function AprovacaoLandingPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div className="ap-mock-header">
                     <span style={{ fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: 6, fontSize: '13px' }}>
-                      <Layers size={16} color="var(--amber)" /> Caderno de Erros Inteligente
+                      <Layers size={16} color="var(--amber)" /> Caderno de Erros
                     </span>
                     <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '2px 8px', borderRadius: 4 }}>12 pendentes</span>
                   </div>
 
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Questões salvas automaticamente para revisão ativa:</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Questões salvas automaticamente para revisão:</p>
                     
                     <div style={{ padding: 12, background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: 10 }}>
                       <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'white' }}>Questão #12,894 — Clínica Médica (USP-SP)</div>
@@ -1420,10 +1841,10 @@ export default function AprovacaoLandingPage() {
 
           {/* Right: Interactive trigger buttons */}
           <div>
-            <div className="ap-sec-tag">Recurso Principal</div>
-            <h2 className="ap-sec-title">Uma agenda que <span>estuda com você</span></h2>
+            <div className="ap-sec-tag">Veja o que acontece depois que você erra</div>
+            <h2 className="ap-sec-title" style={{ marginBottom: 12 }}>Do erro ao <span>próximo passo</span></h2>
             <p className="ap-sec-desc" style={{ marginBottom: 32 }}>
-              A rotina médica é caótica. Por isso, abandonamos as planilhas fixas e criamos uma agenda dinâmica e adaptativa de verdade.
+              Cada questão respondida gera dados. Esses dados mostram onde você está perdendo pontos e o que revisar a seguir.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1432,11 +1853,11 @@ export default function AprovacaoLandingPage() {
                 onClick={() => setActiveAgendaTab('cronograma')}
               >
                 <div className="ap-tab-icon">
-                  <LayoutDashboard size={20} />
+                  <BarChart2 size={20} />
                 </div>
                 <div>
-                  <h3 className="ap-tab-title">Cronograma até a prova</h3>
-                  <p className="ap-tab-desc">Distribuição semanal inteligente de acordo com sua disponibilidade e tempo até o exame.</p>
+                  <h3 className="ap-tab-title">Análise de Desempenho</h3>
+                  <p className="ap-tab-desc">Veja exatamente em quais especialidades e temas você perde mais pontos, com dados claros do seu histórico.</p>
                 </div>
               </button>
 
@@ -1445,11 +1866,11 @@ export default function AprovacaoLandingPage() {
                 onClick={() => setActiveAgendaTab('assuntos')}
               >
                 <div className="ap-tab-icon">
-                  <BookOpen size={20} />
+                  <Lightbulb size={20} />
                 </div>
                 <div>
-                  <h3 className="ap-tab-title">Painel de Assuntos Prioritários</h3>
-                  <p className="ap-tab-desc">Acesso rápido aos temas de altíssima incidência nas bancas desejadas.</p>
+                  <h3 className="ap-tab-title">Questão + Comentário + IA Tutor</h3>
+                  <p className="ap-tab-desc">Entenda o raciocínio por trás de cada alternativa com comentários detalhados e o Dr. André disponível para aprofundar.</p>
                 </div>
               </button>
 
@@ -1458,11 +1879,11 @@ export default function AprovacaoLandingPage() {
                 onClick={() => setActiveAgendaTab('caderno')}
               >
                 <div className="ap-tab-icon">
-                  <Layers size={20} />
+                  <RotateCcw size={20} />
                 </div>
                 <div>
-                  <h3 className="ap-tab-title">Caderno de Erros Automático</h3>
-                  <p className="ap-tab-desc">Organiza suas questões incorretas e força revisões periódicas programadas por IA.</p>
+                  <h3 className="ap-tab-title">Caderno de Erros + Flashcards</h3>
+                  <p className="ap-tab-desc">Seus erros viram revisão automática. Flashcards adaptativos reforçam os conteúdos onde você mais precisa.</p>
                 </div>
               </button>
             </div>
@@ -1471,82 +1892,162 @@ export default function AprovacaoLandingPage() {
         </div>
       </section>
 
-      {/* ── All Features Section ── */}
+      {/* ── 5. BENEFITS / FEATURES SECTION ── */}
       <section style={{ padding: '100px 0' }}>
         <div className="ap-container">
           <div className="ap-sec-header">
-            <div className="ap-sec-tag">+ Tudo que você precisa</div>
-            <h2 className="ap-sec-title">Uma plataforma, <span>mil ferramentas</span></h2>
-            <p className="ap-sec-desc">Tudo integrado em um único ecossistema focado no seu aprendizado e retenção de longo prazo.</p>
+            <div className="ap-sec-tag">O que você acessa</div>
+            <h2 className="ap-sec-title">Cada recurso pensado para <span>melhorar seu desempenho</span></h2>
+            <p className="ap-sec-desc">Não funcionalidades soltas. Um conjunto integrado focado em identificar lacunas e transformar erros em preparação.</p>
           </div>
 
           <div className="ap-features-grid">
             <div className="ap-card ap-card-hover">
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(59, 126, 248, 0.1)', border: '1px solid rgba(59, 126, 248, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                <BookOpen size={20} />
+                <MessageSquare size={20} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Questões Comentadas</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>+15 mil questões reais mapeadas, com comentários detalhados e apoio de teoria.</p>
-            </div>
-
-            <div className="ap-card ap-card-hover">
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(165, 195, 247, 0.08)', border: '1px solid rgba(165, 195, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cyan)' }}>
-                <Target size={20} />
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Análise Estatística de Prova</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Conheça de antemão as predileções e pesos de cada banca examinadora (USP, ENARE, UNICAMP).</p>
+              <h3 className="ap-benefit-headline">Errou uma questão? Entenda por que errou.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Use a IA Tutor para aprofundar explicações, esclarecer dúvidas e compreender melhor os conceitos por trás de cada questão.</p>
             </div>
 
             <div className="ap-card ap-card-hover">
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--green)' }}>
-                <TrendingUp size={20} />
+                <BarChart2 size={20} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Painel de Métricas Real-time</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Gráficos precisos de evolução de acertos e controle de metas semanais de estudos.</p>
+              <h3 className="ap-benefit-headline">Veja exatamente onde sua nota está escapando.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Acompanhe seu desempenho e identifique áreas, especialidades e temas que merecem mais atenção. Dados claros, não suposições.</p>
+            </div>
+
+            <div className="ap-card ap-card-hover">
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(165, 195, 247, 0.08)', border: '1px solid rgba(165, 195, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cyan)' }}>
+                <RefreshCw size={20} />
+              </div>
+              <h3 className="ap-benefit-headline">Revise mais o que você esquece e menos o que já domina.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Flashcards adaptativos priorizam os conteúdos com maior dificuldade, tornando sua revisão mais objetiva e eficiente.</p>
             </div>
 
             <div className="ap-card ap-card-hover">
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6' }}>
-                <Layers size={20} />
+                <Target size={20} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Simulados Customizáveis</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Monte provas sob medida escolhendo temas, bancas, nível de dificuldade e ano de aplicação.</p>
+              <h3 className="ap-benefit-headline">Teste sua preparação antes da prova real.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Monte simulados por banca, especialidade, nível e ano. Acompanhe sua evolução em um ambiente focado em desempenho.</p>
             </div>
 
             <div className="ap-card ap-card-hover">
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--amber)' }}>
-                <Video size={20} />
+                <Layers size={20} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Aulas de Técnicas</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Aperfeiçoe sua rotina de estudos com técnicas de memorização e resolução de exames práticos.</p>
+              <h3 className="ap-benefit-headline">Seus erros viram revisão automática.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>O caderno de erros organiza automaticamente suas questões incorretas e programa revisões periódicas para que você não esqueça o que aprendeu.</p>
             </div>
 
             <div className="ap-card ap-card-hover">
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EC4899' }}>
-                <Smartphone size={20} />
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(59, 126, 248, 0.1)', border: '1px solid rgba(59, 126, 248, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                <BookOpen size={20} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginTop: 20, marginBottom: 8, fontFamily: 'Outfit' }}>Onboarding Gamificado</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Aprenda a navegar nas rotinas e ferramentas da plataforma com missões guiadas recompensadoras.</p>
+              <h3 className="ap-benefit-headline">Questões comentadas das principais bancas.</h3>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Mais de 15.000 questões reais com comentários detalhados, organizadas por especialidade, banca, tema e nível de dificuldade.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Testimonials Section ── */}
+      {/* ── 6. 15.000 QUESTÕES POSICIONAMENTO ── */}
+      <section className="ap-questions-sec" style={{ padding: '100px 0' }}>
+        <div className="ap-container">
+          <div className="ap-questions-inner">
+            <div className="ap-sec-tag">O banco de questões</div>
+            <div className="ap-questions-stat">15.000+</div>
+            <h2 className="ap-sec-title" style={{ marginBottom: 20 }}>questões comentadas</h2>
+            <p style={{ fontSize: '17px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32 }}>
+              Mais questões não significam necessariamente mais aprovação. O RokoMed reúne mais de 15.000 questões para uma preparação focada em resolução, identificação de erros e revisão.
+            </p>
+            <p style={{ fontSize: '15px', color: 'var(--text-muted)', lineHeight: 1.6, fontStyle: 'italic' }}>
+              A ideia não é criar uma biblioteca infinita que você nunca termina. É ajudar você a descobrir onde está perdendo pontos e transformar cada sessão de estudo em informação útil para sua preparação.
+            </p>
+            <div style={{ marginTop: 40, padding: '20px 32px', background: 'rgba(59, 126, 248, 0.05)', border: '1px solid rgba(59, 126, 248, 0.12)', borderRadius: 16, display: 'inline-block' }}>
+              <p style={{ fontSize: '15px', color: 'var(--cyan)', fontWeight: 600 }}>
+                Tudo o que você precisa para treinar. Sem o excesso que só faz você perder tempo.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 40 }}>
+              {['ENARE', 'USP-SP', 'UNIFESP', 'UNICAMP', 'SUS-SP', 'Revalida'].map(banca => (
+                <span key={banca} style={{ padding: '8px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 9999, fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, fontFamily: 'Sora' }}>
+                  {banca}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7. COMPARISON ── */}
+      <section className="ap-compare-sec" style={{ padding: '100px 0' }}>
+        <div className="ap-container">
+          <div className="ap-sec-header">
+            <div className="ap-sec-tag">Comparativo honesto</div>
+            <h2 className="ap-sec-title">Preparação tradicional <span>vs. RokoMed</span></h2>
+            <p className="ap-sec-desc">Uma comparação direta e objetiva. Não estamos dizendo que o outro lado é ruim — estamos dizendo que o RokoMed foi feito com um foco diferente.</p>
+          </div>
+
+          <div className="ap-compare-grid">
+            {/* Coluna Tradicional */}
+            <div className="ap-compare-col">
+              <div className="ap-compare-head">Preparação Tradicional</div>
+              {[
+                'Você escolhe manualmente o que revisar, sem dados sobre onde está errando.',
+                'Muito conteúdo e pouca clareza sobre suas lacunas reais.',
+                'Você estuda e depois tenta lembrar o que errou.',
+                'Difícil visualizar sua evolução ao longo do tempo.',
+                'Plataformas com preços de R$ 4.000 a R$ 12.000/ano.',
+              ].map((text, i) => (
+                <div key={i} className="ap-compare-item">
+                  <span style={{ color: 'var(--text-muted)', flexShrink: 0, fontSize: '16px' }}>—</span>
+                  {text}
+                </div>
+              ))}
+            </div>
+
+            {/* Coluna RokoMed */}
+            <div className="ap-compare-col roko">
+              <div className="ap-compare-head">RokoMed</div>
+              {[
+                'Seus erros identificam automaticamente onde você precisa melhorar.',
+                'Desempenho organizado por especialidade para facilitar o foco.',
+                'Questões, explicações, revisão e flashcards fazem parte do mesmo processo.',
+                'Acompanhe seu desempenho com dados claros ao longo do tempo.',
+                'R$ 29/mês, com acesso completo e sem fidelidade.',
+              ].map((text, i) => (
+                <div key={i} className="ap-compare-item">
+                  <CheckCircle2 size={16} color="var(--green)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 8. TESTIMONIALS ── */}
       <section id="depoimentos" className="ap-testimonials-sec" style={{ padding: '100px 0' }}>
         <div className="ap-container">
           <div className="ap-sec-header">
-            <div className="ap-sec-tag">Depoimentos reais</div>
-            <h2 className="ap-sec-title">Eles colocaram o RokoMed na rotina. <span>E passaram.</span></h2>
-            <p className="ap-sec-desc">Mapeamos as histórias de sucesso de quem otimizou os estudos e alcançou a aprovação.</p>
+            <div className="ap-sec-tag">Depoimentos</div>
+            <h2 className="ap-sec-title">Quem colocou o RokoMed <span>na rotina de estudos</span></h2>
+            <p className="ap-sec-desc">Relatos de estudantes que usaram a plataforma durante sua preparação para residência médica.</p>
           </div>
 
           <div className="ap-test-grid">
             <div className="ap-test-card">
+              <div className="ap-test-stars">
+                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="var(--amber)" color="var(--amber)" />)}
+              </div>
               <p className="ap-test-quote">
                 "O Tutor de IA (Dr. André) me tirou dúvidas complexas de fisiologia cardíaca em plena madrugada, logo após eu errar uma questão. O feedback imediato do RokoMed vale ouro."
               </p>
-              <div className="ap-test-tag">✓ Aprovado ENARE • Anestesiologia</div>
+              <div className="ap-test-tag">Aprovado ENARE • Anestesiologia</div>
               <div className="ap-test-user">
                 <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, #EC4899 0%, var(--primary) 100%)' }}>H</div>
                 <div>
@@ -1557,10 +2058,13 @@ export default function AprovacaoLandingPage() {
             </div>
 
             <div className="ap-test-card">
+              <div className="ap-test-stars">
+                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="var(--amber)" color="var(--amber)" />)}
+              </div>
               <p className="ap-test-quote">
                 "Achei que o banco adaptativo era só marketing, mas o algoritmo do RokoMed começou a me mandar exatamente os pontos fracos de neonatologia que eu errava nas provas antigas. Incrível."
               </p>
-              <div className="ap-test-tag">✓ Aprovada USP-SP • Pediatria</div>
+              <div className="ap-test-tag">Aprovada USP-SP • Pediatria</div>
               <div className="ap-test-user">
                 <div className="ap-test-avatar">L</div>
                 <div>
@@ -1571,10 +2075,13 @@ export default function AprovacaoLandingPage() {
             </div>
 
             <div className="ap-test-card">
+              <div className="ap-test-stars">
+                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="var(--amber)" color="var(--amber)" />)}
+              </div>
               <p className="ap-test-quote">
-                "Conciliar o último ano do internato com estudo para residência exige precisão. O RokoMed me deu as 20 questões mais quentes do dia para fazer no hospital."
+                "Conciliar o último ano do internato com estudo para residência exige precisão. O RokoMed me deu as questões mais quentes do dia para fazer no hospital."
               </p>
-              <div className="ap-test-tag">✓ Aprovado UNICAMP • Ortopedia</div>
+              <div className="ap-test-tag">Aprovado UNICAMP • Ortopedia</div>
               <div className="ap-test-user">
                 <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--amber) 0%, #EC4899 100%)' }}>R</div>
                 <div>
@@ -1585,10 +2092,13 @@ export default function AprovacaoLandingPage() {
             </div>
 
             <div className="ap-test-card">
+              <div className="ap-test-stars">
+                {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={13} fill="var(--amber)" color="var(--amber)" />)}
+              </div>
               <p className="ap-test-quote">
                 "O caderno de erros inteligente do RokoMed limpa as nossas falhas. Em vez de rever o edital inteiro, eu revisava apenas onde havia tropeçado. Foco cirúrgico no que cai."
               </p>
-              <div className="ap-test-tag">✓ Aprovada SUS-SP • Ginecologia e Obstetrícia</div>
+              <div className="ap-test-tag">Aprovada SUS-SP • Ginecologia e Obstetrícia</div>
               <div className="ap-test-user">
                 <div className="ap-test-avatar" style={{ background: 'linear-gradient(135deg, var(--green) 0%, var(--cyan) 100%)' }}>B</div>
                 <div>
@@ -1601,114 +2111,20 @@ export default function AprovacaoLandingPage() {
         </div>
       </section>
 
-      {/* ── Jornada em 4 Passos e Video Player ── */}
-      <section style={{ padding: '100px 0' }}>
-        <div className="ap-container ap-journey-grid">
-          <div>
-            <div className="ap-sec-tag">Como funciona</div>
-            <h2 className="ap-sec-title" style={{ marginBottom: 36 }}>Na rota da aprovação <span>em 4 passos</span></h2>
-            
-            <div className="ap-j-step">
-              <div className="ap-j-num">01</div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>Faça o seu cadastro</h3>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: 4 }}>Preencha seus dados para receber o link com acesso imediato e experimentar a plataforma.</p>
-              </div>
-            </div>
-
-            <div className="ap-j-step">
-              <div className="ap-j-num">02</div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>Selecione seus objetivos</h3>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: 4 }}>Indique qual residência médica pretende concorrer e defina suas principais prioridades.</p>
-              </div>
-            </div>
-
-            <div className="ap-j-step">
-              <div className="ap-j-num">03</div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>Estude no piloto automático</h3>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: 4 }}>Siga as tarefas geradas pela agenda inteligente com base em desempenho e probabilidade.</p>
-              </div>
-            </div>
-
-            <div className="ap-j-step">
-              <div className="ap-j-num">04</div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>Monitore a evolução</h3>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', marginTop: 4 }}>Confira no painel central a evolução da sua nota estatística e alcance a meta de acertos.</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="ap-video-mock">
-              <button className="ap-play-btn" aria-label="Reproduzir vídeo demonstrativo do RokoMed">
-                <Play size={24} style={{ fill: '#030812' }} />
-              </button>
-            </div>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', marginTop: 14 }}>
-              Demonstração rápida da plataforma (2 minutos de tour).
-            </p>
-          </div>
-        </div>
-      </section>
-
-
-      {/* ── Table Comparison ── */}
-      <section style={{ padding: '100px 0' }}>
-        <div className="ap-container">
-          <div className="ap-sec-header">
-            <div className="ap-sec-tag">Comparativo Honesto</div>
-            <h2 className="ap-sec-title">RokoMed vs. <span>Mecanismos Tradicionais</span></h2>
-            <p className="ap-sec-desc">Mapeamos as diferenças fundamentais entre o nosso método e o modelo passivo de cursinhos tradicionais.</p>
-          </div>
-
-          <div className="ap-compare-wrap" style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '16px', background: 'rgba(255,255,255,0.01)' }}>
-            <table className="ap-compare-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-              <thead>
-                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: '18px 24px', fontWeight: 700, color: 'white' }}>Recurso</th>
-                  <th style={{ padding: '18px 24px', fontWeight: 700, color: 'var(--cyan)' }}>Método RokoMed</th>
-                  <th style={{ padding: '18px 24px', fontWeight: 500, color: 'var(--text-secondary)' }}>Apostilas Tradicionais</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { r: 'Metodologia ativa', rk: 'Estudo guiado centrado em questões comentadas', tr: 'Leitura linear cansativa e videoaulas de 3h' },
-                  { r: 'Organização da agenda', rk: 'Algoritmo que recalibra metas diariamente com 1 clique', tr: 'Cronograma estático e volumoso impossível de seguir' },
-                  { r: 'Suporte a dúvidas', rk: 'Dr. André (IA) responde no comentário da questão em segundos', tr: 'Envio de fórum lento que demora dias para retorno' },
-                  { r: 'Caderno de erros', rk: 'Filtro e agendamento automático de erros do aluno', tr: 'Seleção e organização manual de folhas incorretas' },
-                  { r: 'Mensalidade média', rk: 'R$ 29,00/mês (sem taxas escondidas)', tr: 'Preços abusivos variando de R$ 4.000 a R$ 12.000' }
-                ].map((row, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.02)' }}>
-                    <td style={{ padding: '16px 24px', fontWeight: 600, color: 'white' }}>{row.r}</td>
-                    <td style={{ padding: '16px 24px', color: 'white' }}>
-                      <Check size={14} color="var(--green)" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> {row.rk}
-                    </td>
-                    <td style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>{row.tr}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Pricing Section ── */}
+      {/* ── 9. PRICING SECTION ── */}
       <section id="planos" className="ap-pricing-sec" style={{ padding: '100px 0' }}>
         <div className="ap-container">
           <div className="ap-sec-header">
             <div className="ap-sec-tag">Planos acessíveis</div>
-            <h2 className="ap-sec-title">Escolha o seu plano de estudos</h2>
-            <p className="ap-sec-desc">Acesso completo sem taxas de cancelamento. Comece a acelerar seu rendimento hoje mesmo.</p>
+            <h2 className="ap-sec-title">Sua preparação não deveria <span>custar milhares de reais.</span></h2>
+            <p className="ap-sec-desc">Acesso completo à plataforma. Sem fidelidade. Cancel quando quiser.</p>
           </div>
 
           <div className="ap-pricing-grid">
             {/* Mensal */}
             <div className="ap-price-card">
-              <h3 className="ap-price-title">Plano Mensal</h3>
-              <p className="ap-price-desc">Flexibilidade máxima para sua jornada de estudos.</p>
+              <h3 className="ap-price-title">Mensal</h3>
+              <p className="ap-price-desc">Flexibilidade máxima para começar.</p>
               
               <div className="ap-price-val">
                 <span className="currency">R$</span>
@@ -1717,21 +2133,26 @@ export default function AprovacaoLandingPage() {
               </div>
 
               <ul className="ap-features-list">
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Acesso completo ao banco de questões</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Simulados adaptativos personalizados</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Resumos teóricos e flashcards</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Suporte do Dr. André (Tutor IA)</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> 15.000+ questões comentadas</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> IA Tutor (Dr. André)</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Flashcards adaptativos</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Análise de desempenho</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Simulados personalizáveis</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Caderno de erros automático</li>
               </ul>
 
               <Link to="/checkout?plan=monthly" className="ap-btn ap-btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', borderRadius: '12px' }}>
-                Assinar Plano Mensal
+                Começar agora
               </Link>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>
+                Acesso imediato • Sem fidelidade • 7 dias de garantia
+              </p>
             </div>
 
             {/* Semestral */}
             <div className="ap-price-card popular">
-              <h3 className="ap-price-title">Plano Semestral</h3>
-              <p className="ap-price-desc">Ideal para manter a regularidade no ciclo de revisões.</p>
+              <h3 className="ap-price-title">Semestral</h3>
+              <p className="ap-price-desc">Ideal para manter consistência na preparação.</p>
               
               <div className="ap-price-val">
                 <span className="period">6x de </span>
@@ -1742,20 +2163,23 @@ export default function AprovacaoLandingPage() {
 
               <ul className="ap-features-list">
                 <li><CheckCircle2 size={16} color="var(--cyan)" /> Tudo do plano Mensal</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Rastreamento estatístico aprofundado</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Prioridade de respostas do Dr. André</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Análise estatística aprofundada</li>
                 <li><CheckCircle2 size={16} color="var(--cyan)" /> Análise detalhada por banca</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Prioridade no suporte</li>
               </ul>
 
               <Link to="/checkout?plan=semiannual" className="ap-btn ap-btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', borderRadius: '12px' }}>
-                Assinar Plano Semestral
+                Começar agora
               </Link>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>
+                Acesso imediato • Sem fidelidade • 7 dias de garantia
+              </p>
             </div>
 
             {/* Anual */}
             <div className="ap-price-card">
-              <h3 className="ap-price-title">Plano Anual</h3>
-              <p className="ap-price-desc">A melhor taxa de desconto para preparação a longo prazo.</p>
+              <h3 className="ap-price-title">Anual</h3>
+              <p className="ap-price-desc">Para uma preparação consistente a longo prazo.</p>
               
               <div className="ap-price-val">
                 <span className="period">12x de </span>
@@ -1766,25 +2190,86 @@ export default function AprovacaoLandingPage() {
 
               <ul className="ap-features-list">
                 <li><CheckCircle2 size={16} color="var(--cyan)" /> Tudo do plano Semestral</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Maior desconto por tempo de acesso</li>
-                <li><CheckCircle2 size={16} color="var(--cyan)" /> Caderno de erros adaptável estendido</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Maior desconto por acesso</li>
+                <li><CheckCircle2 size={16} color="var(--cyan)" /> Caderno de erros estendido</li>
                 <li><CheckCircle2 size={16} color="var(--cyan)" /> Suporte prioritário via WhatsApp</li>
               </ul>
 
               <Link to="/checkout?plan=annual" className="ap-btn ap-btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'auto', borderRadius: '12px' }}>
-                Assinar Plano Anual
+                Começar agora
               </Link>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>
+                Acesso imediato • Sem fidelidade • 7 dias de garantia
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FAQ Section ── */}
+      {/* ── 10. POR QUE CUSTA MENOS ── */}
+      <section className="ap-cheaper-sec" style={{ padding: '80px 0' }}>
+        <div className="ap-container">
+          <div className="ap-cheaper-inner">
+            <div className="ap-sec-tag">Por que o RokoMed custa menos?</div>
+            <h2 className="ap-sec-title" style={{ marginBottom: 24 }}>Foco em estudo ativo, <span>não em estrutura gigantesca.</span></h2>
+            <p style={{ fontSize: '16px', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: 20 }}>
+              Porque somos uma plataforma focada em estudo ativo por questões, revisão e tecnologia. Em vez de cobrar pelo acesso a uma estrutura gigantesca de conteúdos que talvez você nunca use, concentramos o RokoMed no que ajuda você a praticar, identificar erros e revisar com mais objetividade.
+            </p>
+            <p style={{ fontSize: '15px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
+              Preço baixo não significa baixa qualidade. Significa foco diferente.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 11. PARA QUEM É ── */}
+      <section className="ap-forwhom-sec" style={{ padding: '100px 0' }}>
+        <div className="ap-container">
+          <div className="ap-sec-header">
+            <div className="ap-sec-tag">Para quem é</div>
+            <h2 className="ap-sec-title">O RokoMed é <span>para você que...</span></h2>
+          </div>
+
+          <div className="ap-forwhom-grid">
+            <div className="ap-forwhom-col yes">
+              <div className="ap-forwhom-head">✓ O RokoMed é para você</div>
+              {[
+                'Está se preparando para residência médica',
+                'Aprende principalmente resolvendo questões',
+                'Quer identificar seus principais pontos fracos com clareza',
+                'Precisa estudar com mais objetividade e foco',
+                'Busca uma alternativa acessível com tecnologia',
+              ].map((text, i) => (
+                <div key={i} className="ap-forwhom-item">
+                  <CheckCircle2 size={16} color="var(--green)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  {text}
+                </div>
+              ))}
+            </div>
+
+            <div className="ap-forwhom-col maybe-not">
+              <div className="ap-forwhom-head">Talvez o RokoMed não seja para você se</div>
+              {[
+                'Você procura um curso baseado principalmente em centenas de horas de videoaulas',
+                'Não pretende resolver questões com frequência',
+                'Espera que uma plataforma substitua completamente sua dedicação pessoal',
+              ].map((text, i) => (
+                <div key={i} className="ap-forwhom-item">
+                  <span style={{ color: 'var(--text-muted)', flexShrink: 0, fontSize: '16px' }}>—</span>
+                  {text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 12. FAQ ── */}
       <section id="faq" style={{ padding: '100px 0' }}>
         <div className="ap-container">
           <div className="ap-sec-header">
-            <div className="ap-sec-tag">Ficou com alguma dúvida?</div>
-            <h2 className="ap-sec-title">Dúvidas <span>Frequentes</span></h2>
+            <div className="ap-sec-tag">Dúvidas frequentes</div>
+            <h2 className="ap-sec-title">Perguntas <span>Frequentes</span></h2>
             <p className="ap-sec-desc">Caso sua pergunta não esteja aqui, entre em contato conosco pelo chat de suporte.</p>
           </div>
 
@@ -1798,7 +2283,7 @@ export default function AprovacaoLandingPage() {
                     className="ap-faq-btn"
                   >
                     <span>{item.q}</span>
-                    <ChevronDown size={18} style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', color: 'var(--text-secondary)' }} />
+                    <ChevronDown size={18} style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', color: 'var(--text-secondary)', flexShrink: 0 }} />
                   </button>
                   {isOpen && (
                     <div className="ap-faq-ans">
@@ -1808,6 +2293,42 @@ export default function AprovacaoLandingPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 13. FINAL CTA ── */}
+      <section className="ap-finalcta-sec" style={{ padding: '120px 0' }}>
+        <div className="ap-glow" style={{ top: '20%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'rgba(59, 126, 248, 0.12)', opacity: 0.6 }}></div>
+        <div className="ap-container">
+          <div className="ap-finalcta-inner">
+            <div className="ap-badge" style={{ justifyContent: 'center' }}>
+              <Zap size={12} style={{ display: 'inline', marginRight: 4 }} />
+              Acesso imediato após a assinatura
+            </div>
+
+            <h2 className="ap-sec-title" style={{ fontSize: 'clamp(32px, 5vw, 52px)', marginBottom: 20 }}>
+              Você não precisa estudar<br /><span>mais no escuro.</span>
+            </h2>
+
+            <p style={{ fontSize: '18px', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 48, maxWidth: 560, margin: '0 auto 48px' }}>
+              Resolva questões, descubra onde está perdendo pontos e transforme seus erros em uma preparação mais inteligente.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <Link
+                to="/checkout?plan=monthly"
+                className="ap-btn ap-btn-primary ap-btn-lg"
+                style={{ fontSize: '16px', padding: '18px 48px' }}
+              >
+                Começar agora por R$ {monthlyPrice}/mês <ArrowRight size={18} />
+              </Link>
+              <div className="ap-cta-sub" style={{ justifyContent: 'center', fontSize: '13px' }}>
+                <span><Check size={13} color="var(--green)" /> Acesso imediato</span>
+                <span><Check size={13} color="var(--green)" /> Sem fidelidade</span>
+                <span><ShieldCheck size={13} color="var(--green)" /> 7 dias de garantia</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1822,7 +2343,7 @@ export default function AprovacaoLandingPage() {
             <a href="#" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '13px' }}>Privacidade</a>
           </div>
           <p>© {new Date().getFullYear()} RokoMed. Todos os direitos reservados.</p>
-          <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>Plataforma adaptativa feita por médicos, para médicos.</p>
+          <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>Plataforma de preparação para residência médica.</p>
         </div>
       </footer>
     </div>
