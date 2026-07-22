@@ -347,3 +347,47 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(20,184,166,0.06); border-color: rgba(20,184,166,0.2);
 }
 
+/* ── Acessibilidade — focus-visible global ────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove outline apenas quando não é navegação por teclado */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── prefers-reduced-motion ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Utilitários mobile / safe-area ──────────────────────────────────────── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+
+/* Classes de display usadas pelo Layout (complementam Tailwind) */
+@media (max-width: 767px) {
+  .md\:flex  { display: none !important; }
+  .md\:hidden { display: flex !important; }
+  .md\:ml-\[240px\] { margin-left: 0 !important; }
+  .md\:p-8 { padding: 1.25rem 1rem !important; }
+  .md\:pb-8 { padding-bottom: calc(env(safe-area-inset-bottom) + 72px) !important; }
+}
+@media (min-width: 768px) {
+  .md\:flex    { display: flex !important; }
+  .md\:hidden  { display: none !important; }
+  .md\:ml-\[240px\] { margin-left: 240px !important; }
+  .md\:p-8    { padding: 2rem !important; }
+  .md\:pb-8   { padding-bottom: 2rem !important; }
+}
+
