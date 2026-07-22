@@ -201,7 +201,7 @@ export default function QuestionBankPage() {
               }}
             />
             {searchInput && (
-              <button type="button" onClick={() => { setSearchInput(''); setSearch(''); setPage(1) }}
+              <button type="button" onClick={() => { setSearchInput(''); setFilter({ q: null }) }}
                 style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 4 }}>
                 <X size={15} />
               </button>

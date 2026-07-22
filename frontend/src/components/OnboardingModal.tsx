@@ -710,11 +710,7 @@ export default function OnboardingModal({ onComplete }: Props) {
                 <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Não sabe o dia exato? Use o primeiro dia do mês esperado.
                 </p>
-              </div>
-
               {/* Resumo */}
-                </div>
-              </div>
             </div>
           )}
         </div>

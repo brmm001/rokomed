@@ -88,13 +88,33 @@ export default function StudyPage() {
     queryFn:  () => questionsApi.get(id!),
   })
 
-  // Debounce para anotações
-  useEffect(() => { if (q?.note) setNoteText(q.note) }, [q])
-  useEffect(() => {
-    if (!q || noteText === q.note) return
-    const timer = setTimeout(() => { noteMutation.mutate() }, 1000)
-    return () => clearTimeout(timer)
-  }, [noteText])
+  const noteMutation = useMutation({
+    mutationFn: () => questionsApi.note(id!, noteText),
+    onSuccess: () => toast.success('Anotação salva'),
+  })
+
+  const answerMutation = useMutation({
+    mutationFn: (opt: string) => questionsApi.answer(id!, {
+      selectedOpt: opt,
+      timeSpentSec: Math.round((Date.now() - startTime.current) / 1000),
+    }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user-stats'] }),
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { error?: string; upgrade?: boolean } } })?.response?.data
+      if (msg?.upgrade) {
+        toast.error('Limite diário atingido! Faça upgrade para Pro.', { duration: 5000 })
+        setTimeout(() => navigate('/pricing'), 2000)
+      } else toast.error(msg?.error || 'Erro ao registrar resposta')
+    },
+  })
+
+  const bookmarkMutation = useMutation({
+    mutationFn: () => questionsApi.bookmark(id!),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['question', id] })
+      toast.success(data.bookmarked ? 'Adicionado aos favoritos' : 'Removido dos favoritos')
+    },
+  })
 
   useEffect(() => {
     setSelected(null); setSubmitted(false); setShowExpl(true)
@@ -122,33 +142,13 @@ export default function StudyPage() {
     }
   }
 
-  const answerMutation = useMutation({
-    mutationFn: (opt: string) => questionsApi.answer(id!, {
-      selectedOpt: opt,
-      timeSpentSec: Math.round((Date.now() - startTime.current) / 1000),
-    }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['user-stats'] }),
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: string; upgrade?: boolean } } })?.response?.data
-      if (msg?.upgrade) {
-        toast.error('Limite diário atingido! Faça upgrade para Pro.', { duration: 5000 })
-        setTimeout(() => navigate('/pricing'), 2000)
-      } else toast.error(msg?.error || 'Erro ao registrar resposta')
-    },
-  })
-
-  const bookmarkMutation = useMutation({
-    mutationFn: () => questionsApi.bookmark(id!),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['question', id] })
-      toast.success(data.bookmarked ? 'Adicionado aos favoritos' : 'Removido dos favoritos')
-    },
-  })
-
-  const noteMutation = useMutation({
-    mutationFn: () => questionsApi.note(id!, noteText),
-    onSuccess: () => toast.success('Anotação salva'),
-  })
+  // Debounce para anotações
+  useEffect(() => { if (q?.note) setNoteText(q.note) }, [q])
+  useEffect(() => {
+    if (!q || noteText === q.note) return
+    const timer = setTimeout(() => { noteMutation.mutate() }, 1000)
+    return () => clearTimeout(timer)
+  }, [noteText])
 
   const handleAnswer = (opt: string) => { if (submitted) return; setSelected(opt) }
 
