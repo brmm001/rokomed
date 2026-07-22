@@ -187,7 +187,7 @@ async function activateSubscription(
 
   if (!existingSub) {
     await prisma.subscription.create({
-      data: { userId, plan: 'PRO', status: 'active', expiresAt },
+      data: { userId, plan: 'PRO', status: 'active', expiresAt, mercadoPagoId: mpId },
     })
   }
 
@@ -330,6 +330,40 @@ export default async function subscriptionRoutes(app: FastifyInstance) {
       where: { id: user.id },
       data: { plan: 'FREE' }
     })
+
+    // ── Cancelar no Mercado Pago (PreApproval) ─────────────────────────────────
+    if (process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+      // Tenta obter o ID da PreApproval: primeiro na própria Subscription, depois no último Payment
+      let mpPreApprovalId: string | null = activeSub?.mercadoPagoId ?? null
+
+      if (!mpPreApprovalId) {
+        const lastPayment = await prisma.payment.findFirst({
+          where: { userId: user.id, status: 'approved' },
+          orderBy: { createdAt: 'desc' },
+        })
+        mpPreApprovalId = lastPayment?.mercadoPagoId ?? null
+      }
+
+      if (mpPreApprovalId) {
+        try {
+          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN! })
+          const preApprovalClient = new PreApproval(client)
+          await preApprovalClient.update({
+            id: mpPreApprovalId,
+            body: { status: 'cancelled' },
+          })
+          app.log.info(`[cancel] PreApproval ${mpPreApprovalId} cancelada no Mercado Pago para userId=${user.id}`)
+        } catch (mpErr: any) {
+          // Logamos mas não falhamos — o cancelamento local já foi feito
+          app.log.error(
+            { err: mpErr },
+            `[cancel] Falha ao cancelar PreApproval ${mpPreApprovalId} no Mercado Pago (cancelamento local já aplicado)`
+          )
+        }
+      } else {
+        app.log.warn(`[cancel] Nenhum mercadoPagoId encontrado para userId=${user.id} — cancelamento local apenas`)
+      }
+    }
 
     // E-mail de confirmação de cancelamento (estilizado)
     const cancelEmailHtml = getEmailTemplate(

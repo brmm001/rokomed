@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../lib/prisma'
 import { requireRole } from '../middleware/auth'
 import { randomUUID } from 'crypto'
+import { MercadoPagoConfig, Payment, PreApproval } from 'mercadopago'
 
 // ── Institution map (mesma do script de import) ───────────────────────────────
 const INSTITUTION_MAP: Record<string, { name: string; city?: string; state?: string }> = {
@@ -780,6 +781,91 @@ export default async function adminRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ success: true, priority: record })
+  })
+
+  // ── Mercado Pago — Cancelar assinatura/PreApproval ───────────────────────
+
+  // POST /api/admin/mp/cancel-subscription
+  // Body: { paymentId: string }  ← ID do Payment ou PreApproval no MP
+  // Verifica o tipo do pagamento e cancela a PreApproval se for recorrente.
+  app.post('/mp/cancel-subscription', { preHandler: [isAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { paymentId } = request.body as { paymentId: string }
+    if (!paymentId) return reply.code(400).send({ error: 'paymentId é obrigatório' })
+
+    const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+    if (!mpToken) return reply.code(503).send({ error: 'MERCADO_PAGO_ACCESS_TOKEN não configurado no servidor' })
+
+    const client = new MercadoPagoConfig({ accessToken: mpToken })
+    const paymentClient = new Payment(client)
+    const preApprovalClient = new PreApproval(client)
+
+    try {
+      // Tenta primeiro como Payment
+      let preapprovalId: string | null = null
+      let paymentStatus: string | null = null
+      let paymentMethod: string | null = null
+      let amount: number | null = null
+      let payerEmail: string | null = null
+      let isPreApprovalDirect = false
+
+      try {
+        const paymentInfo = await paymentClient.get({ id: paymentId })
+        paymentStatus = paymentInfo.status ?? null
+        paymentMethod = paymentInfo.payment_method_id ?? null
+        amount = paymentInfo.transaction_amount ?? null
+        payerEmail = paymentInfo.payer?.email ?? null
+        preapprovalId = (paymentInfo as any).preapproval_id ?? null
+      } catch (payErr: any) {
+        // Se falhou como Payment, pode ser um ID de PreApproval diretamente
+        app.log.warn(`[mp/cancel] Não encontrado como Payment, tentando como PreApproval: ${paymentId}`)
+        isPreApprovalDirect = true
+        preapprovalId = paymentId
+      }
+
+      // Sem preapproval_id e não é PreApproval direta → pagamento avulso
+      if (!preapprovalId) {
+        return reply.send({
+          type: 'one_time_payment',
+          paymentId,
+          paymentStatus,
+          paymentMethod,
+          amount,
+          payerEmail,
+          message: 'Pagamento avulso (PIX/boleto/cartão único) — sem cobrança recorrente. Cancelamento local já é suficiente.',
+        })
+      }
+
+      // Cancela a PreApproval no MP
+      const pa = await preApprovalClient.get({ id: preapprovalId })
+      const previousStatus = pa.status
+
+      if (pa.status === 'cancelled') {
+        return reply.send({
+          type: isPreApprovalDirect ? 'preapproval' : 'preapproval_via_payment',
+          preapprovalId,
+          previousStatus,
+          message: 'PreApproval já estava cancelada no Mercado Pago.',
+        })
+      }
+
+      await preApprovalClient.update({
+        id: preapprovalId,
+        body: { status: 'cancelled' },
+      })
+
+      app.log.info(`[mp/cancel] PreApproval ${preapprovalId} cancelada no MP por admin`)
+
+      return reply.send({
+        type: isPreApprovalDirect ? 'preapproval' : 'preapproval_via_payment',
+        preapprovalId,
+        previousStatus,
+        message: 'PreApproval cancelada com sucesso no Mercado Pago. Não haverá próxima cobrança.',
+      })
+    } catch (err: any) {
+      const detail = err?.cause?.message ?? err?.message ?? String(err)
+      app.log.error({ err }, `[mp/cancel] Erro ao cancelar ${paymentId} no MP`)
+      return reply.code(500).send({ error: 'Erro ao cancelar no Mercado Pago', detail })
+    }
   })
 }
 
