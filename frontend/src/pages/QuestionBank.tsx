@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { questionsApi } from '../lib/api'
 import {
   Search, BookOpen, ChevronRight, ChevronLeft, X, RefreshCw,
   Filter, Target, Building2, GraduationCap, ChevronDown,
-  XCircle, BarChart3, List, LayoutGrid, Star,
+  XCircle, BarChart3, List, LayoutGrid, Star, Zap, AlertCircle,
+  RotateCcw, Clock,
 } from 'lucide-react'
 
 const DIFFICULTIES = ['FACIL', 'MEDIO', 'DIFICIL'] as const
@@ -16,21 +17,58 @@ const diffConfig = {
   DIFICIL: { label: 'Difícil', color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',   dot: '#EF4444' },
 }
 
+// Filtros rápidos que aparecem como chips no topo (sem abrir o painel)
+const QUICK_FILTERS = [
+  { id: 'wrongOnly',  label: '✕ Meus erros',      icon: AlertCircle,  color: '#EF4444' },
+  { id: 'bookmarked', label: '★ Favoritas',       icon: Star,         color: '#F59E0B' },
+  { id: 'unanswered', label: 'Não respondidas',   icon: BookOpen,     color: '#3B82F6' },
+] as const
+
+const SESSION_SIZES = [10, 20, 30] as const
+
 export default function QuestionBankPage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const [page, setPage]             = useState(1)
-  const [search, setSearch]         = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [specialty, setSpecialty]   = useState('')
-  const [institution, setInstitution] = useState('')
-  const [year, setYear]             = useState('')
-  const [difficulty, setDifficulty] = useState('')
-  const [bookmarked, setBookmarked] = useState(false)
-  const [wrongOnly, setWrongOnly]   = useState(searchParams.get('wrongOnly') === 'true')
-  const [showFilters, setShowFilters] = useState(searchParams.get('wrongOnly') === 'true' || false)
-  const [viewMode, setViewMode]     = useState<'list' | 'compact'>('list')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Estado dos filtros sincronizado com a URL
+  const getParam = (key: string, fallback = '') => searchParams.get(key) ?? fallback
+
+  const [searchInput, setSearchInput] = useState(() => getParam('q'))
+  const [viewMode, setViewMode]       = useState<'list' | 'compact'>(() => getParam('view', 'list') as 'list' | 'compact')
+  const [showFilters, setShowFilters] = useState(() => !!searchParams.get('specialty') || !!searchParams.get('institution') || !!searchParams.get('year') || !!searchParams.get('difficulty'))
+  const [sessionSize, setSessionSize] = useState<number | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+
+  // Deriva todos os filtros diretamente dos searchParams
+  const page        = parseInt(getParam('page', '1'))
+  const search      = getParam('q')
+  const specialty   = getParam('specialty')
+  const institution = getParam('institution')
+  const year        = getParam('year')
+  const difficulty  = getParam('difficulty')
+  const bookmarked  = getParam('bookmarked') === 'true'
+  const wrongOnly   = getParam('wrongOnly') === 'true'
+  const unanswered  = getParam('unanswered') === 'true'
+
+  // Atualiza a URL preservando os outros params
+  const setFilter = useCallback((updates: Record<string, string | null>) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      for (const [k, v] of Object.entries(updates)) {
+        if (v === null || v === '') next.delete(k)
+        else next.set(k, v)
+      }
+      // Sempre volta para page 1 ao filtrar
+      next.set('page', '1')
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  const setPage = (p: number) => setSearchParams(prev => {
+    const next = new URLSearchParams(prev)
+    next.set('page', String(p))
+    return next
+  }, { replace: true })
 
   const { data: filtersData } = useQuery({
     queryKey: ['question-filters'],
@@ -39,7 +77,7 @@ export default function QuestionBankPage() {
   })
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['questions', page, search, specialty, institution, year, difficulty, bookmarked, wrongOnly],
+    queryKey: ['questions', page, search, specialty, institution, year, difficulty, bookmarked, wrongOnly, unanswered],
     queryFn: () => questionsApi.list({
       page,
       ...(search        && { search }),
@@ -49,22 +87,32 @@ export default function QuestionBankPage() {
       ...(difficulty    && { difficulty }),
       ...(bookmarked    && { bookmarked: true }),
       ...(wrongOnly     && { wrongOnly: true }),
+      ...(unanswered    && { unanswered: true }),
     }),
     placeholderData: (prev) => prev,
   })
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setSearch(searchInput)
-    setPage(1)
+    setFilter({ q: searchInput })
   }
 
   const clearFilters = () => {
-    setSpecialty(''); setInstitution(''); setYear(''); setDifficulty(''); setBookmarked(false); setWrongOnly(false)
-    setSearch(''); setSearchInput(''); setPage(1)
+    setSearchInput('')
+    setSearchParams({}, { replace: true })
   }
 
-  const activeFilters = [specialty, institution, year, difficulty, bookmarked ? 'bookmarked' : '', wrongOnly ? 'wrongOnly' : ''].filter(Boolean).length
+  const activeFilters = [specialty, institution, year, difficulty, bookmarked ? '1' : '', wrongOnly ? '1' : '', unanswered ? '1' : ''].filter(Boolean).length
+
+  // Inicia sessão com tamanho definido
+  const startSession = (size: number) => {
+    // Salva os IDs da página atual como fila da sessão
+    const ids = data?.data?.slice(0, size).map((q: any) => q.id) ?? []
+    localStorage.setItem('session_queue', JSON.stringify(ids))
+    localStorage.setItem('session_size', String(size))
+    localStorage.setItem('session_index', '0')
+    if (ids[0]) navigate(`/questoes/${ids[0]}?session=1`)
+  }
 
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', paddingBottom: '3rem' }}>
@@ -99,7 +147,7 @@ export default function QuestionBankPage() {
                 Banco de Questões
               </h1>
               <p style={{ margin: 0, marginTop: 4, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                Resíduos Médicos · REVALIDA
+                Residência Médica · REVALIDA
               </p>
             </div>
           </div>
@@ -203,23 +251,77 @@ export default function QuestionBankPage() {
         </form>
       </div>
 
-      {/* ── Active filter chips ───────────────────────────────────────── */}
+      {/* ── Filtros rápidos (chips) ───────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: '1rem', alignItems: 'center' }}>
+        {QUICK_FILTERS.map(({ id, label, color, icon: QIcon }) => {
+          const active = searchParams.get(id) === 'true'
+          return (
+            <button
+              key={id}
+              onClick={() => setFilter({ [id]: active ? null : 'true' })}
+              aria-pressed={active}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 99,
+                border: `1px solid ${active ? color + '60' : 'rgba(255,255,255,0.1)'}`,
+                background: active ? `${color}18` : 'rgba(255,255,255,0.04)',
+                color: active ? color : 'rgba(255,255,255,0.5)',
+                fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              <QIcon size={13} />
+              {label}
+            </button>
+          )
+        })}
+
+        {/* Seletor de sessão */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', fontWeight: 600, whiteSpace: 'nowrap' }}>Iniciar sessão:</span>
+          {SESSION_SIZES.map(size => (
+            <button
+              key={size}
+              onClick={() => startSession(size)}
+              disabled={!data?.data?.length}
+              title={`Sessão de ${size} questões (~${size * 1.5} min)`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 99,
+                border: '1px solid rgba(59,130,246,0.3)',
+                background: 'rgba(59,130,246,0.1)',
+                color: '#93C5FD', fontWeight: 700, fontSize: '0.78rem',
+                cursor: data?.data?.length ? 'pointer' : 'not-allowed',
+                opacity: data?.data?.length ? 1 : 0.4,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { if (data?.data?.length) e.currentTarget.style.background = 'rgba(59,130,246,0.2)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)' }}
+            >
+              <Zap size={11} /> {size}q <Clock size={11} style={{ opacity: 0.6 }} /> ~{Math.round(size * 1.5)}min
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Active filter chips ─────────────────────────────────── */}
       {activeFilters > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Ativos:</span>
           {specialty && filtersData?.specialties && (() => {
             const s = filtersData.specialties.find((x: { id: string; name: string }) => x.id === specialty)
-            return s ? <FilterChip label={s.name} onRemove={() => { setSpecialty(''); setPage(1) }} color="#3B82F6" /> : null
+            return s ? <FilterChip label={s.name} onRemove={() => setFilter({ specialty: null })} color="#3B82F6" /> : null
           })()}
           {institution && filtersData?.institutions && (() => {
             const i = filtersData.institutions.find((x: { id: string; acronym: string }) => x.id === institution)
-            return i ? <FilterChip label={i.acronym} onRemove={() => { setInstitution(''); setPage(1) }} color="#8B5CF6" /> : null
+            return i ? <FilterChip label={i.acronym} onRemove={() => setFilter({ institution: null })} color="#8B5CF6" /> : null
           })()}
-          {year && <FilterChip label={`Ano ${year}`} onRemove={() => { setYear(''); setPage(1) }} color="#14B8A6" />}
-          {difficulty && <FilterChip label={diffConfig[difficulty as keyof typeof diffConfig]?.label ?? difficulty} onRemove={() => { setDifficulty(''); setPage(1) }} color={diffConfig[difficulty as keyof typeof diffConfig]?.color ?? '#888'} />}
-          {bookmarked && <FilterChip label="⭐ Favoritas" onRemove={() => { setBookmarked(false); setPage(1) }} color="#F59E0B" />}
-          {wrongOnly && <FilterChip label="✗ Apenas erros" onRemove={() => { setWrongOnly(false); setPage(1) }} color="#EF4444" />}
-          {search && <FilterChip label={`"${search}"`} onRemove={() => { setSearch(''); setSearchInput(''); setPage(1) }} color="#64748B" />}
+          {year && <FilterChip label={`Ano ${year}`} onRemove={() => setFilter({ year: null })} color="#14B8A6" />}
+          {difficulty && <FilterChip label={diffConfig[difficulty as keyof typeof diffConfig]?.label ?? difficulty} onRemove={() => setFilter({ difficulty: null })} color={diffConfig[difficulty as keyof typeof diffConfig]?.color ?? '#888'} />}
+          {bookmarked && <FilterChip label="★ Favoritas" onRemove={() => setFilter({ bookmarked: null })} color="#F59E0B" />}
+          {wrongOnly && <FilterChip label="✕ Apenas erros" onRemove={() => setFilter({ wrongOnly: null })} color="#EF4444" />}
+          {unanswered && <FilterChip label="Não respondidas" onRemove={() => setFilter({ unanswered: null })} color="#3B82F6" />}
+          {search && <FilterChip label={`"${search}"`} onRemove={() => setFilter({ q: null })} color="#64748B" />}
           <button onClick={clearFilters} style={{
             background: 'none', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171',
             borderRadius: 99, padding: '3px 10px', fontSize: '0.75rem', fontWeight: 600,
@@ -242,21 +344,21 @@ export default function QuestionBankPage() {
           animation: 'qb-slide-down 0.25s cubic-bezier(0.2,0.8,0.2,1) both',
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-            <FilterSelect id="filter-specialty" label="Especialidade" icon={<GraduationCap size={13} />} value={specialty} onChange={v => { setSpecialty(v); setPage(1) }}>
+            <FilterSelect id="filter-specialty" label="Especialidade" icon={<GraduationCap size={13} />} value={specialty} onChange={v => setFilter({ specialty: v })}>
               <option value="">Todas especialidades</option>
               {filtersData?.specialties?.map((s: { id: string; name: string }) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </FilterSelect>
 
-            <FilterSelect id="filter-institution" label="Instituição" icon={<Building2 size={13} />} value={institution} onChange={v => { setInstitution(v); setPage(1) }}>
+            <FilterSelect id="filter-institution" label="Instituição" icon={<Building2 size={13} />} value={institution} onChange={v => setFilter({ institution: v })}>
               <option value="">Todas instituições</option>
               {filtersData?.institutions?.map((i: { id: string; acronym: string; name: string }) => (
                 <option key={i.id} value={i.id}>{i.acronym} — {i.name}</option>
               ))}
             </FilterSelect>
 
-            <FilterSelect id="filter-year" label="Ano" icon={<BarChart3 size={13} />} value={year} onChange={v => { setYear(v); setPage(1) }}>
+            <FilterSelect id="filter-year" label="Ano" icon={<BarChart3 size={13} />} value={year} onChange={v => setFilter({ year: v })}>
               <option value="">Todos os anos</option>
               {filtersData?.years?.map((y: number) => (
                 <option key={y} value={y}>{y}</option>
@@ -273,7 +375,7 @@ export default function QuestionBankPage() {
                   const cfg = d ? diffConfig[d] : null
                   const active = difficulty === d
                   return (
-                    <button key={d} type="button" onClick={() => { setDifficulty(d as string); setPage(1) }} style={{
+                    <button key={d} type="button" onClick={() => setFilter({ difficulty: d || null })} style={{
                       flex: 1, padding: '8px 4px',
                       borderRadius: 10,
                       border: active ? `1px solid ${cfg?.border ?? 'rgba(255,255,255,0.3)'}` : '1px solid rgba(255,255,255,0.07)',
@@ -293,8 +395,9 @@ export default function QuestionBankPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-            <ToggleSwitch id="filter-bookmarked" checked={bookmarked} onChange={v => { setBookmarked(v); setPage(1) }} icon={<Star size={13} />} label="Somente favoritas" color="#F59E0B" />
-            <ToggleSwitch id="filter-wrongonly" checked={wrongOnly} onChange={v => { setWrongOnly(v); setPage(1) }} icon={<XCircle size={13} />} label="Apenas erros" color="#EF4444" />
+            <ToggleSwitch id="filter-bookmarked" checked={bookmarked} onChange={v => setFilter({ bookmarked: v ? 'true' : null })} icon={<Star size={13} />} label="Somente favoritas" color="#F59E0B" />
+            <ToggleSwitch id="filter-wrongonly" checked={wrongOnly} onChange={v => setFilter({ wrongOnly: v ? 'true' : null })} icon={<XCircle size={13} />} label="Apenas erros" color="#EF4444" />
+            <ToggleSwitch id="filter-unanswered" checked={unanswered} onChange={v => setFilter({ unanswered: v ? 'true' : null })} icon={<BookOpen size={13} />} label="Não respondidas" color="#3B82F6" />
           </div>
         </div>
       )}
@@ -370,7 +473,18 @@ export default function QuestionBankPage() {
               q={q}
               idx={(page - 1) * 20 + idx + 1}
               viewMode={viewMode}
-              onClick={() => navigate(`/questoes/${q.id}`)}
+              onClick={() => {
+                // Salva a sessão atual no localStorage para "Continuar"
+                const ids = data?.data?.map((item: any) => item.id) ?? []
+                localStorage.setItem('session_queue', JSON.stringify(ids))
+                localStorage.setItem('session_index', String(idx))
+                localStorage.setItem('last_study_session', JSON.stringify({
+                  label: `Banco de Questões — p. ${page}`,
+                  path: `/questoes?${searchParams.toString()}`,
+                  progress: `Questão ${(page-1)*20 + idx + 1} de ${data?.total ?? '?'}`,
+                }))
+                navigate(`/questoes/${q.id}?fromBank=1`)
+              }}
             />
           ))}
         </div>

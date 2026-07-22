@@ -69,25 +69,57 @@ export default function StudyPage() {
   const [showPrint, setShowPrint] = useState(false)
   const startTime = useRef(Date.now())
 
+  // Sessão atual do localStorage
+  const sessionData = (() => {
+    try {
+      const qs = localStorage.getItem('session_queue')
+      const idx = localStorage.getItem('session_index')
+      const last = localStorage.getItem('last_study_session')
+      return {
+        queue: qs ? JSON.parse(qs) as string[] : [],
+        index: idx ? parseInt(idx) : 0,
+        meta: last ? JSON.parse(last) : null
+      }
+    } catch { return { queue: [], index: 0, meta: null } }
+  })()
+
   const { data: q, isLoading } = useQuery<Question>({
     queryKey: ['question', id],
     queryFn:  () => questionsApi.get(id!),
   })
 
+  // Debounce para anotações
   useEffect(() => { if (q?.note) setNoteText(q.note) }, [q])
+  useEffect(() => {
+    if (!q || noteText === q.note) return
+    const timer = setTimeout(() => { noteMutation.mutate() }, 1000)
+    return () => clearTimeout(timer)
+  }, [noteText])
 
   useEffect(() => {
     setSelected(null); setSubmitted(false); setShowExpl(true)
-    setShowNote(false); setNoteText(''); startTime.current = Date.now()
+    setShowNote(false); startTime.current = Date.now()
   }, [id])
 
-  const handleNextQuestion = async () => {
-    try {
-      const res = await questionsApi.list({ specialtyId: q?.specialty?.id, limit: 50 })
-      const others = (res?.data || []).filter((item: any) => item.id !== id)
-      if (others.length > 0) navigate(`/questoes/${others[Math.floor(Math.random() * others.length)].id}`)
-      else { toast.success('Concluiu todas as questões desta especialidade!'); navigate('/questoes') }
-    } catch { toast.error('Erro ao carregar próxima questão'); navigate('/questoes') }
+  const handleNextQuestion = () => {
+    if (sessionData.queue.length > 0 && sessionData.index < sessionData.queue.length - 1) {
+      const nextIndex = sessionData.index + 1
+      localStorage.setItem('session_index', String(nextIndex))
+      if (sessionData.meta) {
+        localStorage.setItem('last_study_session', JSON.stringify({
+          ...sessionData.meta,
+          progress: `Questão ${nextIndex + 1} de ${sessionData.queue.length}`
+        }))
+      }
+      navigate(`/questoes/${sessionData.queue[nextIndex]}?session=1`)
+    } else {
+      toast.success('Você concluiu esta sessão de estudos!', { duration: 4000 })
+      // Limpa sessão
+      localStorage.removeItem('session_queue')
+      localStorage.removeItem('session_index')
+      localStorage.removeItem('session_size')
+      navigate('/questoes')
+    }
   }
 
   const answerMutation = useMutation({
@@ -127,6 +159,36 @@ export default function StudyPage() {
     if (res.isCorrect) toast.success('Resposta correta! 🎉', { duration: 3000 })
     else toast.error(`Incorreto. Gabarito: ${res.correctOption}`, { duration: 3000 })
   }
+
+  // Atalhos de teclado globais (apenas se não estiver digitando na nota)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignora se estiver num input ou textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      const key = e.key.toUpperCase()
+      
+      // Atalhos A-E para selecionar opção
+      if (['A', 'B', 'C', 'D', 'E'].includes(key)) {
+        if (!submitted) handleAnswer(key)
+      } 
+      // Enter: Confirmar resposta ou ir para próxima
+      else if (e.key === 'Enter') {
+        if (!submitted && selected) handleSubmit()
+        else if (submitted) handleNextQuestion()
+      } 
+      // N: Abrir notas
+      else if (key === 'N') {
+        setShowNote(p => {
+          if (!p) setTimeout(() => document.getElementById('note-textarea')?.focus(), 50)
+          return !p
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [submitted, selected])
+
 
   /* ── loading ── */
   if (isLoading) return (
@@ -176,6 +238,18 @@ export default function StudyPage() {
         </button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Progresso da sessão (se houver) */}
+          {sessionData.queue.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#3B82F6', background: 'rgba(59,130,246,0.15)', padding: '2px 8px', borderRadius: 6 }}>
+                SESSÃO
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {sessionData.index + 1} de {sessionData.queue.length} questões
+              </span>
+            </div>
+          )}
+
           {breadcrumb.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
               {breadcrumb.map((s, i) => (
@@ -215,11 +289,11 @@ export default function StudyPage() {
 
         <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
           {[
-            { btnId: 'bookmark-btn', icon: q.isBookmarked ? <BookmarkCheck size={17} color="#F59E0B" /> : <Bookmark size={17} />, onClick: () => bookmarkMutation.mutate(), disabled: bookmarkMutation.isPending, active: false },
-            { btnId: 'note-btn', icon: <MessageSquare size={17} color={showNote ? '#3B82F6' : undefined} />, onClick: () => setShowNote(p => !p), active: showNote, disabled: false },
-            { btnId: 'print-question-btn', icon: <Printer size={17} />, onClick: () => setShowPrint(true), active: false, disabled: false },
-          ].map(({ btnId, icon, onClick, disabled, active }) => (
-            <button key={btnId} id={btnId} onClick={onClick} disabled={disabled}
+            { btnId: 'bookmark-btn', icon: q.isBookmarked ? <BookmarkCheck size={17} color="#F59E0B" /> : <Bookmark size={17} />, onClick: () => bookmarkMutation.mutate(), disabled: bookmarkMutation.isPending, active: false, title: 'Favoritar' },
+            { btnId: 'note-btn', icon: <MessageSquare size={17} color={showNote ? '#3B82F6' : undefined} />, onClick: () => setShowNote(p => !p), active: showNote, disabled: false, title: 'Anotações (N)' },
+            { btnId: 'print-question-btn', icon: <Printer size={17} />, onClick: () => setShowPrint(true), active: false, disabled: false, title: 'Imprimir' },
+          ].map(({ btnId, icon, onClick, disabled, active, title }) => (
+            <button key={btnId} id={btnId} onClick={onClick} disabled={disabled} title={title}
               style={{
                 padding: '0.5rem 0.75rem',
                 background: active ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
@@ -330,12 +404,12 @@ export default function StudyPage() {
             >
               {answerMutation.isPending
                 ? <><Loader2 size={18} className="animate-spin" /> Verificando...</>
-                : <><Zap size={18} /> Confirmar Resposta</>
+                : <><Zap size={18} /> Confirmar Resposta <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: 4 }}>(Enter)</span></>
               }
             </button>
             {selected === null && (
               <p style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-                <Clock size={13} /> Selecione uma alternativa
+                <Clock size={13} /> Você também pode usar as teclas A-E do teclado
               </p>
             )}
           </div>
@@ -512,19 +586,14 @@ export default function StudyPage() {
             onChange={e => setNoteText(e.target.value)}
             style={{ resize: 'vertical', fontSize: '0.9rem' }}
           />
-          <button
-            id="save-note-btn"
-            onClick={() => noteMutation.mutate()}
-            disabled={noteMutation.isPending}
-            style={{
-              marginTop: '0.75rem', padding: '0.625rem 1.25rem',
-              background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)',
-              borderRadius: 10, color: '#93C5FD', fontWeight: 600, fontSize: '0.875rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            {noteMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : 'Salvar anotação'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Anotações são salvas automaticamente
+            </span>
+            <span style={{ fontSize: '0.75rem', color: noteMutation.isPending ? 'var(--accent-blue)' : 'var(--text-muted)' }}>
+              {noteMutation.isPending ? 'Salvando...' : noteText === q.note ? 'Salvo' : 'Não salvo'}
+            </span>
+          </div>
         </div>
       )}
 
@@ -568,7 +637,11 @@ export default function StudyPage() {
               transition: 'all 0.2s',
             }}
           >
-            Próxima questão <ChevronRight size={17} />
+            {sessionData.queue.length > 0 && sessionData.index >= sessionData.queue.length - 1 ? (
+              <>Concluir sessão <CheckCircle size={17} /></>
+            ) : (
+              <>Próxima questão <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: 2 }}>(Enter)</span> <ChevronRight size={17} /></>
+            )}
           </button>
         </div>
       )}
