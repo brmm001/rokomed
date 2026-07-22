@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { adminApi, userApi } from '../lib/api'
 import api from '../lib/api'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import {
   Building2, GraduationCap, Stethoscope, Calendar,
@@ -468,7 +469,7 @@ interface OnboardingData {
   originInstitution: string
   targetInstitutionId: string
   targetSpecialtyId: string
-  examYear: number
+  examDate: string   // ISO date string (YYYY-MM-DD) — data real, nunca apenas o ano
 }
 
 interface Props {
@@ -481,10 +482,11 @@ export default function OnboardingModal({ onComplete }: Props) {
     originInstitution: '',
     targetInstitutionId: '',
     targetSpecialtyId: '',
-    examYear: new Date().getFullYear() + 1,
+    examDate: '',
   })
   const [schoolSearch, setSchoolSearch] = useState('')
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const { data: institutionsData } = useQuery({
     queryKey: ['user-institutions'],
@@ -495,12 +497,30 @@ export default function OnboardingModal({ onComplete }: Props) {
     s.toLowerCase().includes(schoolSearch.toLowerCase())
   ).slice(0, 8)
 
+  // Persist "skip" to backend so the user isn't shown onboarding again
+  const handleSkip = async () => {
+    try {
+      await api.post('/user/onboarding', {
+        originInstitution: '',
+        targetInstitutionId: '',
+        targetSpecialtyId: '',
+        examDate: '',
+        skipped: true,
+      })
+    } catch {
+      // Best-effort: even if it fails, mark locally
+    }
+    onComplete()
+  }
+
   const handleSubmit = async () => {
     setLoading(true)
     try {
       await api.post('/user/onboarding', data)
-      toast.success('Perfil configurado! Sua experiência está personalizada 🎯', { duration: 4000 })
+      toast.success('Perfil configurado! Iniciando seu diagnóstico... 🎯', { duration: 3000 })
       onComplete()
+      // Redireciona para sessão de diagnóstico (10 questões) em vez do dashboard
+      navigate('/questoes?session=10&mode=diagnostico')
     } catch {
       toast.error('Erro ao salvar configurações')
     } finally {
@@ -509,9 +529,9 @@ export default function OnboardingModal({ onComplete }: Props) {
   }
 
   const canNext = () => {
-    if (step === 1) return data.originInstitution.length > 0
+    if (step === 1) return true // Faculdade é opcional
     if (step === 2) return data.targetInstitutionId.length > 0 && data.targetSpecialtyId.length > 0
-    if (step === 3) return data.examYear > 0
+    if (step === 3) return data.examDate.length > 0
     return false
   }
 
@@ -559,7 +579,7 @@ export default function OnboardingModal({ onComplete }: Props) {
             ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-            {['Origem', 'Objetivo', 'Quando'].map((label, i) => (
+            {['Objetivo', 'Prova', 'Quando'].map((label, i) => (
               <span key={label} style={{ fontSize: '0.65rem', color: i + 1 <= step ? 'var(--accent-blue)' : 'var(--text-muted)', fontFamily: 'Outfit', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                 {label}
               </span>
@@ -570,68 +590,28 @@ export default function OnboardingModal({ onComplete }: Props) {
         {/* Corpo */}
         <div style={{ padding: '2rem' }}>
 
-          {/* ── Step 1: Faculdade de origem ── */}
+          {/* ── Step 1: Prova-alvo e especialidade (era Faculdade, agora o mais importante vem 1º) ── */}
           {step === 1 && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <GraduationCap size={22} color="var(--accent-blue)" />
+                  <Stethoscope size={22} color="var(--accent-blue)" />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
-                    <Typewriter text="De qual faculdade você é?" />
+                    <Typewriter text="Qual é sua especialidade-alvo?" />
                   </h2>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    <Typewriter text="Isso nos ajuda a personalizar os conteúdos para o seu perfil" speed={15} />
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+                    Isso define quais temas priorizamos para você.
                   </p>
                 </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Buscar faculdade..."
-                value={schoolSearch}
-                onChange={e => setSchoolSearch(e.target.value)}
-                className="input"
-                style={{ width: '100%', marginBottom: '0.75rem', fontSize: '0.9rem', boxSizing: 'border-box' }}
-                autoFocus
-              />
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
-                {(schoolSearch ? filteredSchools : MEDICAL_SCHOOLS.slice(0, 10)).map(school => (
-                  <button
-                    key={school}
-                    onClick={() => { setData(d => ({ ...d, originInstitution: school })); setSchoolSearch('') }}
-                    style={{
-                      textAlign: 'left', padding: '10px 14px', borderRadius: 10, border: '1px solid',
-                      borderColor: data.originInstitution === school ? 'var(--accent-blue)' : 'var(--border)',
-                      background: data.originInstitution === school ? 'rgba(59,130,246,0.12)' : 'transparent',
-                      cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-primary)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    <span>{school}</span>
-                    {data.originInstitution === school && <CheckCircle2 size={16} color="var(--accent-blue)" />}
-                  </button>
-                ))}
-                {schoolSearch && filteredSchools.length === 0 && (
-                  <button
-                    onClick={() => { setData(d => ({ ...d, originInstitution: schoolSearch })); setSchoolSearch('') }}
-                    style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10, border: '1px dashed var(--border)', background: 'transparent', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--accent-blue)' }}
-                  >
-                    + Usar "{schoolSearch}"
-                  </button>
-                )}
-              </div>
-
-              {data.originInstitution && (
-                <div style={{ marginTop: '0.75rem', padding: '8px 12px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--accent-blue)' }}>
-                  ✓ Selecionado: <strong>{data.originInstitution}</strong>
-                </div>
-              )}
-            </div>
-          )}
+              {/* Instituição-alvo (prova) */}
+              <div style={{ marginBottom: '0.875rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
+                  Qual prova você vai fazer?
+                </label>
 
           {/* ── Step 2: Prova e especialidade ── */}
           {step === 2 && (
@@ -686,7 +666,7 @@ export default function OnboardingModal({ onComplete }: Props) {
             </div>
           )}
 
-          {/* ── Step 3: Ano da prova ── */}
+          {/* ── Step 3: Data real da prova ── */}
           {step === 3 && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
@@ -695,61 +675,44 @@ export default function OnboardingModal({ onComplete }: Props) {
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
-                    <Typewriter text="Quando você vai prestar?" />
+                    <Typewriter text="Quando é sua prova?" />
                   </h2>
                   <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                    <Typewriter text="Vamos calibrar seu cronograma de estudos automaticamente" speed={15} />
+                    <Typewriter text="Vamos calcular seu cronograma com a data exata" speed={15} />
                   </p>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: '1.5rem' }}>
-                {EXAM_YEARS.map(year => (
-                  <button
-                    key={year}
-                    onClick={() => setData(d => ({ ...d, examYear: year }))}
-                    style={{
-                      padding: '1.5rem 1rem', borderRadius: 14, border: '2px solid',
-                      borderColor: data.examYear === year ? '#FBBF24' : 'var(--border)',
-                      background: data.examYear === year ? 'rgba(251,191,36,0.1)' : 'transparent',
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                    }}
-                  >
-                    <span style={{ fontSize: '1.5rem', fontFamily: 'Outfit', fontWeight: 800, color: data.examYear === year ? '#FBBF24' : 'var(--text-primary)' }}>
-                      {year}
-                    </span>
-                    {year === new Date().getFullYear() && (
-                      <span style={{ fontSize: '0.6rem', color: '#F87171', fontWeight: 600, textTransform: 'uppercase' }}>Este ano</span>
-                    )}
-                    {year === new Date().getFullYear() + 1 && (
-                      <span style={{ fontSize: '0.6rem', color: 'var(--accent-teal)', fontWeight: 600, textTransform: 'uppercase' }}>Mais comum</span>
-                    )}
-                  </button>
-                ))}
+              {/* Input de data real */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label
+                  htmlFor="exam-date"
+                  style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 8 }}
+                >
+                  Data da prova (aproximada)
+                </label>
+                <input
+                  id="exam-date"
+                  type="date"
+                  value={data.examDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={e => setData(d => ({ ...d, examDate: e.target.value }))}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    fontSize: '1rem',
+                    padding: '12px 16px',
+                    boxSizing: 'border-box',
+                    colorScheme: 'dark',
+                  }}
+                  autoFocus
+                />
+                <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Não sabe o dia exato? Use o primeiro dia do mês esperado.
+                </p>
               </div>
 
               {/* Resumo */}
-              <div style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 14, padding: '1rem 1.25rem' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, marginBottom: 10 }}>
-                  Resumo do seu perfil
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem' }}>
-                    <GraduationCap size={14} color="var(--accent-blue)" />
-                    <span style={{ color: 'var(--text-muted)' }}>Origem:</span>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{data.originInstitution || '—'}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem' }}>
-                    <Stethoscope size={14} color="var(--accent-teal)" />
-                    <span style={{ color: 'var(--text-muted)' }}>Especialidade:</span>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{data.targetSpecialtyId || '—'}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem' }}>
-                    <Calendar size={14} color="#FBBF24" />
-                    <span style={{ color: 'var(--text-muted)' }}>Prova em:</span>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{data.examYear}</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -763,14 +726,13 @@ export default function OnboardingModal({ onComplete }: Props) {
           borderTop: '1px solid var(--border)',
         }}>
           <button
-            onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : undefined}
+            onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : handleSkip()}
             style={{
-              opacity: step === 1 ? 0 : 1, pointerEvents: step === 1 ? 'none' : 'auto',
               background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
               display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.875rem',
             }}
           >
-            <ChevronLeft size={16} /> Voltar
+            {step > 1 ? <><ChevronLeft size={16} /> Voltar</> : 'Pular'}
           </button>
 
           {step < 3 ? (
@@ -789,7 +751,7 @@ export default function OnboardingModal({ onComplete }: Props) {
               className="btn btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg, #3B82F6, #14B8A6)', opacity: canNext() ? 1 : 0.4 }}
             >
-              {loading ? 'Salvando...' : <><Sparkles size={15} /> Começar personalizado</>}
+              {loading ? 'Salvando...' : <><Sparkles size={15} /> Começar diagnóstico</>}
             </button>
           )}
         </div>
