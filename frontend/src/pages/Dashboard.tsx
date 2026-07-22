@@ -133,6 +133,44 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+      {/* Banner Amarelo - Novas Questões UFSC 500+ & Suporte */}
+      <div
+        className="animate-in fade-in slide-in-from-top-4 duration-300"
+        style={{
+          background: 'linear-gradient(135deg, #FEF08A 0%, #FACC15 100%)',
+          border: '1px solid #EAB308',
+          borderRadius: '16px',
+          padding: '18px 24px',
+          marginBottom: '24px',
+          boxShadow: '0 4px 20px rgba(234, 179, 8, 0.2)',
+          color: '#713F12',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{
+            background: '#78350F',
+            color: '#FEF08A',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            padding: '4px 10px',
+            borderRadius: '20px',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase'
+          }}>
+            🔥 NOVIDADE
+          </span>
+          <strong style={{ fontSize: '1.125rem', fontWeight: 800, color: '#451A03', fontFamily: 'Outfit, sans-serif' }}>
+            NOVAS QUESTÕES UFSC 500+
+          </strong>
+        </div>
+        <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600, color: '#78350F', lineHeight: 1.5 }}>
+          SE PRECISAR DE SUPORTE, NOS CHAME VIA E-MAIL OU BOTÃO DO WHATSAPP NA INDEX OU PELO BOTÃO DO SUPORTE. SERÁ UM PRAZER ATENDER!
+        </p>
+      </div>
+
       {/* Welcome */}
       <div className="dashboard-header" style={{ marginBottom: '32px' }}>
         <h1 className="apple-title">

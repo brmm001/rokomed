@@ -285,16 +285,45 @@ async function main() {
   const notFoundList: string[] = []
 
   for (const raw of items) {
-    const num  = raw.numero_questao_original ?? raw.numero_questao ?? 0
+    let num: number = raw.numero_questao_original ?? raw.numero_questao ?? 0
 
     // Normaliza o id: substitui underscores por hífens e ajusta prefixo Revalida
     const rawId = raw.id
       ? raw.id.replace(/_/g, '-').replace(/^REVALIDA-/i, 'Revalida-')
       : null
 
+    // Se num for 0/falsy, tenta extrair do final do rawId (ex: UFSC_2017_RESIDENCIA_MEDICA_001 → 1)
+    if (!num && rawId) {
+      const lastPart = rawId.split('-').pop() ?? ''
+      const parsed = parseInt(lastPart, 10)
+      if (!isNaN(parsed) && parsed > 0) num = parsed
+    }
+
     let code = rawId ?? buildCode(raw.instituicao, raw.ano, num)
     if (!existingCodes.has(code)) {
       code = buildCode(raw.instituicao, raw.ano, num)
+    }
+
+    // Fallback extra: tenta com a sigla extraída da instituição
+    // Ex: 'UFSC / COREME' → 'UFSC' ou 'Universidade Federal de Santa Catarina (UFSC)' → 'UFSC'
+    if (!existingCodes.has(code)) {
+      const matchParen = raw.instituicao.match(/\(([^)]+)\)/)
+      const extractedAcronym = matchParen ? matchParen[1].trim() : null
+      const instPrefix = extractedAcronym ?? raw.instituicao.split(/[\s\/]/)[0].trim()
+
+      if (instPrefix) {
+        const fallbackCode = buildCode(instPrefix, raw.ano, num)
+        if (existingCodes.has(fallbackCode)) {
+          code = fallbackCode
+        }
+      }
+
+      if (!existingCodes.has(code) && raw.instituicao.includes('UFSC')) {
+        const fallbackCode = buildCode('UFSC', raw.ano, num)
+        if (existingCodes.has(fallbackCode)) {
+          code = fallbackCode
+        }
+      }
     }
 
     if (!existingCodes.has(code)) {

@@ -126,10 +126,10 @@ async function main() {
       if (!t) continue
       try {
         const raw = JSON.parse(t)
-        if (raw.enunciado_completo) {
+        if (raw.enunciado_completo && raw.id && typeof raw.id === 'string' && raw.id.trim().length > 0) {
           gabaritosMatch.push({
             id: raw.id,
-            numero: raw.numero_questao,
+            numero: raw.numero_questao_original ?? raw.numero_questao,
             words: getWords(raw.enunciado_completo),
             ano: parseInt(String(raw.ano), 10)
           })
@@ -231,7 +231,7 @@ async function main() {
           }
         }
 
-        if (bestMatch && maxScore > 0.3) {
+        if (bestMatch && bestMatch.id && typeof bestMatch.id === 'string' && bestMatch.id.trim().length > 0 && maxScore > 0.3) {
           code = bestMatch.id
         } else {
           if (raw.ano === 2026 && raw.instituicao.startsWith('UNICAMP')) {
@@ -265,7 +265,27 @@ async function main() {
       imported += batch.length
       console.log(`  ✅ ${imported}/${questions.length} importadas...`)
     } catch (err) {
-      console.error(`  ❌ Erro no lote ${i / BATCH_SIZE + 1}:`, err)
+      // Debug: tentar um por vez para identificar o statement problemático
+      console.error(`  ❌ Erro no lote ${i / BATCH_SIZE + 1}: ${(err as any).message}`)
+      console.log(`    🔍 Tentando um por vez para identificar o problema...`)
+      let batchImported = 0
+      for (const s of stmts) {
+        const undefs = (s.args ?? []).map((v: any, idx: number) => typeof v === 'undefined' ? idx : -1).filter((idx: number) => idx >= 0)
+        if (undefs.length > 0) {
+          console.error(`    ❌ Statement com undefined nos args[${undefs.join(', ')}]: ${s.sql.substring(0, 60)}`)
+          continue
+        }
+        try {
+          await client.batch([s], 'write')
+          batchImported++
+        } catch (sErr) {
+          const msg = (sErr as any).message ?? String(sErr)
+          if (!msg.includes('UNIQUE') && !msg.includes('FOREIGN KEY')) {
+            console.error(`    ❌ Stmt fail: ${msg.substring(0, 120)} | SQL: ${s.sql.substring(0, 60)}`)
+          }
+        }
+      }
+      imported += batchImported
       errors += batch.length
     }
   }
