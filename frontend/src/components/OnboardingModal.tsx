@@ -590,28 +590,73 @@ export default function OnboardingModal({ onComplete }: Props) {
         {/* Corpo */}
         <div style={{ padding: '2rem' }}>
 
-          {/* ── Step 1: Prova-alvo e especialidade (era Faculdade, agora o mais importante vem 1º) ── */}
+          {/* ── Step 1: Faculdade de origem (opcional) ── */}
           {step === 1 && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Stethoscope size={22} color="var(--accent-blue)" />
+                  <GraduationCap size={22} color="var(--accent-blue)" />
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
-                    <Typewriter text="Qual é sua especialidade-alvo?" />
+                    <Typewriter text="Onde você estuda (ou estudou)?" />
                   </h2>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    Isso define quais temas priorizamos para você.
+                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                    <Typewriter text="Sua faculdade de origem de medicina (opcional)" speed={15} />
                   </p>
                 </div>
               </div>
 
-              {/* Instituição-alvo (prova) */}
-              <div style={{ marginBottom: '0.875rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                  Qual prova você vai fazer?
+              <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
+                  Faculdade de Medicina
                 </label>
+                <div style={{ position: 'relative' }}>
+                  <Building2 size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    value={schoolSearch}
+                    onChange={e => setSchoolSearch(e.target.value)}
+                    placeholder="Digite o nome ou sigla da faculdade..."
+                    className="input"
+                    style={{ width: '100%', paddingLeft: 36, boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                {schoolSearch.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                    background: 'var(--bg-surface)', border: '1px solid var(--border)',
+                    borderRadius: 12, marginTop: 4, maxHeight: 180, overflowY: 'auto',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  }}>
+                    {filteredSchools.map((s, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setData(d => ({ ...d, originInstitution: s }))
+                          setSchoolSearch(s)
+                        }}
+                        style={{
+                          width: '100%', padding: '10px 14px', background: 'none', border: 'none',
+                          color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer',
+                          fontSize: '0.875rem', borderBottom: '1px solid var(--border)',
+                        }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {data.originInstitution && (
+                <div style={{ marginTop: '0.75rem', padding: '8px 12px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, fontSize: '0.8rem', color: 'var(--accent-blue)' }}>
+                  ✓ Selecionado: <strong>{data.originInstitution}</strong>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Step 2: Prova e especialidade ── */}
           {step === 2 && (
@@ -710,7 +755,7 @@ export default function OnboardingModal({ onComplete }: Props) {
                 <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Não sabe o dia exato? Use o primeiro dia do mês esperado.
                 </p>
-              {/* Resumo */}
+              </div>
             </div>
           )}
         </div>
