@@ -493,7 +493,7 @@ export default function QuestionBankPage() {
       {/* ── Pagination ─────────────────────────────────────────────────── */}
       {data && data.totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem', marginTop: '2rem' }}>
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{
+          <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} style={{
             height: 40, padding: '0 1rem',
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
@@ -521,7 +521,7 @@ export default function QuestionBankPage() {
             )}
           </div>
 
-          <button onClick={() => setPage(p => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} style={{
+          <button onClick={() => setPage(Math.min(data.totalPages, page + 1))} disabled={page === data.totalPages} style={{
             height: 40, padding: '0 1rem',
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
