@@ -6,8 +6,9 @@ import toast from 'react-hot-toast'
 import {
   ArrowLeft, ArrowRight, CheckCircle, XCircle, Flag, Clock,
   BarChart3, BookOpen, Brain, Target, ChevronDown, ChevronUp,
-  Trophy, RotateCcw, Loader2, Printer,
+  Trophy, RotateCcw, Loader2, Printer, ListTodo
 } from 'lucide-react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts'
 import PrintModal, { type PrintQuestion } from '../components/PrintView'
 
 /* ── tipos ── */
@@ -26,9 +27,6 @@ interface MockExam {
   questions: ExamQuestion[]
 }
 
-const diffLabel: Record<string,string> = { FACIL:'Fácil', MEDIO:'Médio', DIFICIL:'Difícil' }
-const diffColor: Record<string,string> = { FACIL:'#10B981', MEDIO:'#F59E0B', DIFICIL:'#EF4444' }
-
 function Timer({ startedAt, limitMin, finished }: { startedAt?: string|null, limitMin?: number|null, finished: boolean }) {
   const [elapsed, setElapsed] = useState(0)
   useEffect(() => {
@@ -41,12 +39,11 @@ function Timer({ startedAt, limitMin, finished }: { startedAt?: string|null, lim
   const display = total ? Math.max(0, total - elapsed) : elapsed
   const mm = String(Math.floor(display / 60)).padStart(2, '0')
   const ss = String(display % 60).padStart(2, '0')
-  const pct = total ? Math.min(100, (elapsed / total) * 100) : null
   const over  = total ? elapsed > total : false
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <Clock size={15} color={over ? '#FF453A' : 'var(--text-secondary)'} />
-      <span style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '14px', color: over ? '#FF453A' : 'var(--text-primary)', letterSpacing: '0.5px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: over ? 'rgba(255,69,58,0.1)' : 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '12px' }}>
+      <Clock size={16} color={over ? '#FF453A' : 'var(--accent-blue)'} />
+      <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '18px', color: over ? '#FF453A' : 'var(--text-primary)', letterSpacing: '0.5px' }}>
         {total ? (over ? '+' : '') : ''}{mm}:{ss}
       </span>
     </div>
@@ -59,7 +56,7 @@ export default function SimuladoExamPage() {
   const qc        = useQueryClient()
 
   const [current, setCurrent]         = useState(0)
-  const [localAnswers, setLocalAnswers] = useState<Record<number, string>>({})  // order → selectedOpt
+  const [localAnswers, setLocalAnswers] = useState<Record<number, string>>({})
   const [showResult, setShowResult]   = useState(false)
   const [showExpl, setShowExpl]       = useState<number | null>(null)
   const [showPrint, setShowPrint]     = useState(false)
@@ -71,7 +68,7 @@ export default function SimuladoExamPage() {
     refetchOnWindowFocus: false,
   })
 
-  // Inicializa respostas salvas do servidor
+  // Inicializa respostas
   useEffect(() => {
     if (!exam) return
     if (exam.status === 'FINISHED') setShowResult(true)
@@ -80,7 +77,7 @@ export default function SimuladoExamPage() {
     setLocalAnswers(saved)
     const firstUnanswered = exam.questions.find(q => !q.selectedOpt)?.order ?? 0
     setCurrent(firstUnanswered)
-  }, [exam?.id]) // eslint-disable-line
+  }, [exam?.id])
 
   const startMutation = useMutation({
     mutationFn: () => simuladosApi.start(id!),
@@ -89,9 +86,7 @@ export default function SimuladoExamPage() {
       qc.invalidateQueries({ queryKey: ['simulado', id] })
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error || err?.message || 'Erro ao iniciar simulado';
-      toast.error(msg);
-      console.error('[Simulado] Error starting exam:', err);
+      toast.error(err?.response?.data?.error || 'Erro ao iniciar simulado')
     },
   })
 
@@ -107,9 +102,7 @@ export default function SimuladoExamPage() {
       setShowResult(true)
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.error || err?.message || 'Erro ao finalizar simulado';
-      toast.error(msg);
-      console.error('[Simulado] Error finishing exam:', err);
+      toast.error(err?.response?.data?.error || 'Erro ao finalizar simulado')
     },
   })
 
@@ -140,68 +133,79 @@ export default function SimuladoExamPage() {
 
   if (!exam) return <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>Simulado não encontrado</div>
 
-  /* ── Tela inicial (PENDING) ── */
+  /* ── PENDING: Overview ── */
   if (exam.status === 'PENDING' && !showResult) {
+    // Collect specialties to show overview
+    const specCounts = exam.questions.reduce((acc, eq) => {
+      const sName = eq.question.specialty?.parent?.name || eq.question.specialty?.name || 'Outros'
+      acc[sName] = (acc[sName] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
     return (
-      <div className="animate-fade-in" style={{ maxWidth: 620, margin: '0 auto', textAlign: 'center', paddingTop: '3rem' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--gradient-accent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-          <Trophy size={36} color="white" />
-        </div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>{exam.title}</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          {exam.totalQuestions} questões{exam.timeLimitMin ? ` · ${exam.timeLimitMin} minutos` : ''}
-        </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2rem' }}>
-          {[
-            { icon: <BookOpen size={18} />, label: `${exam.totalQuestions} questões` },
-            { icon: <Clock size={18} />,    label: exam.timeLimitMin ? `${exam.timeLimitMin} min` : 'Sem limite' },
-            { icon: <Target size={18} />,   label: 'Aleatório' },
-          ].map((item, i) => (
-              <div key={i} className="apple-card" style={{ padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              {item.icon} {item.label}
+      <div className="animate-fade-in" style={{ maxWidth: 700, margin: '0 auto', paddingTop: '2rem' }}>
+        <button onClick={() => navigate('/simulados')} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', marginBottom: '2rem', padding: 0 }}>
+          <ArrowLeft size={16} /> Voltar aos Simulados
+        </button>
+
+        <div className="glass" style={{ padding: '2.5rem 2rem', borderRadius: 20, textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: 'var(--gradient-accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 8px 20px rgba(59,130,246,0.3)' }}>
+            <Trophy size={36} color="white" />
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>{exam.title || 'Simulado Personalizado'}</h1>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1rem' }}>
+            Visão geral da prova e distribuição dos temas
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <div className="apple-card" style={{ padding: '1.25rem' }}>
+              <BookOpen size={20} color="var(--accent-blue)" style={{ marginBottom: 8 }} />
+              <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{exam.totalQuestions}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Questões</div>
             </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            id="print-before-start-btn"
-            className="btn btn-ghost"
-            onClick={() => setShowPrint(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            <Printer size={16} /> Imprimir Simulado
-          </button>
-          <button id="start-simulado-btn" className="btn btn-primary" onClick={handleStart}
-            disabled={startMutation.isPending}
-            style={{ padding: '0.875rem 2.5rem', fontSize: '1.0625rem', fontWeight: 700, borderRadius: 12 }}>
-            {startMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <>🚀 Iniciar Simulado</>}
-          </button>
+            <div className="apple-card" style={{ padding: '1.25rem' }}>
+              <Clock size={20} color="var(--accent-gold)" style={{ marginBottom: 8 }} />
+              <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{exam.timeLimitMin ? `${exam.timeLimitMin} min` : 'Livre'}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Duração Estimada</div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'left', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ListTodo size={18} color="var(--accent-blue)" /> Áreas Abordadas
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              {Object.entries(specCounts).map(([name, count]) => (
+                <div key={name} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', padding: '0.5rem 0.875rem', borderRadius: 10, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontWeight: 600, color: '#fff' }}>{count}</span> questões de {name}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn btn-ghost" onClick={() => setShowPrint(true)} style={{ padding: '0.875rem 1.5rem', borderRadius: 12 }}>
+              <Printer size={18} /> Imprimir PDF
+            </button>
+            <button className="btn btn-primary" onClick={handleStart} disabled={startMutation.isPending}
+              style={{ padding: '0.875rem 3rem', fontSize: '1.0625rem', fontWeight: 700, borderRadius: 12, boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}>
+              {startMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : '🚀 Começar Agora'}
+            </button>
+          </div>
         </div>
 
-        {/* Modal de impressão (antes de iniciar) */}
         {showPrint && (
-          <PrintModal
-            title={exam.title}
-            questions={exam.questions.map((eq, i) => ({
-              number: i + 1,
-              statement: eq.question.statement,
-              options: eq.question.options,
-              correctOption: eq.question.correctOption,
-              year: eq.question.year,
-              institution: eq.question.institution?.acronym,
-              specialty: eq.question.specialty?.name,
-              images: eq.question.images,
-            } as PrintQuestion))}
-            onClose={() => setShowPrint(false)}
-          />
+          <PrintModal title={exam.title} questions={exam.questions.map((eq, i) => ({
+            number: i + 1, statement: eq.question.statement, options: eq.question.options, correctOption: eq.question.correctOption,
+            year: eq.question.year, institution: eq.question.institution?.acronym, specialty: eq.question.specialty?.name, images: eq.question.images
+          } as PrintQuestion))} onClose={() => setShowPrint(false)} />
         )}
       </div>
     )
   }
 
-
-  /* ── Tela de resultado (FINISHED) ── */
+  /* ── FINISHED: Resultado com Radar Chart ── */
   if (showResult && exam.status === 'FINISHED') {
     const correct    = exam.correctCount
     const total      = exam.totalQuestions
@@ -209,41 +213,83 @@ export default function SimuladoExamPage() {
     const wrong      = exam.questions.filter(q => q.isCorrect === false).length
     const unanswered = exam.questions.filter(q => q.selectedOpt === null).length
 
+    // Calculando dados para o Radar Chart
+    const specialtyStats = exam.questions.reduce((acc, eq) => {
+      const specName = eq.question.specialty?.parent?.name || eq.question.specialty?.name || 'Geral'
+      if (!acc[specName]) acc[specName] = { name: specName, total: 0, correct: 0 }
+      acc[specName].total++
+      if (eq.isCorrect) acc[specName].correct++
+      return acc
+    }, {} as Record<string, { name: string, total: number, correct: number }>)
+
+    const radarData = Object.values(specialtyStats).map(s => ({
+      subject: s.name,
+      A: Math.round((s.correct / s.total) * 100),
+      fullMark: 100
+    }))
+
     return (
-      <div className="animate-fade-in" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
-        {/* Score hero */}
-        <div className="apple-card" style={{ padding: '40px', textAlign: 'center', marginBottom: '24px',
-          background: score >= 70 ? 'rgba(48,209,88,0.08)'
-            : score >= 50 ? 'rgba(245,158,11,0.08)'
-            : 'rgba(255,69,58,0.08)' }}>
-          <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '5rem', lineHeight: 1,
-            color: score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444' }}>
-            {score}%
-          </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem' }}>{exam.title}</div>
-          <div style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-            {score >= 70 ? '🏆 Excelente desempenho!' : score >= 50 ? '📈 Bom trabalho, continue!' : '💪 Revise os conteúdos e tente novamente'}
-          </div>
+      <div className="animate-fade-in" style={{ maxWidth: 900, margin: '0 auto', paddingBottom: '3rem' }}>
+        
+        {/* Top bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <button className="btn btn-ghost" onClick={() => navigate('/simulados')} style={{ padding: '0.5rem 0.875rem' }}>
+            <ArrowLeft size={16} /> Voltar
+          </button>
+          <div style={{ fontSize: '1.25rem', fontWeight: 800 }}>{exam.title}</div>
+          <button className="btn btn-primary" onClick={() => navigate('/simulados/novo')} style={{ padding: '0.5rem 1.25rem', borderRadius: 10 }}>
+             Novo Simulado
+          </button>
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          {[
-            { label: 'ACERTOS', value: correct, sub: `de ${total}`, color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
-            { label: 'ERROS',   value: wrong,   sub: `de ${total}`, color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
-            { label: 'EM BRANCO', value: unanswered, sub: 'não respondidas', color: '#94A3B8', bg: 'rgba(100,116,139,0.1)' },
-          ].map(s => (
-            <div key={s.label} className="apple-card" style={{ padding: '24px', textAlign: 'center', background: s.bg, border: `1px solid ${s.color}22` }}>
-              <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '2.5rem', color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: 1 }}>{s.label}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.sub}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+          {/* Score & KPI */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="apple-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem',
+              background: score >= 70 ? 'rgba(48,209,88,0.08)' : score >= 50 ? 'rgba(245,158,11,0.08)' : 'rgba(255,69,58,0.08)' }}>
+              <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '5rem', lineHeight: 1, color: score >= 70 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444' }}>
+                {score}%
+              </div>
+              <div style={{ color: 'var(--text-secondary)', marginTop: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>
+                {score >= 70 ? 'Excelente desempenho!' : score >= 50 ? 'Bom trabalho, continue!' : 'Revise os conteúdos'}
+              </div>
             </div>
-          ))}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              {[
+                { label: 'ACERTOS', value: correct, color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+                { label: 'ERROS',   value: wrong,   color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
+                { label: 'BRANCOS', value: unanswered, color: '#94A3B8', bg: 'rgba(100,116,139,0.1)' },
+              ].map(s => (
+                <div key={s.label} className="apple-card" style={{ padding: '1rem', textAlign: 'center', background: s.bg, border: `1px solid ${s.color}22` }}>
+                  <div style={{ fontFamily: 'Outfit', fontWeight: 900, fontSize: '2rem', color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: 1 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Radar Chart */}
+          <div className="apple-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Target size={18} color="var(--accent-blue)" /> Desempenho por Área
+            </h3>
+            <div style={{ flex: 1, minHeight: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                  <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} />
+                  <Radar name="Aproveitamento" dataKey="A" stroke="var(--accent-blue)" fill="var(--accent-blue)" fillOpacity={0.4} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
         {/* Revisão de questões */}
         <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <BarChart3 size={18} color="var(--accent-blue)" /> Revisão das Questões
+          <BarChart3 size={18} color="var(--accent-blue)" /> Gabarito Comentado
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {exam.questions.map((eq, i) => {
@@ -309,191 +355,140 @@ export default function SimuladoExamPage() {
             )
           })}
         </div>
-
-        {/* Ações */}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '2rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-ghost" onClick={() => navigate('/simulados')}>
-            <ArrowLeft size={16} /> Meus Simulados
-          </button>
-          <button
-            id="print-exam-btn"
-            className="btn btn-ghost"
-            onClick={() => setShowPrint(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            <Printer size={16} /> Imprimir Questões
-          </button>
-          <button className="btn btn-primary" onClick={() => navigate('/simulados/novo')}>
-            <RotateCcw size={16} /> Novo Simulado
-          </button>
-        </div>
-
-        {/* Modal de impressão */}
-        {showPrint && (
-          <PrintModal
-            title={exam.title}
-            questions={exam.questions.map((eq, i) => ({
-              number: i + 1,
-              statement: eq.question.statement,
-              options: eq.question.options,
-              correctOption: eq.question.correctOption,
-              year: eq.question.year,
-              institution: eq.question.institution?.acronym,
-              specialty: eq.question.specialty?.name,
-              images: eq.question.images,
-            } as PrintQuestion))}
-            onClose={() => setShowPrint(false)}
-          />
-        )}
       </div>
     )
   }
 
-  /* ── Execução do simulado ── */
+  /* ── IN_PROGRESS: Execução com Sidebar e Grid ── */
   const eqs = exam.questions
   const eq  = eqs[current]
   if (!eq) return null
   const q          = eq.question
   const answered   = localAnswers[eq.order]
-  const answeredPct = Math.round((Object.keys(localAnswers).length / exam.totalQuestions) * 100)
 
   return (
-    <div className="animate-spring" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
-      {/* Dynamic Island Progress */}
-      <div style={{
-        margin: '0 auto 2.5rem auto', width: 'fit-content', background: 'rgba(28, 28, 30, 0.65)', 
-        backdropFilter: 'blur(20px)', padding: '10px 20px', borderRadius: '40px',
-        display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-      }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-          {current + 1} <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>/ {exam.totalQuestions}</span>
-        </div>
-        <div style={{ width: 140, height: 6, borderRadius: 6, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 6, background: '#fff', width: `${((current + 1) / exam.totalQuestions) * 100}%`, transition: 'width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)' }} />
-        </div>
-        <Timer startedAt={exam.startedAt} limitMin={exam.timeLimitMin} finished={exam.status === 'FINISHED'} />
-      </div>
+    <div className="animate-spring" style={{ maxWidth: 1100, margin: '0 auto', paddingBottom: '3rem', paddingTop: '1rem' }}>
+      
+      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', flexDirection: 'row-reverse' }}>
+        
+        {/* SIDEBAR: Question Map & Timer */}
+        <div style={{ width: 320, flexShrink: 0, position: 'sticky', top: '5rem' }}>
+          <div className="apple-card" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>Mapa da Prova</h2>
+              <Timer startedAt={exam.startedAt} limitMin={exam.timeLimitMin} finished={exam.status === 'FINISHED'} />
+            </div>
 
-      {/* Dot navigation */}
-      <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        {eqs.map((eq2, i) => {
-          const ans = localAnswers[eq2.order]
-          return (
-            <button key={i} onClick={() => setCurrent(i)}
-              title={`Questão ${i + 1}`}
-              style={{ width: 22, height: 22, borderRadius: 6, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-                background: i === current ? 'var(--accent-blue)'
-                  : ans ? 'rgba(16,185,129,0.4)'
-                  : 'rgba(255,255,255,0.08)',
-                transform: i === current ? 'scale(1.15)' : 'scale(1)',
-              }} />
-          )
-        })}
-      </div>
+            {/* Grid 1..N */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.6rem', marginBottom: '2rem' }}>
+              {eqs.map((eq2, i) => {
+                const ans = localAnswers[eq2.order]
+                return (
+                  <button key={i} onClick={() => setCurrent(i)}
+                    title={`Questão ${i + 1}`}
+                    style={{ 
+                      aspectRatio: '1', borderRadius: 8, border: '1px solid',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 700, fontSize: '0.85rem',
+                      background: i === current ? 'rgba(59,130,246,0.2)' : ans ? 'rgba(59,130,246,0.9)' : 'rgba(255,255,255,0.03)',
+                      borderColor: i === current ? '#3B82F6' : ans ? 'rgba(59,130,246,0.9)' : 'var(--border)',
+                      color: ans && i !== current ? '#fff' : i === current ? '#3B82F6' : 'var(--text-muted)',
+                      transform: i === current ? 'scale(1.08)' : 'scale(1)',
+                    }}>
+                    {i + 1}
+                  </button>
+                )
+              })}
+            </div>
 
-      {/* Question card */}
-      <div style={{ padding: '0 0.5rem 2rem 0.5rem', marginBottom: '1rem' }}>
-        {/* Meta */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          {q.specialty?.parent && <span className="badge badge-blue">{q.specialty.parent.name}</span>}
-          {q.specialty && <span className="badge badge-blue">{q.specialty.name}</span>}
-          {q.institution && <span className="badge badge-gray">{q.institution.acronym}</span>}
-          {q.year && <span className="badge badge-gray">{q.year}</span>}
-        </div>
-
-        <div className="text-lg md:text-xl font-medium leading-relaxed text-[var(--text-primary)] mb-6 md:mb-10 tracking-tight"
-          dangerouslySetInnerHTML={{ __html: q.statement }} />
-
-        {q.images && q.images.length > 0 && (
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            {q.images.map(img => (
-              <div key={img.id} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                <img src={img.url} alt={img.caption || 'Imagem'} style={{ maxWidth: 320, display: 'block' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(59,130,246,0.9)' }} /> Respondidas
               </div>
-            ))}
-          </div>
-        )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }} /> Em branco
+              </div>
+            </div>
 
-        {/* Alternativas */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-          {q.options.map(({ letter, text }) => (
-            <button key={letter} id={`opt-${letter}`}
-              onClick={() => handleAnswer(eq.order, letter)}
-              className={`apple-option${answered === letter ? ' selected' : ''}`}>
-              <span style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 600, fontSize: '1rem',
-                background: answered === letter ? '#fff' : 'rgba(255,255,255,0.1)', color: answered === letter ? '#000' : 'var(--text-primary)', transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
-                {letter}
-              </span>
-              <span style={{ flex: 1 }}>{text}</span>
-              {answered === letter && <CheckCircle size={18} color="#000" />}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginTop: '1rem', fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Flag size={13} />
-          {answered
-            ? <span>Resposta registrada: <strong style={{ color: 'var(--accent-blue)' }}>{answered}</strong> — você pode mudar antes de finalizar</span>
-            : <span>Selecione uma alternativa. Você pode navegar entre questões e voltar depois.</span>}
-        </div>
-      </div>
-
-      {/* Navegação */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <button className="btn btn-ghost" onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>
-          <ArrowLeft size={16} /> Anterior
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-          <span style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--accent-green)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--accent-green)', fontSize: '0.75rem' }}>
-            {Object.keys(localAnswers).length}
-          </span>
-          <span>/{exam.totalQuestions} respondidas</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button
-            id="print-during-exam-btn"
-            className="btn btn-ghost"
-            onClick={() => setShowPrint(true)}
-            title="Imprimir questões"
-            style={{ padding: '0.6rem 0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}
-          >
-            <Printer size={15} /> Imprimir
-          </button>
-
-          {current < exam.totalQuestions - 1 ? (
-            <button className="apple-btn" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))}>
-              Próxima <ArrowRight size={16} />
-            </button>
-          ) : (
-            <button id="finish-simulado-btn" className="apple-btn"
+            <button id="finish-simulado-btn" className="btn btn-primary"
               onClick={handleFinish} disabled={finishMutation.isPending}
-              style={{ background: '#fff', color: '#000' }}>
-              {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Finalizar</>}
+              style={{ width: '100%', padding: '0.875rem', borderRadius: 10, fontWeight: 700, fontSize: '0.95rem' }}>
+              {finishMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <><Trophy size={16} /> Entregar Simulado</>}
             </button>
-          )}
+          </div>
+        </div>
+
+        {/* MAIN CONTENT: Question Area */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="glass" style={{ borderRadius: 20, padding: '2.5rem' }}>
+            
+            {/* Header / Meta */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+              <div>
+                <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--accent-blue)', letterSpacing: 1, textTransform: 'uppercase' }}>Questão {current + 1}</span>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                  {q.specialty?.parent && <span className="badge badge-gray">{q.specialty.parent.name}</span>}
+                  {q.specialty && <span className="badge badge-gray">{q.specialty.name}</span>}
+                  {q.institution && <span className="badge badge-gray">{q.institution.acronym}</span>}
+                  {q.year && <span className="badge badge-gray">{q.year}</span>}
+                </div>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setShowPrint(true)} style={{ padding: '0.5rem 0.8rem', fontSize: '0.8125rem' }}>
+                <Printer size={15} /> Imprimir
+              </button>
+            </div>
+
+            <div className="text-lg md:text-xl font-medium leading-relaxed text-[var(--text-primary)] mb-6 md:mb-10 tracking-tight"
+              dangerouslySetInnerHTML={{ __html: q.statement }} />
+
+            {q.images && q.images.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                {q.images.map(img => (
+                  <div key={img.id} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <img src={img.url} alt={img.caption || 'Imagem'} style={{ maxWidth: 320, display: 'block' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Alternativas */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {q.options.map(({ letter, text }) => (
+                <button key={letter} id={`opt-${letter}`}
+                  onClick={() => handleAnswer(eq.order, letter)}
+                  className={`apple-option${answered === letter ? ' selected' : ''}`}>
+                  <span style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 600, fontSize: '1rem',
+                    background: answered === letter ? '#fff' : 'rgba(255,255,255,0.1)', color: answered === letter ? '#000' : 'var(--text-primary)', transition: 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+                    {letter}
+                  </span>
+                  <span style={{ flex: 1, textAlign: 'left', lineHeight: 1.5 }}>{text}</span>
+                  {answered === letter && <CheckCircle size={18} color="#000" />}
+                </button>
+              ))}
+            </div>
+            
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+              <button className="btn btn-ghost" onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>
+                <ArrowLeft size={16} /> Anterior
+              </button>
+              {current < exam.totalQuestions - 1 && (
+                <button className="btn btn-primary" onClick={() => setCurrent(c => Math.min(eqs.length - 1, c + 1))} style={{ padding: '0.6rem 1.25rem', borderRadius: 10 }}>
+                  Próxima <ArrowRight size={16} />
+                </button>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* Modal de impressão (durante simulado) */}
       {showPrint && (
-        <PrintModal
-          title={exam.title}
-          questions={eqs.map((eq2, i) => ({
-            number: i + 1,
-            statement: eq2.question.statement,
-            options: eq2.question.options,
-            correctOption: eq2.question.correctOption,
-            year: eq2.question.year,
-            institution: eq2.question.institution?.acronym,
-            specialty: eq2.question.specialty?.name,
-            images: eq2.question.images,
-          } as PrintQuestion))}
-          onClose={() => setShowPrint(false)}
-        />
+        <PrintModal title={exam.title} questions={eqs.map((eq2, i) => ({
+          number: i + 1, statement: eq2.question.statement, options: eq2.question.options, correctOption: eq2.question.correctOption,
+          year: eq2.question.year, institution: eq2.question.institution?.acronym, specialty: eq2.question.specialty?.name, images: eq2.question.images
+        } as PrintQuestion))} onClose={() => setShowPrint(false)} />
       )}
     </div>
   )
