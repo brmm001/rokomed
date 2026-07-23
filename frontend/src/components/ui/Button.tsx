@@ -1,5 +1,7 @@
-import React, { ButtonHTMLAttributes } from 'react'
-import { motion, HTMLMotionProps } from 'framer-motion'
+import React from 'react'
+import type { ButtonHTMLAttributes } from 'react'
+import { motion } from 'framer-motion'
+import type { HTMLMotionProps } from 'framer-motion'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
