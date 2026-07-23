@@ -6,11 +6,15 @@ import { userApi } from '../lib/api'
 import {
   BookOpen, CheckCircle, Flame, Zap,
   ArrowRight, Clock, X, ChevronRight, RotateCcw,
-  CalendarCheck2, Target, PlayCircle, AlertCircle,
+  Target, PlayCircle, AlertCircle,
   TrendingUp, Star, Check,
 } from 'lucide-react'
 
-// ── Banner dispensável (substitui o amarelo permanente) ───────────────────
+import { Button } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
+import { Badge } from '../components/ui/Badge'
+
+// ── Banner dispensável ───────────────────────────────────────────────────
 function DismissableBanner({ id, children }: { id: string; children: React.ReactNode }) {
   const key = `banner_dismissed_${id}`
   const [visible, setVisible] = useState(() => !localStorage.getItem(key))
@@ -22,24 +26,12 @@ function DismissableBanner({ id, children }: { id: string; children: React.React
 
   if (!visible) return null
   return (
-    <div style={{
-      position: 'relative',
-      background: 'linear-gradient(135deg,rgba(59,130,246,0.12),rgba(20,184,166,0.1))',
-      border: '1px solid rgba(59,130,246,0.2)',
-      borderRadius: 14, padding: '14px 40px 14px 18px',
-      marginBottom: 20, fontSize: '0.875rem', color: '#A1A1A6', lineHeight: 1.55,
-      animation: 'fadeSlideIn 0.3s ease',
-    }}>
+    <div className="relative bg-gradient-to-br from-[rgba(59,130,246,0.12)] to-[rgba(20,184,166,0.1)] border border-solid border-[rgba(59,130,246,0.2)] rounded-xl py-3.5 pr-10 pl-4 mb-5 text-[14px] text-[#A1A1A6] leading-[1.55] animate-fade-in">
       {children}
       <button
         onClick={dismiss}
         aria-label="Dispensar aviso"
-        style={{
-          position: 'absolute', top: 10, right: 10,
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,0.3)', padding: 4, borderRadius: 6,
-          lineHeight: 0,
-        }}
+        className="absolute top-2.5 right-2.5 bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.3)] p-1 rounded-md leading-none hover:bg-[rgba(255,255,255,0.05)] transition-colors"
       >
         <X size={14} />
       </button>
@@ -70,55 +62,40 @@ function NextActionCard({ stats, isPro, onStart }: { stats: any; isPro: boolean;
   const ActionIcon = action.icon
 
   return (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(15,32,64,0.9) 0%, rgba(10,10,11,0.9) 100%)',
-      border: `1px solid ${action.color}30`,
-      borderRadius: 20,
-      padding: '1.5rem',
-      position: 'relative',
-      overflow: 'hidden',
-      marginBottom: 20,
-    }}>
+    <Card variant="glass" padding="lg" className="mb-5 relative overflow-hidden" style={{ borderColor: `${action.color}30` }}>
       {/* Glow de fundo */}
-      <div style={{ position: 'absolute', top: -60, right: -60, width: 180, height: 180, borderRadius: '50%', background: `${action.color}18`, filter: 'blur(40px)', pointerEvents: 'none' }} />
+      <div className="absolute -top-[60px] -right-[60px] w-[180px] h-[180px] rounded-full blur-[40px] pointer-events-none" style={{ backgroundColor: `${action.color}18` }} />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, position: 'relative' }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: `${action.color}20`, border: `1px solid ${action.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div className="flex items-start gap-3.5 relative">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border border-solid" style={{ backgroundColor: `${action.color}20`, borderColor: `${action.color}30` }}>
           <ActionIcon size={22} color={action.color} />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: action.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] mb-1" style={{ color: action.color }}>
             O que estudar agora
           </div>
-          <h2 style={{ fontSize: '1.0625rem', fontWeight: 700, color: '#EDEDED', margin: '0 0 4px', lineHeight: 1.3 }}>
+          <h2 className="text-[17px] font-bold text-[#EDEDED] m-0 mb-1 leading-[1.3] font-outfit">
             {action.title}
           </h2>
-          <p style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.45)', margin: '0 0 14px', lineHeight: 1.5 }}>
+          <p className="text-[13px] text-[rgba(255,255,255,0.45)] m-0 mb-3.5 leading-[1.5]">
             {action.reason}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <button
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Button
+              size="sm"
               onClick={action.path ? (() => window.location.href = action.path) : onStart}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '10px 18px', borderRadius: 99, border: 'none',
-                background: action.color, color: '#fff',
-                fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer',
-                boxShadow: `0 4px 16px ${action.color}40`,
-                transition: 'transform 0.15s, box-shadow 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 6px 20px ${action.color}60` }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = `0 4px 16px ${action.color}40` }}
+              className="!rounded-full border-none shadow-md transition-all hover:-translate-y-[1px]"
+              style={{ backgroundColor: action.color, color: '#fff' }}
             >
               <PlayCircle size={15} /> {action.cta}
-            </button>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            </Button>
+            <span className="text-xs text-[rgba(255,255,255,0.3)] flex items-center gap-1">
               <Clock size={12} /> {action.duration}
             </span>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -129,25 +106,16 @@ function ContinueCard({ lastSession, navigate }: { lastSession: any; navigate: (
   return (
     <button
       onClick={() => navigate(lastSession.path)}
-      style={{
-        width: '100%', textAlign: 'left',
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 14, padding: '14px 16px',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
-        marginBottom: 20, transition: 'background 0.15s',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.055)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+      className="w-full text-left bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.055)] border border-solid border-[rgba(255,255,255,0.07)] rounded-2xl p-3.5 cursor-pointer flex items-center gap-3 mb-5 transition-colors"
     >
-      <div style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.15)] flex items-center justify-center shrink-0">
         <RotateCcw size={18} color="#3B82F6" />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Continuar</div>
-        <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#EDEDED', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lastSession.label}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[11px] font-bold text-[#3B82F6] uppercase tracking-[0.05em]">Continuar</div>
+        <div className="text-[14px] font-semibold text-[#EDEDED] mt-[1px] truncate">{lastSession.label}</div>
         {lastSession.progress && (
-          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{lastSession.progress}</div>
+          <div className="text-[11px] text-[rgba(255,255,255,0.35)] mt-0.5">{lastSession.progress}</div>
         )}
       </div>
       <ChevronRight size={16} color="rgba(255,255,255,0.25)" />
@@ -158,11 +126,11 @@ function ContinueCard({ lastSession, navigate }: { lastSession: any; navigate: (
 // ── Stat card compacto ────────────────────────────────────────────────────
 function StatChip({ icon: Icon, value, label, color }: { icon: any; value: string | number; label: string; color: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '14px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
+    <Card variant="apple" padding="sm" className="flex flex-col items-center gap-1 py-3.5 px-2">
       <Icon size={18} color={color} />
-      <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.03em' }}>{value}</span>
-      <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
-    </div>
+      <span className="text-[20px] font-bold text-white tracking-tight font-outfit">{value}</span>
+      <span className="text-[10px] text-[rgba(255,255,255,0.4)] text-center leading-[1.2]">{label}</span>
+    </Card>
   )
 }
 
@@ -180,40 +148,34 @@ function ActivationChecklist({ stats }: { stats: any }) {
   if (dismissed || doneCount === items.length) return null
 
   return (
-    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '1rem', marginBottom: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+    <Card variant="apple" padding="md" className="mb-5">
+      <div className="flex justify-between items-center mb-2.5">
         <div>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#EDEDED' }}>Primeiros passos</div>
-          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>{doneCount}/{items.length} concluídos</div>
+          <div className="text-[13px] font-bold text-[#EDEDED]">Primeiros passos</div>
+          <div className="text-[11px] text-[rgba(255,255,255,0.35)] mt-px">{doneCount}/{items.length} concluídos</div>
         </div>
-        <button onClick={() => { localStorage.setItem('checklist_dismissed', '1'); setDismissed(true) }} aria-label="Fechar checklist" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', lineHeight: 0 }}>
+        <button onClick={() => { localStorage.setItem('checklist_dismissed', '1'); setDismissed(true) }} aria-label="Fechar checklist" className="bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.3)] leading-none hover:bg-[rgba(255,255,255,0.05)] p-1 rounded-md transition-colors">
           <X size={14} />
         </button>
       </div>
       {/* Barra de progresso */}
-      <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', marginBottom: 12, overflow: 'hidden' }}>
-        <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg,#3B82F6,#10B981)', width: `${(doneCount / items.length) * 100}%`, transition: 'width 0.4s ease' }} />
+      <div className="h-1 rounded-full bg-[rgba(255,255,255,0.07)] mb-3 overflow-hidden">
+        <div className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#10B981] transition-all duration-400 ease-out" style={{ width: `${(doneCount / items.length) * 100}%` }} />
       </div>
       {items.map(({ label, done, path }) => (
         <a
           key={label}
           href={path}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '7px 0', textDecoration: 'none',
-            color: done ? 'rgba(255,255,255,0.3)' : '#EDEDED',
-            fontSize: '0.8125rem', fontWeight: done ? 400 : 500,
-            transition: 'color 0.15s',
-          }}
+          className={`flex items-center gap-2.5 py-1.5 no-underline text-[13px] transition-colors ${done ? 'text-[rgba(255,255,255,0.3)] font-normal' : 'text-[#EDEDED] font-medium'}`}
         >
-          <div style={{ width: 20, height: 20, borderRadius: 6, border: `1.5px solid ${done ? '#10B981' : 'rgba(255,255,255,0.2)'}`, background: done ? 'rgba(16,185,129,0.2)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+          <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all border-[1.5px] border-solid ${done ? 'border-[#10B981] bg-[rgba(16,185,129,0.2)]' : 'border-[rgba(255,255,255,0.2)] bg-transparent'}`}>
             {done && <Check size={11} color="#10B981" strokeWidth={3} />}
           </div>
-          <span style={{ textDecoration: done ? 'line-through' : 'none' }}>{label}</span>
-          {!done && <ChevronRight size={13} color="rgba(255,255,255,0.2)" style={{ marginLeft: 'auto' }} />}
+          <span className={done ? 'line-through' : ''}>{label}</span>
+          {!done && <ChevronRight size={13} color="rgba(255,255,255,0.2)" className="ml-auto" />}
         </a>
       ))}
-    </div>
+    </Card>
   )
 }
 
@@ -253,7 +215,7 @@ export default function DashboardPage() {
   const isPro = user?.plan !== 'FREE'
   const firstName = user?.name?.split(' ')[0] ?? ''
 
-  // Última sessão salva no localStorage (simples por ora; backend em seguida)
+  // Última sessão salva no localStorage
   const lastSession = (() => {
     try {
       const raw = localStorage.getItem('last_study_session')
@@ -275,64 +237,53 @@ export default function DashboardPage() {
   })()
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', animation: 'fadeSlideIn 0.3s ease' }}>
-      <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(8px) }
-          to   { opacity: 1; transform: translateY(0) }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          * { animation: none !important; transition-duration: 0.01ms !important; }
-        }
-      `}</style>
-
+    <div className="max-w-[860px] mx-auto animate-fade-in pb-10">
+      
       {/* Notificação de pagamento */}
       {paymentNotification && (
-        <div style={{
-          padding: '14px 20px', borderRadius: 12, marginBottom: 20,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-          border: '1px solid',
-          background: paymentNotification === 'success' ? 'rgba(16,185,129,0.1)' : paymentNotification === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-          borderColor: paymentNotification === 'success' ? 'rgba(16,185,129,0.3)' : paymentNotification === 'pending' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.1rem' }}>{paymentNotification === 'success' ? '🎉' : paymentNotification === 'pending' ? '⏳' : '❌'}</span>
+        <Card variant="solid" padding="md" className={`mb-5 flex items-center justify-between gap-3 ${
+          paymentNotification === 'success' ? 'bg-[rgba(16,185,129,0.1)] border-[rgba(16,185,129,0.3)]' :
+          paymentNotification === 'pending' ? 'bg-[rgba(245,158,11,0.1)] border-[rgba(245,158,11,0.3)]' :
+          'bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.3)]'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <span className="text-[1.1rem]">
+              {paymentNotification === 'success' ? '🎉' : paymentNotification === 'pending' ? '⏳' : '❌'}
+            </span>
             <div>
-              <strong style={{ display: 'block', fontSize: '0.9rem', color: '#EDEDED' }}>
+              <strong className="block text-[14px] text-[#EDEDED] mb-0.5">
                 {paymentNotification === 'success' ? 'Assinatura Ativada!' : paymentNotification === 'pending' ? 'Pagamento em Processamento' : 'Falha no Pagamento'}
               </strong>
-              <span style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)' }}>
+              <span className="text-[13px] text-[rgba(255,255,255,0.5)]">
                 {paymentNotification === 'success' ? 'Seu acesso ao RokoMed PRO está totalmente liberado. Bons estudos!' : paymentNotification === 'pending' ? 'Assim que confirmado, seu plano PRO será liberado.' : 'Não conseguimos processar sua transação. Tente novamente ou fale com o suporte.'}
               </span>
             </div>
           </div>
-          <button onClick={() => setPaymentNotification(null)} aria-label="Fechar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', lineHeight: 0, flexShrink: 0 }}>
+          <button onClick={() => setPaymentNotification(null)} aria-label="Fechar" className="bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.4)] leading-none shrink-0 hover:bg-[rgba(255,255,255,0.1)] p-1.5 rounded-md transition-colors">
             <X size={16} />
           </button>
-        </div>
+        </Card>
       )}
 
       {/* Saudação */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, background: 'linear-gradient(180deg,#fff 0%,#A1A1A6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.02em' }}>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold m-0 bg-gradient-to-b from-white to-[#A1A1A6] bg-clip-text text-transparent tracking-tight font-outfit">
           {greeting}, {firstName} 👋
         </h1>
-        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', margin: '4px 0 0', fontWeight: 400 }}>
+        <p className="text-[rgba(255,255,255,0.4)] text-[14px] m-0 mt-1 font-normal">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
 
       {/* Área de ações principais */}
-      <section aria-label="Próximas ações" style={{ marginBottom: 24 }}>
-        {/* Retomada de sessão */}
+      <section aria-label="Próximas ações" className="mb-6">
         <ContinueCard lastSession={lastSession} navigate={navigate} />
 
-        {/* Próxima ação recomendada */}
         {!isLoading && (
           <NextActionCard stats={stats} isPro={isPro} onStart={startQuickSession} />
         )}
         {isLoading && (
-          <div style={{ height: 140, borderRadius: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 20, animation: 'pulse 1.5s ease infinite' }} />
+          <div className="h-[140px] rounded-[20px] bg-[rgba(255,255,255,0.03)] border border-solid border-[rgba(255,255,255,0.06)] mb-5 animate-pulse" />
         )}
       </section>
 
@@ -341,18 +292,18 @@ export default function DashboardPage() {
 
       {/* Banner dispensável (notícias/novidades) */}
       <DismissableBanner id="ufsc-500-julho">
-        <strong style={{ color: '#EDEDED' }}>🔥 Novidade — UFSC 500+ questões</strong>
+        <strong className="text-[#EDEDED]">🔥 Novidade — UFSC 500+ questões</strong>
         <br />
         Adicionamos mais de 500 questões comentadas da UFSC. Explore no banco de questões!
-        <a href="/questoes?instituicao=UFSC" style={{ color: '#3B82F6', marginLeft: 6, textDecoration: 'none', fontWeight: 600 }}>Ver agora →</a>
+        <a href="/questoes?instituicao=UFSC" className="text-[#3B82F6] ml-1.5 no-underline font-semibold hover:underline">Ver agora →</a>
       </DismissableBanner>
 
       {/* Stats grid — abaixo das ações */}
-      <section aria-label="Estatísticas" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+      <section aria-label="Estatísticas" className="mb-6">
+        <div className="grid grid-cols-4 gap-2">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{ height: 88, borderRadius: 14, background: 'rgba(255,255,255,0.03)', animation: 'pulse 1.5s ease infinite' }} />
+              <div key={i} className="h-[88px] rounded-[14px] bg-[rgba(255,255,255,0.03)] animate-pulse" />
             ))
           ) : (
             <>
@@ -366,65 +317,45 @@ export default function DashboardPage() {
       </section>
 
       {/* Ação rápida + progresso diário */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
+      <section className="grid grid-cols-[1fr_auto] gap-3 items-start">
         {/* Botão de sessão rápida */}
         <button
           id="start-10q-btn"
           onClick={startQuickSession}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '14px 18px', borderRadius: 14,
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#EDEDED', cursor: 'pointer', textAlign: 'left',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+          className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-[rgba(255,255,255,0.05)] border border-solid border-[rgba(255,255,255,0.08)] text-[#EDEDED] cursor-pointer text-left transition-colors hover:bg-[rgba(255,255,255,0.08)]"
         >
           <Zap size={20} color="#F59E0B" />
           <div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Sessão rápida — 10 questões</div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>~15 min · Seleção inteligente</div>
+            <div className="text-[14px] font-semibold font-inter">Sessão rápida — 10 questões</div>
+            <div className="text-[11.5px] text-[rgba(255,255,255,0.4)] mt-[1px]">~15 min · Seleção inteligente</div>
           </div>
-          <ArrowRight size={16} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto' }} />
+          <ArrowRight size={16} color="rgba(255,255,255,0.3)" className="ml-auto" />
         </button>
 
         {/* Progresso diário compacto */}
-        <div style={{ padding: '14px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', minWidth: 120, textAlign: 'center' }}>
-          <TrendingUp size={16} color="#10B981" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>Hoje</div>
-          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.07)', overflow: 'hidden', marginBottom: 6 }}>
-            <div style={{
-              height: '100%', borderRadius: 3,
-              background: 'linear-gradient(90deg,#3B82F6,#10B981)',
-              width: isPro ? '60%' : `${Math.min(((stats?.today_count ?? 0) / 10) * 100, 100)}%`,
-              transition: 'width 0.5s ease',
-            }} />
+        <Card variant="apple" padding="sm" className="min-w-[120px] text-center p-3.5">
+          <TrendingUp size={16} color="#10B981" className="mb-1 mx-auto" />
+          <div className="text-[11px] text-[rgba(255,255,255,0.4)] mb-1.5">Hoje</div>
+          <div className="h-1.5 rounded-full bg-[rgba(255,255,255,0.07)] overflow-hidden mb-1.5">
+            <div className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#10B981] transition-all duration-500 ease-out"
+              style={{ width: isPro ? '60%' : `${Math.min(((stats?.today_count ?? 0) / 10) * 100, 100)}%` }} />
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>
+          <div className="text-[11.5px] text-[rgba(255,255,255,0.35)] font-medium">
             {stats?.today_count ?? 0}{isPro ? '' : '/10'}
           </div>
-        </div>
+        </Card>
       </section>
 
       {/* Dica do dia */}
-      <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <Star size={15} color="#F59E0B" style={{ flexShrink: 0, marginTop: 1 }} />
+      <Card variant="apple" padding="sm" className="mt-4 flex items-start gap-2.5 p-3.5">
+        <Star size={15} color="#F59E0B" className="shrink-0 mt-[1px]" />
         <div>
-          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#EDEDED', marginBottom: 2 }}>Dica do dia</div>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.55 }}>
+          <div className="text-[12.5px] font-semibold text-[#EDEDED] mb-0.5">Dica do dia</div>
+          <p className="m-0 text-[12.5px] text-[rgba(255,255,255,0.45)] leading-[1.55]">
             Revise questões erradas antes de avançar para novos tópicos. O espaçamento entre revisões melhora a retenção em até 3×.
           </p>
         </div>
-      </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5 }
-          50% { opacity: 0.8 }
-        }
-      `}</style>
+      </Card>
     </div>
   )
 }

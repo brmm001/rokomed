@@ -12,6 +12,11 @@ import {
 } from 'lucide-react'
 import PrintModal, { type PrintQuestion } from '../components/PrintView'
 
+// Componentes UI
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
+
 /* ── tipos ────────────────────────────────────────────────────────────────── */
 interface SpecialtyNode {
   id: string; name: string; slug: string
@@ -36,15 +41,18 @@ interface Question {
 
 /* ── helpers ──────────────────────────────────────────────────────────────── */
 const diffLabel: Record<string, string> = { FACIL: 'Fácil', MEDIO: 'Médio', DIFICIL: 'Difícil' }
-const diffCfg: Record<string, { color: string; bg: string; border: string }> = {
-  FACIL:   { color: '#10B981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)' },
-  MEDIO:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
-  DIFICIL: { color: '#EF4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)' },
+const diffVariant: Record<string, "green" | "gold" | "red"> = {
+  FACIL:   'green',
+  MEDIO:   'gold',
+  DIFICIL: 'red',
 }
 const diffBarColor: Record<string, string> = {
   FACIL:   'linear-gradient(90deg,#10B981,#6EE7B7)',
   MEDIO:   'linear-gradient(90deg,#F59E0B,#FCD34D)',
   DIFICIL: 'linear-gradient(90deg,#EF4444,#F87171)',
+}
+const diffColorHex: Record<string, string> = {
+  FACIL: '#10B981', MEDIO: '#F59E0B', DIFICIL: '#EF4444'
 }
 
 function buildBreadcrumb(specialty: SpecialtyNode | null | undefined): SpecialtyNode[] {
@@ -160,25 +168,17 @@ export default function StudyPage() {
     else toast.error(`Incorreto. Gabarito: ${res.correctOption}`, { duration: 3000 })
   }
 
-  // Atalhos de teclado globais (apenas se não estiver digitando na nota)
+  // Atalhos de teclado globais
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignora se estiver num input ou textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-
       const key = e.key.toUpperCase()
-      
-      // Atalhos A-E para selecionar opção
       if (['A', 'B', 'C', 'D', 'E'].includes(key)) {
         if (!submitted) handleAnswer(key)
-      } 
-      // Enter: Confirmar resposta ou ir para próxima
-      else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter') {
         if (!submitted && selected) handleSubmit()
         else if (submitted) handleNextQuestion()
-      } 
-      // N: Abrir notas
-      else if (key === 'N') {
+      } else if (key === 'N') {
         setShowNote(p => {
           if (!p) setTimeout(() => document.getElementById('note-textarea')?.focus(), 50)
           return !p
@@ -192,25 +192,24 @@ export default function StudyPage() {
 
   /* ── loading ── */
   if (isLoading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 12 }}>
-      <Loader2 size={24} color="var(--accent-blue)" className="animate-spin" />
-      <span style={{ color: 'var(--text-muted)' }}>Carregando questão...</span>
+    <div className="flex items-center justify-center min-h-[400px] gap-3">
+      <Loader2 size={24} className="text-[var(--accent-blue)] animate-spin" />
+      <span className="text-[var(--text-muted)]">Carregando questão...</span>
     </div>
   )
 
   if (!q) return (
-    <div style={{ textAlign: 'center', padding: '4rem' }}>
-      <p style={{ color: 'var(--text-muted)' }}>Questão não encontrada</p>
-      <button className="btn btn-ghost" onClick={() => navigate('/questoes')} style={{ marginTop: 12 }}>
+    <div className="text-center p-16">
+      <p className="text-[var(--text-muted)]">Questão não encontrada</p>
+      <Button variant="ghost" onClick={() => navigate('/questoes')} className="mt-3">
         <ArrowLeft size={16} /> Voltar
-      </button>
+      </Button>
     </div>
   )
 
   const options   = q.options
   const isCorrect = selected !== null && selected === q.correctOption
   const breadcrumb = buildBreadcrumb(q.specialty)
-  const dc = diffCfg[q.difficulty]
 
   const getOptionState = (letter: string): 'idle' | 'selected' | 'correct' | 'wrong' | 'dimmed' => {
     if (!submitted) return selected === letter ? 'selected' : 'idle'
@@ -220,87 +219,61 @@ export default function StudyPage() {
   }
 
   return (
-    <div style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '4rem' }}>
+    <div className="max-w-[820px] mx-auto pb-16">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <button
-          onClick={() => navigate('/questoes')}
-          style={{
-            flexShrink: 0, padding: '0.5rem 0.875rem',
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.15s',
-          }}
-        >
+      <div className="flex items-start gap-3 mb-6">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/questoes')} className="flex-shrink-0 !px-3">
           <ArrowLeft size={16} /> Voltar
-        </button>
+        </Button>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Progresso da sessão (se houver) */}
+        <div className="flex-1 min-w-0">
           {sessionData.queue.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#3B82F6', background: 'rgba(59,130,246,0.15)', padding: '2px 8px', borderRadius: 6 }}>
-                SESSÃO
-              </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="blue">SESSÃO</Badge>
+              <span className="text-xs text-[var(--text-muted)]">
                 {sessionData.index + 1} de {sessionData.queue.length} questões
               </span>
             </div>
           )}
 
           {breadcrumb.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
               {breadcrumb.map((s, i) => (
-                <span key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span style={{
-                    fontSize: '0.75rem', fontWeight: 600,
-                    color: i === breadcrumb.length - 1 ? '#93C5FD' : 'var(--text-muted)',
-                    background: i === breadcrumb.length - 1 ? 'rgba(59,130,246,0.12)' : 'transparent',
-                    padding: i === breadcrumb.length - 1 ? '0.2rem 0.6rem' : '0',
-                    borderRadius: 6,
-                    border: i === breadcrumb.length - 1 ? '1px solid rgba(59,130,246,0.2)' : 'none',
-                  }}>{s.name}</span>
-                  {i < breadcrumb.length - 1 && <ChevronRight size={11} color="var(--text-muted)" />}
+                <span key={s.id} className="flex items-center gap-1.5">
+                  <span className={`text-xs font-semibold rounded-md ${
+                    i === breadcrumb.length - 1 
+                      ? 'text-[#93C5FD] bg-[rgba(59,130,246,0.12)] px-2.5 py-1 border border-solid border-[rgba(59,130,246,0.2)]'
+                      : 'text-[var(--text-muted)]'
+                  }`}>{s.name}</span>
+                  {i < breadcrumb.length - 1 && <ChevronRight size={11} className="text-[var(--text-muted)]" />}
                 </span>
               ))}
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {q.institution && (
-              <span style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: '#C4B5FD', borderRadius: 99, padding: '2px 10px', fontSize: '0.75rem', fontWeight: 600 }}>
-                {q.institution.acronym}
-              </span>
-            )}
-            {q.year && (
-              <span style={{ background: 'rgba(100,116,139,0.12)', border: '1px solid rgba(100,116,139,0.2)', color: '#94A3B8', borderRadius: 99, padding: '2px 10px', fontSize: '0.75rem', fontWeight: 600 }}>
-                {q.year}
-              </span>
-            )}
-            <span style={{ background: dc.bg, border: `1px solid ${dc.border}`, color: dc.color, borderRadius: 99, padding: '2px 10px', fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: dc.color, display: 'inline-block' }} />
+          <div className="flex gap-2 flex-wrap items-center">
+            {q.institution && <Badge variant="gray">{q.institution.acronym}</Badge>}
+            {q.year && <Badge variant="gray">{q.year}</Badge>}
+            <Badge variant={diffVariant[q.difficulty]}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: diffColorHex[q.difficulty] }} />
               {diffLabel[q.difficulty]}
-            </span>
-            {q.code && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>#{q.code}</span>}
+            </Badge>
+            {q.code && <span className="text-[11px] text-[var(--text-muted)] font-mono">#{q.code}</span>}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+        <div className="flex gap-1.5 flex-shrink-0">
           {[
-            { btnId: 'bookmark-btn', icon: q.isBookmarked ? <BookmarkCheck size={17} color="#F59E0B" /> : <Bookmark size={17} />, onClick: () => bookmarkMutation.mutate(), disabled: bookmarkMutation.isPending, active: false, title: 'Favoritar' },
-            { btnId: 'note-btn', icon: <MessageSquare size={17} color={showNote ? '#3B82F6' : undefined} />, onClick: () => setShowNote(p => !p), active: showNote, disabled: false, title: 'Anotações (N)' },
-            { btnId: 'print-question-btn', icon: <Printer size={17} />, onClick: () => setShowPrint(true), active: false, disabled: false, title: 'Imprimir' },
-          ].map(({ btnId, icon, onClick, disabled, active, title }) => (
-            <button key={btnId} id={btnId} onClick={onClick} disabled={disabled} title={title}
-              style={{
-                padding: '0.5rem 0.75rem',
-                background: active ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
-                border: active ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', transition: 'all 0.15s',
-              }}
+            { btnId: 'bookmark-btn', icon: q.isBookmarked ? <BookmarkCheck size={17} color="#F59E0B" /> : <Bookmark size={17} />, onClick: () => bookmarkMutation.mutate(), active: false, title: 'Favoritar' },
+            { btnId: 'note-btn', icon: <MessageSquare size={17} color={showNote ? '#3B82F6' : undefined} />, onClick: () => setShowNote(p => !p), active: showNote, title: 'Anotações (N)' },
+            { btnId: 'print-question-btn', icon: <Printer size={17} />, onClick: () => setShowPrint(true), active: false, title: 'Imprimir' },
+          ].map(({ btnId, icon, onClick, active, title }) => (
+            <button key={btnId} id={btnId} onClick={onClick} title={title}
+              className={`p-2 rounded-[10px] flex items-center transition-all cursor-pointer ${
+                active ? 'bg-[rgba(59,130,246,0.15)] border border-solid border-[rgba(59,130,246,0.3)] text-[var(--accent-blue)]'
+                       : 'bg-[rgba(255,255,255,0.05)] border border-solid border-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.1)]'
+              }`}
             >
               {icon}
             </button>
@@ -309,44 +282,39 @@ export default function StudyPage() {
       </div>
 
       {/* ── Question Body ─────────────────────────────────────────────────── */}
-      <div style={{
-        background: 'rgba(10,22,40,0.6)',
-        border: '1px solid rgba(99,179,237,0.1)',
-        borderRadius: 20, padding: '2rem',
-        marginBottom: '1.25rem',
-      }}>
+      <Card variant="solid" className="mb-5 bg-[rgba(10,22,40,0.6)]">
         {/* Statement */}
         <div
-          style={{ fontSize: '1rem', lineHeight: 1.8, color: 'var(--text-primary)', marginBottom: '1.75rem' }}
+          className="text-base leading-[1.8] text-[var(--text-primary)] mb-7"
           dangerouslySetInnerHTML={{ __html: q.statement }}
         />
 
         {/* Images */}
         {q.images && q.images.length > 0 && (
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <div className="flex gap-3 flex-wrap mb-6">
             {q.images.map(img => (
-              <div key={img.id} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <img src={img.url} alt={img.caption || 'Imagem'} style={{ maxWidth: 320, display: 'block' }} />
-                {img.caption && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.5rem' }}>{img.caption}</p>}
+              <div key={img.id} className="rounded-xl overflow-hidden border border-solid border-[rgba(255,255,255,0.08)]">
+                <img src={img.url} alt={img.caption || 'Imagem'} className="max-w-[320px] block" />
+                {img.caption && <p className="text-xs text-[var(--text-muted)] text-center m-2">{img.caption}</p>}
               </div>
             ))}
           </div>
         )}
 
         {/* Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div className="flex flex-col gap-2">
           {options.map(({ letter, text }) => {
             const state = getOptionState(letter)
-            const stateStyles: Record<string, React.CSSProperties> = {
-              idle:     { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: 'var(--text-primary)' },
-              selected: { background: 'rgba(59,130,246,0.12)',  border: '1px solid rgba(59,130,246,0.4)',   color: 'var(--text-primary)' },
-              correct:  { background: 'rgba(16,185,129,0.1)',   border: '1px solid rgba(16,185,129,0.5)',   color: 'var(--text-primary)' },
-              wrong:    { background: 'rgba(239,68,68,0.1)',    border: '1px solid rgba(239,68,68,0.4)',    color: 'var(--text-primary)' },
-              dimmed:   { background: 'rgba(255,255,255,0.015)',border: '1px solid rgba(255,255,255,0.04)', color: 'var(--text-muted)', opacity: 0.6 },
+            const stateClasses = {
+              idle:     "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-[var(--text-primary)] hover:bg-[rgba(59,130,246,0.08)] hover:border-[var(--border-accent)]",
+              selected: "bg-[rgba(59,130,246,0.12)] border-[rgba(59,130,246,0.4)] text-[var(--text-primary)]",
+              correct:  "bg-[rgba(16,185,129,0.1)] border-[rgba(16,185,129,0.5)] text-[var(--text-primary)]",
+              wrong:    "bg-[rgba(239,68,68,0.1)] border-[rgba(239,68,68,0.4)] text-[var(--text-primary)]",
+              dimmed:   "bg-[rgba(255,255,255,0.015)] border-[rgba(255,255,255,0.04)] text-[var(--text-muted)] opacity-60",
             }
-            const letterBg: Record<string, string> = {
-              idle: 'rgba(255,255,255,0.08)', selected: '#3B82F6',
-              correct: '#10B981', wrong: '#EF4444', dimmed: 'rgba(255,255,255,0.04)',
+            const letterBg = {
+              idle: 'bg-[rgba(255,255,255,0.08)]', selected: 'bg-[#3B82F6]',
+              correct: 'bg-[#10B981]', wrong: 'bg-[#EF4444]', dimmed: 'bg-[rgba(255,255,255,0.04)]',
             }
             return (
               <button
@@ -354,29 +322,14 @@ export default function StudyPage() {
                 key={letter}
                 onClick={() => handleAnswer(letter)}
                 disabled={submitted}
-                style={{
-                  width: '100%', textAlign: 'left',
-                  cursor: submitted ? 'default' : 'pointer',
-                  borderRadius: 12, padding: '0.875rem 1rem',
-                  display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
-                  fontSize: '0.9375rem', lineHeight: 1.55,
-                  fontFamily: 'Inter, sans-serif',
-                  transition: 'all 0.2s cubic-bezier(0.2,0.8,0.2,1)',
-                  ...stateStyles[state],
-                }}
+                className={`w-full text-left rounded-xl p-3.5 flex items-start gap-3.5 text-[15px] leading-[1.55] font-inter transition-all duration-200 border border-solid ${stateClasses[state]} ${submitted ? 'cursor-default' : 'cursor-pointer'}`}
               >
-                <span style={{
-                  width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: '0.875rem', color: '#fff',
-                  background: letterBg[state],
-                  transition: 'all 0.2s',
-                }}>
+                <span className={`w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center font-bold text-[14px] text-white transition-all duration-200 ${letterBg[state]}`}>
                   {state === 'correct' && <CheckCircle size={16} color="#fff" />}
                   {state === 'wrong'   && <XCircle size={16} color="#fff" />}
                   {state !== 'correct' && state !== 'wrong' && letter}
                 </span>
-                <span style={{ flex: 1, paddingTop: 3 }}>{text}</span>
+                <span className="flex-1 pt-[3px]">{text}</span>
               </button>
             )
           })}
@@ -384,146 +337,125 @@ export default function StudyPage() {
 
         {/* Submit button */}
         {!submitted && (
-          <div style={{ marginTop: '1.25rem' }}>
-            <button
+          <div className="mt-5">
+            <Button
               id="submit-answer-btn"
               onClick={handleSubmit}
               disabled={selected === null || answerMutation.isPending}
-              style={{
-                width: '100%', padding: '0.9375rem',
-                borderRadius: 12, border: 'none',
-                background: selected !== null ? 'linear-gradient(135deg, #3B82F6, #14B8A6)' : 'rgba(255,255,255,0.05)',
-                color: selected !== null ? '#fff' : 'var(--text-muted)',
-                fontWeight: 700, fontSize: '1rem',
-                cursor: selected === null ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: selected !== null ? '0 4px 20px rgba(59,130,246,0.3)' : 'none',
-                transition: 'all 0.25s cubic-bezier(0.2,0.8,0.2,1)',
-                fontFamily: 'Outfit, sans-serif',
-              }}
+              className={`w-full !py-3.5 !rounded-xl !text-base font-outfit ${selected === null ? '!bg-[rgba(255,255,255,0.05)] !text-[var(--text-muted)]' : ''}`}
             >
               {answerMutation.isPending
                 ? <><Loader2 size={18} className="animate-spin" /> Verificando...</>
-                : <><Zap size={18} /> Confirmar Resposta <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: 4 }}>(Enter)</span></>
+                : <><Zap size={18} /> Confirmar Resposta <span className="text-[11px] opacity-60 ml-1">(Enter)</span></>
               }
-            </button>
+            </Button>
             {selected === null && (
-              <p style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+              <p className="text-center text-[13px] text-[var(--text-muted)] mt-2.5 flex items-center justify-center gap-1.5">
                 <Clock size={13} /> Você também pode usar as teclas A-E do teclado
               </p>
             )}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* ── Result panel ─────────────────────────────────────────────────── */}
       {submitted && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', animation: 'study-slide-up 0.4s cubic-bezier(0.2,0.8,0.2,1) both' }}>
+        <div className="flex flex-col gap-4 animate-[study-slide-up_0.4s_ease_both]">
 
           {/* Result banner */}
-          <div style={{
-            borderRadius: 16, padding: '1.125rem 1.5rem',
-            background: isCorrect
-              ? 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.05))'
-              : 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.05))',
-            border: `1px solid ${isCorrect ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)'}`,
-            display: 'flex', alignItems: 'center', gap: '1rem',
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-              background: isCorrect ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.18)',
-              border: `1px solid ${isCorrect ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)'}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+          <div className={`rounded-2xl p-5 border border-solid flex items-center gap-4 ${
+            isCorrect
+              ? 'bg-gradient-to-br from-[rgba(16,185,129,0.12)] to-[rgba(16,185,129,0.05)] border-[rgba(16,185,129,0.35)]'
+              : 'bg-gradient-to-br from-[rgba(239,68,68,0.12)] to-[rgba(239,68,68,0.05)] border-[rgba(239,68,68,0.35)]'
+          }`}>
+            <div className={`w-11 h-11 rounded-full shrink-0 flex items-center justify-center border border-solid ${
+              isCorrect ? 'bg-[rgba(16,185,129,0.18)] border-[rgba(16,185,129,0.45)]' : 'bg-[rgba(239,68,68,0.18)] border-[rgba(239,68,68,0.45)]'
+            }`}>
               {isCorrect ? <CheckCircle size={22} color="#10B981" /> : <XCircle size={22} color="#EF4444" />}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.0625rem', color: isCorrect ? '#6EE7B7' : '#FCA5A5', marginBottom: 2 }}>
+            <div className="flex-1">
+              <div className={`font-outfit font-extrabold text-[17px] mb-0.5 ${isCorrect ? 'text-[#6EE7B7]' : 'text-[#FCA5A5]'}`}>
                 {isCorrect ? 'Resposta correta!' : 'Resposta incorreta'}
               </div>
               {!isCorrect && (
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.8375rem' }}>
-                  Você marcou <strong style={{ color: '#FCA5A5' }}>{selected}</strong> · Gabarito: <strong style={{ color: '#6EE7B7' }}>{q.correctOption}</strong>
+                <div className="text-[var(--text-secondary)] text-[13px]">
+                  Você marcou <strong className="text-[#FCA5A5]">{selected}</strong> · Gabarito: <strong className="text-[#6EE7B7]">{q.correctOption}</strong>
                 </div>
               )}
-              {isCorrect && <div style={{ color: 'var(--text-muted)', fontSize: '0.8375rem' }}>Continue assim! 🏆</div>}
+              {isCorrect && <div className="text-[var(--text-muted)] text-[13px]">Continue assim! 🏆</div>}
             </div>
           </div>
 
           {/* Stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.625rem' }}>
-            {/* Acerto geral */}
-            <div style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,179,237,0.09)', borderRadius: 14, padding: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.625rem' }}>
+          <div className="grid grid-cols-3 gap-2.5">
+            <Card variant="solid" padding="sm" className="bg-[rgba(10,22,40,0.7)] p-4">
+              <div className="flex items-center gap-1.5 mb-2.5">
                 <BarChart3 size={14} color="#3B82F6" />
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.08em' }}>ACERTO GERAL</span>
+                <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-wider">ACERTO GERAL</span>
               </div>
               {q.stats?.correctRate !== null && q.stats?.correctRate !== undefined ? (
                 <>
-                  <div style={{ fontSize: '1.625rem', fontFamily: 'Outfit', fontWeight: 800, lineHeight: 1, color: q.stats.correctRate >= 60 ? '#6EE7B7' : q.stats.correctRate >= 40 ? '#FCD34D' : '#FCA5A5' }}>
+                  <div className={`text-[26px] font-outfit font-extrabold leading-none ${q.stats.correctRate >= 60 ? 'text-[#6EE7B7]' : q.stats.correctRate >= 40 ? 'text-[#FCD34D]' : 'text-[#FCA5A5]'}`}>
                     {q.stats.correctRate}%
                   </div>
-                  <div style={{ marginTop: 8, height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${q.stats.correctRate}%`, borderRadius: 3, background: q.stats.correctRate >= 60 ? '#10B981' : q.stats.correctRate >= 40 ? '#F59E0B' : '#EF4444', transition: 'width 1.2s ease' }} />
+                  <div className="mt-2 h-[3px] rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${q.stats.correctRate}%`, backgroundColor: q.stats.correctRate >= 60 ? '#10B981' : q.stats.correctRate >= 40 ? '#F59E0B' : '#EF4444' }} />
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div className="text-[11px] text-[var(--text-muted)] mt-1.5 flex items-center gap-1">
                     <Users size={11} /> {q.stats.correctAnswers}/{q.stats.totalAnswers}
                   </div>
                 </>
-              ) : <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 6 }}>Seja o primeiro!</div>}
-            </div>
+              ) : <div className="text-xs text-[var(--text-muted)] mt-1.5">Seja o primeiro!</div>}
+            </Card>
 
-            {/* Dificuldade */}
-            <div style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,179,237,0.09)', borderRadius: 14, padding: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.625rem' }}>
-                <Target size={14} color={dc.color} />
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.08em' }}>DIFICULDADE</span>
+            <Card variant="solid" padding="sm" className="bg-[rgba(10,22,40,0.7)] p-4">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Target size={14} color={diffColorHex[q.difficulty]} />
+                <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-wider">DIFICULDADE</span>
               </div>
-              <div style={{ fontSize: '1.125rem', fontFamily: 'Outfit', fontWeight: 800, color: dc.color, lineHeight: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: dc.color, display: 'inline-block' }} />
+              <div className="text-[18px] font-outfit font-extrabold leading-none flex items-center gap-1.5" style={{ color: diffColorHex[q.difficulty] }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: diffColorHex[q.difficulty] }} />
                 {diffLabel[q.difficulty]}
               </div>
-              <div style={{ marginTop: 8, height: 3, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 3, background: diffBarColor[q.difficulty], width: q.difficulty === 'FACIL' ? '33%' : q.difficulty === 'MEDIO' ? '66%' : '100%', transition: 'width 0.8s ease' }} />
+              <div className="mt-2 h-[3px] rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{ background: diffBarColor[q.difficulty], width: q.difficulty === 'FACIL' ? '33%' : q.difficulty === 'MEDIO' ? '66%' : '100%' }} />
               </div>
-            </div>
+            </Card>
 
-            {/* Seu resultado */}
-            <div style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,179,237,0.09)', borderRadius: 14, padding: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginBottom: '0.625rem' }}>
+            <Card variant="solid" padding="sm" className="bg-[rgba(10,22,40,0.7)] p-4">
+              <div className="flex items-center gap-1.5 mb-2.5">
                 <TrendingUp size={14} color={isCorrect ? '#10B981' : '#EF4444'} />
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.08em' }}>SEU RESULTADO</span>
+                <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-wider">SEU RESULTADO</span>
               </div>
-              <div style={{ fontSize: '1.125rem', fontFamily: 'Outfit', fontWeight: 800, color: isCorrect ? '#6EE7B7' : '#FCA5A5', lineHeight: 1 }}>
+              <div className={`text-[18px] font-outfit font-extrabold leading-none ${isCorrect ? 'text-[#6EE7B7]' : 'text-[#FCA5A5]'}`}>
                 {isCorrect ? '✓ Acertou' : '✗ Errou'}
               </div>
               {!isCorrect && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                <div className="text-[11px] text-[var(--text-muted)] mt-1.5">
                   {selected} → {q.correctOption}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
 
           {/* Reasoning line */}
           {q.reasoningLine && q.reasoningLine.length > 0 && (
-            <div style={{ background: 'rgba(20,184,166,0.05)', border: '1px solid rgba(20,184,166,0.18)', borderRadius: 16, padding: '1.25rem 1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1rem' }}>
-                <div style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="bg-[rgba(20,184,166,0.05)] border border-solid border-[rgba(20,184,166,0.18)] rounded-2xl p-5">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-[30px] h-[30px] rounded-lg bg-[rgba(20,184,166,0.15)] border border-solid border-[rgba(20,184,166,0.3)] flex items-center justify-center shrink-0">
                   <Brain size={15} color="#14B8A6" />
                 </div>
-                <h3 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 700, color: '#5EEAD4' }}>Linha de Raciocínio</h3>
+                <h3 className="m-0 text-[15px] font-bold text-[#5EEAD4]">Linha de Raciocínio</h3>
               </div>
-              <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <ol className="m-0 p-0 list-none flex flex-col gap-2">
                 {q.reasoningLine.map((step, i) => (
-                  <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                    <span style={{
-                      width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(20,184,166,0.15)', border: '1px solid rgba(20,184,166,0.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.7rem', fontWeight: 800, color: '#14B8A6', marginTop: 1,
-                    }}>{i + 1}</span>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, paddingTop: 1 }}>{step}</span>
+                  <li key={i} className="flex gap-3 items-start">
+                    <span className="w-[22px] h-[22px] rounded-full shrink-0 bg-[rgba(20,184,166,0.15)] border border-solid border-[rgba(20,184,166,0.35)] flex items-center justify-center text-[11px] font-extrabold text-[#14B8A6] mt-px">
+                      {i + 1}
+                    </span>
+                    <span className="text-[var(--text-secondary)] text-[14px] leading-[1.6] pt-px">{step}</span>
                   </li>
                 ))}
               </ol>
@@ -532,117 +464,69 @@ export default function StudyPage() {
 
           {/* Explanation */}
           {q.explanation && (
-            <div style={{ background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(99,179,237,0.1)', borderRadius: 16, overflow: 'hidden' }}>
+            <Card variant="solid" padding="none" className="bg-[rgba(10,22,40,0.7)] overflow-hidden">
               <button
                 id="toggle-explanation-btn"
                 onClick={() => setShowExpl(p => !p)}
-                style={{
-                  width: '100%', padding: '1rem 1.5rem',
-                  background: 'rgba(59,130,246,0.07)',
-                  borderBottom: showExpl ? '1px solid rgba(59,130,246,0.12)' : 'none',
-                  border: 'none', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  transition: 'background 0.15s',
-                }}
+                className={`w-full p-4 bg-[rgba(59,130,246,0.07)] border-none cursor-pointer flex items-center justify-between transition-colors ${showExpl ? 'border-b border-solid border-[rgba(59,130,246,0.12)]' : ''}`}
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontFamily: 'Outfit', fontWeight: 700, fontSize: '0.9375rem', color: '#93C5FD' }}>
-                  <Sparkles size={17} color="#3B82F6" />
-                  Gabarito Comentado
+                <span className="flex items-center gap-2.5 font-outfit font-bold text-[15px] text-[#93C5FD]">
+                  <Sparkles size={17} color="#3B82F6" /> Gabarito Comentado
                 </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                <span className="flex items-center gap-1.5 text-[13px] text-[var(--text-muted)]">
                   {showExpl ? 'Ocultar' : 'Ver explicação'}
                   {showExpl ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </span>
               </button>
-
               {showExpl && (
-                <div
-                  style={{ padding: '1.5rem' }}
-                  className="explanation-content animate-fade-in"
-                  dangerouslySetInnerHTML={{ __html: q.explanation }}
-                />
+                <div className="p-6 explanation-content animate-fade-in" dangerouslySetInnerHTML={{ __html: q.explanation }} />
               )}
-            </div>
+            </Card>
           )}
         </div>
       )}
 
       {/* ── Notes ────────────────────────────────────────────────────────── */}
       {showNote && (
-        <div style={{
-          background: 'rgba(10,22,40,0.7)', border: '1px solid rgba(59,130,246,0.15)',
-          borderRadius: 14, padding: '1.25rem', marginTop: '1rem',
-          animation: 'study-slide-up 0.3s ease both',
-        }}>
-          <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#93C5FD', fontWeight: 600 }}>
+        <Card variant="solid" padding="md" className="mt-4 bg-[rgba(10,22,40,0.7)] border-[rgba(59,130,246,0.15)] animate-[study-slide-up_0.3s_ease_both]">
+          <h3 className="m-0 mb-3 text-[14px] flex items-center gap-2 text-[#93C5FD] font-semibold">
             <MessageSquare size={15} color="#3B82F6" /> Anotações
           </h3>
           <textarea
             id="note-textarea"
-            className="input"
+            className="input resize-y text-[14px]"
             rows={4}
             placeholder="Suas anotações sobre esta questão..."
             value={noteText}
             onChange={e => setNoteText(e.target.value)}
-            style={{ resize: 'vertical', fontSize: '0.9rem' }}
           />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Anotações são salvas automaticamente
-            </span>
-            <span style={{ fontSize: '0.75rem', color: noteMutation.isPending ? 'var(--accent-blue)' : 'var(--text-muted)' }}>
+          <div className="flex items-center justify-between mt-3 text-[12px]">
+            <span className="text-[var(--text-muted)]">Anotações são salvas automaticamente</span>
+            <span className={noteMutation.isPending ? 'text-[var(--accent-blue)]' : 'text-[var(--text-muted)]'}>
               {noteMutation.isPending ? 'Salvando...' : noteText === q.note ? 'Salvo' : 'Não salvo'}
             </span>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* ── Bottom actions ────────────────────────────────────────────────── */}
       {submitted && (
-        <div style={{ display: 'flex', gap: '0.625rem', justifyContent: 'space-between', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => navigate('/questoes')}
-              style={{
-                padding: '0.625rem 1.125rem',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10, color: 'var(--text-secondary)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.875rem', fontWeight: 500,
-              }}
-            >
+        <div className="flex gap-2.5 justify-between mt-6 flex-wrap">
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate('/questoes')}>
               <ArrowLeft size={15} /> Banco
-            </button>
-            <button
-              id="flag-btn"
-              style={{
-                padding: '0.625rem 1.125rem',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.875rem',
-              }}
-            >
+            </Button>
+            <Button id="flag-btn" variant="ghost" className="!text-[var(--text-muted)]">
               <Flag size={15} /> Sinalizar
-            </button>
+            </Button>
           </div>
-          <button
-            onClick={handleNextQuestion}
-            style={{
-              padding: '0.75rem 1.75rem',
-              background: 'linear-gradient(135deg, #3B82F6, #14B8A6)',
-              border: 'none', borderRadius: 12,
-              color: '#fff', fontWeight: 700, fontSize: '0.9375rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              boxShadow: '0 4px 18px rgba(59,130,246,0.35)',
-              fontFamily: 'Outfit, sans-serif',
-              transition: 'all 0.2s',
-            }}
-          >
+          <Button onClick={handleNextQuestion} className="font-outfit">
             {sessionData.queue.length > 0 && sessionData.index >= sessionData.queue.length - 1 ? (
               <>Concluir sessão <CheckCircle size={17} /></>
             ) : (
-              <>Próxima questão <span style={{ fontSize: '0.7rem', opacity: 0.6, marginLeft: 2 }}>(Enter)</span> <ChevronRight size={17} /></>
+              <>Próxima questão <span className="text-[11px] opacity-60 ml-0.5">(Enter)</span> <ChevronRight size={17} /></>
             )}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -651,14 +535,8 @@ export default function StudyPage() {
         <PrintModal
           title={`Questão ${q.code ?? q.id}${q.institution ? ` — ${q.institution.acronym}` : ''}${q.year ? ` (${q.year})` : ''}`}
           questions={[{
-            number: 1,
-            statement: q.statement,
-            options: q.options,
-            correctOption: q.correctOption,
-            year: q.year,
-            institution: q.institution?.acronym,
-            specialty: q.specialty?.name,
-            images: q.images,
+            number: 1, statement: q.statement, options: q.options, correctOption: q.correctOption,
+            year: q.year, institution: q.institution?.acronym, specialty: q.specialty?.name, images: q.images,
           } as PrintQuestion]}
           onClose={() => setShowPrint(false)}
         />
@@ -670,89 +548,50 @@ export default function StudyPage() {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        #submit-answer-btn:not(:disabled):hover {
-          transform: translateY(-1px) !important;
-          box-shadow: 0 8px 28px rgba(59,130,246,0.45) !important;
-        }
-
         /* ── Compact alt items ── */
         .explanation-content .alt-item {
-          display: flex !important;
-          align-items: flex-start !important;
-          padding: 0.5rem 0.75rem !important;
-          border-radius: 10px !important;
-          margin-bottom: 0.3rem !important;
-          background: rgba(255,255,255,0.02) !important;
-          border: 1px solid rgba(255,255,255,0.05) !important;
-          gap: 0.75rem !important;
+          display: flex !important; align-items: flex-start !important;
+          padding: 0.5rem 0.75rem !important; border-radius: 10px !important;
+          margin-bottom: 0.3rem !important; background: rgba(255,255,255,0.02) !important;
+          border: 1px solid rgba(255,255,255,0.05) !important; gap: 0.75rem !important;
           transition: border-color 0.15s !important;
         }
-        .explanation-content .alt-item:hover {
-          border-color: rgba(255,255,255,0.1) !important;
-        }
+        .explanation-content .alt-item:hover { border-color: rgba(255,255,255,0.1) !important; }
         .explanation-content .alt-letra {
-          width: 26px !important;
-          height: 26px !important;
-          border-radius: 7px !important;
-          font-size: 0.75rem !important;
-          font-weight: 800 !important;
-          flex-shrink: 0 !important;
+          width: 26px !important; height: 26px !important; border-radius: 7px !important;
+          font-size: 0.75rem !important; font-weight: 800 !important; flex-shrink: 0 !important;
         }
         .explanation-content .alt-letra.correta {
-          background: rgba(16,185,129,0.18) !important;
-          color: #6EE7B7 !important;
-          border: 1px solid rgba(16,185,129,0.35) !important;
+          background: rgba(16,185,129,0.18) !important; color: #6EE7B7 !important; border: 1px solid rgba(16,185,129,0.35) !important;
         }
         .explanation-content .alt-letra.incorreta {
-          background: rgba(239,68,68,0.14) !important;
-          color: #FCA5A5 !important;
-          border: 1px solid rgba(239,68,68,0.28) !important;
+          background: rgba(239,68,68,0.14) !important; color: #FCA5A5 !important; border: 1px solid rgba(239,68,68,0.28) !important;
         }
         .explanation-content .alt-texto {
-          font-size: 0.875rem !important;
-          line-height: 1.55 !important;
-          color: var(--text-secondary) !important;
-          padding-top: 3px !important;
+          font-size: 0.875rem !important; line-height: 1.55 !important; color: var(--text-secondary) !important; padding-top: 3px !important;
         }
         .explanation-content .alt-comentario {
-          padding-left: 38px !important;
-          font-size: 0.8125rem !important;
-          color: var(--text-muted) !important;
-          line-height: 1.55 !important;
-          margin-top: 0.3rem !important;
-          width: 100% !important;
+          padding-left: 38px !important; font-size: 0.8125rem !important; color: var(--text-muted) !important;
+          line-height: 1.55 !important; margin-top: 0.3rem !important; width: 100% !important;
         }
         .explanation-content h4 {
-          font-size: 0.75rem !important;
-          font-weight: 800 !important;
-          color: var(--text-secondary) !important;
-          margin: 1rem 0 0.5rem !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.06em !important;
-          display: flex !important;
-          align-items: center !important;
-          gap: 0.4rem !important;
+          font-size: 0.75rem !important; font-weight: 800 !important; color: var(--text-secondary) !important;
+          margin: 1rem 0 0.5rem !important; text-transform: uppercase !important; letter-spacing: 0.06em !important;
+          display: flex !important; align-items: center !important; gap: 0.4rem !important;
         }
         .explanation-content .gatilhos {
-          padding: 0.75rem 1rem !important;
-          border-radius: 10px !important;
-          margin-bottom: 1rem !important;
-          gap: 0.4rem !important;
-          font-size: 0.8125rem !important;
+          padding: 0.75rem 1rem !important; border-radius: 10px !important; margin-bottom: 1rem !important;
+          gap: 0.4rem !important; font-size: 0.8125rem !important;
         }
         .explanation-content .comentario-geral,
         .explanation-content .conteudo-completo,
         .explanation-content .raciocinio-alternativas,
         .explanation-content .pegadinha,
         .explanation-content .contexto-especifico {
-          padding: 0.875rem 1rem !important;
-          border-radius: 12px !important;
-          margin-bottom: 1rem !important;
+          padding: 0.875rem 1rem !important; border-radius: 12px !important; margin-bottom: 1rem !important;
         }
         .explanation-content p {
-          margin: 0 0 0.625rem !important;
-          font-size: 0.9rem !important;
-          line-height: 1.65 !important;
+          margin: 0 0 0.625rem !important; font-size: 0.9rem !important; line-height: 1.65 !important;
         }
       `}</style>
     </div>
