@@ -373,7 +373,7 @@ export default function DashboardPage() {
           onClick={startQuickSession}
           style={{
             display: 'flex', alignItems: 'center', gap: 10,
-            padding: '14px 18px', borderRadius: 14, border: 'none',
+            padding: '14px 18px', borderRadius: 14,
             background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.08)',
             color: '#EDEDED', cursor: 'pointer', textAlign: 'left',
