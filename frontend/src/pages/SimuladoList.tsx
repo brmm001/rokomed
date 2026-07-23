@@ -5,7 +5,7 @@ import { simuladosApi } from '../lib/api'
 import toast from 'react-hot-toast'
 import {
   ClipboardList, Plus, Trophy, Clock, CheckCircle,
-  Play, ArrowRight, Loader2, Calendar, AlertCircle, Sparkles, BookOpen, Brain, Activity
+  Play, ArrowRight, Loader2, Calendar, AlertCircle, Sparkles, BookOpen, Brain, Activity, Settings2
 } from 'lucide-react'
 
 interface MockExam {
