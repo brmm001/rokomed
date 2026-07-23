@@ -80,6 +80,7 @@ export default function QuestionBankPage() {
     queryKey: ['questions', page, search, specialty, institution, year, difficulty, bookmarked, wrongOnly, unanswered],
     queryFn: () => questionsApi.list({
       page,
+      limit: 30,
       ...(search        && { search }),
       ...(specialty     && { specialtyId: specialty }),
       ...(institution   && { institutionId: institution }),
